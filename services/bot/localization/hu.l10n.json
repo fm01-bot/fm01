@@ -37,7 +37,7 @@
 		"reply": false
 	},
 	"all": [
-		"all",
+		"mind",
 		"mind"
 	],
 	"work": {
@@ -56,7 +56,8 @@
 			"Részvényeid után **{amount} Ft-ot** kaptál.",
 			"Előléptettek a munkahelyeden, így szereztél **{amount} Ft-ot**.",
 			"Taxisofőrként **{amount} Ft-ot** szereztél ma.",
-			"Elmentél a boltba zacskós levest venni, de a kasszás többet adott vissza. Szereztél **{amount} Ft-ot** és egy csomag zacskós levest."
+			"Elmentél a boltba zacskós levest venni, de a kasszás többet adott vissza. Szereztél **{amount} Ft-ot** és egy csomag zacskós levest.",
+			"Nehéz napod volt a mezőn - kaptál **{amount} Ft-ot**."
 		]
 	},
 	"crime": {
@@ -103,7 +104,7 @@
 	},
 	"deposit": {
 		"all": [
-			"all",
+			"mind",
 			"mind"
 		],
 		"errors": {
@@ -120,7 +121,7 @@
 	},
 	"withdraw": {
 		"all": [
-			"all",
+			"mind",
 			"mind"
 		],
 		"errors": {
@@ -154,7 +155,7 @@
 		"lose": {
 			"embeds": [
 				{
-					"title": "Luck",
+					"title": "Szerencse",
 					"description": "{random}",
 					"color": 13369344
 				}
@@ -214,7 +215,7 @@
 		"win": {
 			"embeds": [
 				{
-					"title": "Slots",
+					"title": "Félkarú rabló",
 					"fields": [
 						{
 							"name": "Végeredmény",
@@ -234,7 +235,7 @@
 		"lose": {
 			"embeds": [
 				{
-					"title": "Slots",
+					"title": "Félkarú rabló",
 					"fields": [
 						{
 							"name": "Végeredmény",
@@ -243,7 +244,7 @@
 						},
 						{
 							"name": "Veszítettél",
-							"value": "${amount}",
+							"value": "{amount} Ft",
 							"inline": false
 						},
 						{
@@ -290,7 +291,7 @@
 						"title": "Bolt",
 						"fields": [
 							{
-								"name": "{item.name} (${item.price})",
+								"name": "{item.name} ({item.price} Ft)",
 								"value": "{item.role.mention}: {item.description}",
 								"inline": false
 							}
@@ -721,50 +722,828 @@
 			}
 		}
 	},
-	"ipinfo": {
-		"embeds": [
-			{
-				"title": "IP információk",
-				"fields": [
+	"info": {
+		"user": {
+			"member": {
+				"embeds": [
 					{
-						"name": "Hostname",
-						"value": "{ip.hostname}",
-						"inline": false
-					},
-					{
-						"name": "Város",
-						"value": "{ip.city}",
-						"inline": false
-					},
-					{
-						"name": "Irányítószám",
-						"value": "{ip.postal}",
-						"inline": false
-					},
-					{
-						"name": "Régió",
-						"value": "{ip.region}",
-						"inline": false
-					},
-					{
-						"name": "Ország",
-						"value": "{ip.country}",
-						"inline": false
-					},
-					{
-						"name": "Org",
-						"value": "{ip.org}",
-						"inline": false
-					},
-					{
-						"name": "Időzóna",
-						"value": "{ip.timezone}",
-						"inline": false
+						"title": "Tag információk",
+						"fields": [
+							{
+								"name": "Felhasználónév",
+								"value": "{member.username}",
+								"inline": true
+							},
+							{
+								"name": "Megjelenített név",
+								"value": "{member.display_name}",
+								"inline": true
+							},
+							{
+								"name": "Hashtag",
+								"value": "{member.discriminator}",
+								"inline": true
+							},
+							{
+								"name": "Becenév",
+								"value": "{member.nickname}",
+								"inline": true
+							},
+							{
+								"name": "ID",
+								"value": "{member.id}",
+								"inline": true
+							},
+							{
+								"name": "Bot?",
+								"value": "{member.bot}"
+							},
+							{
+								"name": "Fiók készült",
+								"value": "{member.created_at.long}"
+							},
+							{
+								"name": "Csatlakozott",
+								"value": "{member.joined_at.long}"
+							},
+							{
+								"name": "Rangok",
+								"value": "{member.roles}"
+							}
+						],
+						"author": {
+							"name": "{member}",
+							"icon_url": "{member.avatar}",
+							"url": "https://discord.com/users/{member.id}"
+						},
+						"timestamp": "{now}"
 					}
-				],
-				"color": 6656243
+				]
+			},
+			"not_member": {
+				"embeds": [
+					{
+						"title": "Felhasználó információk",
+						"fields": [
+							{
+								"name": "Felhasználónév",
+								"value": "{member.username}",
+								"inline": true
+							},
+							{
+								"name": "Megjelenített név",
+								"value": "{member.display_name}",
+								"inline": true
+							},
+							{
+								"name": "Hashtag",
+								"value": "{member.discriminator}",
+								"inline": true
+							},
+							{
+								"name": "ID",
+								"value": "{member.id}",
+								"inline": true
+							},
+							{
+								"name": "Bot?",
+								"value": "{member.bot}"
+							},
+							{
+								"name": "Fiók készült",
+								"value": "{member.created_at.long}"
+							}
+						],
+						"author": {
+							"name": "{member}",
+							"icon_url": "{member.avatar}",
+							"url": "https://discord.com/users/{member.id}"
+						},
+						"timestamp": "{now}"
+					}
+				]
 			}
-		]
+		},
+		"server": {
+			"embeds": [
+				{
+					"title": "Szerver információ",
+					"fields": [
+						{
+							"name": "Leírás",
+							"value": "{server.description}",
+							"inline": true
+						},
+						{
+							"name": "ID",
+							"value": "{server.id}",
+							"inline": true
+						},
+						{
+							"name": "Tulajdonos",
+							"value": "{server.owner.mention}",
+							"inline": true
+						},
+						{
+							"name": "Szerver készült",
+							"value": "{server.created_at.long}",
+							"inline": true
+						},
+						{
+							"name": "Nyelvezet",
+							"value": "{server.language}",
+							"inline": true
+						},
+						{
+							"name": "Örök meghívó",
+							"value": "{server.vanity_url}",
+							"inline": true
+						},
+						{
+							"name": "Gyorsítás fokozat",
+							"value": "{server.boost_tier}",
+							"inline": true
+						},
+						{
+							"name": "Gyorsítók száma",
+							"value": "{server.boosters}",
+							"inline": true
+						},
+						{
+							"name": "Gyorsító rang",
+							"value": "{server.boost_role}",
+							"inline": true
+						},
+						{
+							"name": "Rangok",
+							"value": "{server.roles}",
+							"inline": true
+						},
+						{
+							"name": "Emojik",
+							"value": "{server.emojis}",
+							"inline": true
+						},
+						{
+							"name": "Bitráta limit",
+							"value": "{server.bitrate_limit} kbps",
+							"inline": true
+						},
+						{
+							"name": "Feltöltési limit",
+							"value": "{server.upload_limit} MB"
+						}
+					],
+					"author": {
+						"name": "{server.name}",
+						"icon_url": "{server.icon}"
+					},
+					"timestamp": "{now}"
+				}
+			]
+		},
+		"role": {
+			"embeds": [
+				{
+					"title": "Rang információk",
+					"fields": [
+						{
+							"name": "Név",
+							"value": "{role.name}",
+							"inline": true
+						},
+						{
+							"name": "ID",
+							"value": "{role.id}",
+							"inline": true
+						},
+						{
+							"name": "Pozíció",
+							"value": "{role.position}",
+							"inline": true
+						},
+						{
+							"name": "Külön megjelenített?",
+							"value": "{role.hoist}",
+							"inline": true
+						},
+						{
+							"name": "Integráció kezelt?",
+							"value": "{role.managed}",
+							"inline": true
+						},
+						{
+							"name": "Mindenki megemlítheti?",
+							"value": "{role.mentionable}",
+							"inline": true
+						},
+						{
+							"name": "Bot rang?",
+							"value": "{role.bot}",
+							"inline": true
+						},
+						{
+							"name": "Rang készült",
+							"value": "{role.created}",
+							"inline": true
+						},
+						{
+							"name": "Tagok száma",
+							"value": "{role.members}",
+							"inline": true
+						},
+						{
+							"name": "Jogok",
+							"value": "```{role.permissions}```",
+							"inline": false
+						}
+					]
+				}
+			]
+		},
+		"ip": {
+			"embeds": [
+				{
+					"title": "IP információk",
+					"fields": [
+						{
+							"name": "Hosztnév",
+							"value": "{ip.hostname}",
+							"inline": true
+						},
+						{
+							"name": "Város",
+							"value": "{ip.city}",
+							"inline": true
+						},
+						{
+							"name": "Irányítószám",
+							"value": "{ip.postal}",
+							"inline": true
+						},
+						{
+							"name": "Régió",
+							"value": "{ip.region}",
+							"inline": true
+						},
+						{
+							"name": "Ország",
+							"value": "{ip.country}",
+							"inline": true
+						},
+						{
+							"name": "Szolgáltató",
+							"value": "{ip.org}",
+							"inline": true
+						},
+						{
+							"name": "Időzóna",
+							"value": "{ip.timezone}",
+							"inline": true
+						}
+					]
+				}
+			]
+		},
+		"bot": {
+			"embeds": [
+				{
+					"title": "Bot információk",
+					"description": "Hívd meg a **{bot.name}** botot a szeveredre [itt!](https://fightman01bot.hu/invite)\nWeboldal: https://fightman01bot.hu/",
+					"fields": [
+						{
+							"name": "VPS",
+							"value": "{bot.provider}",
+							"inline": true
+						},
+						{
+							"name": "CPU",
+							"value": "{bot.processor}\nHasználat: {bot.processor.usage}%",
+							"inline": true
+						},
+						{
+							"name": "Memória (max/használt)",
+							"value": "{bot.memory}",
+							"inline": true
+						},
+						{
+							"name": "Tárhely",
+							"value": "{bot.disk}",
+							"inline": true
+						},
+						{
+							"name": "Hálózat (küldött/fogadott)",
+							"value": "{bot.network}",
+							"inline": true
+						},
+						{
+							"name": "discord.py",
+							"value": "v{bot.library_version}",
+							"inline": true
+						},
+						{
+							"name": "Boot ideje",
+							"value": "{bot.boot_time}"
+						}
+					],
+					"author": {
+						"name": "{bot.name}",
+						"icon_url": "{bot.avatar}",
+						"url": "https://fightman01bot.hu/"
+					},
+					"thumbnail": {
+						"url": "{bot.avatar}"
+					},
+					"timestamp": "{now}"
+				}
+			]
+		},
+		"emoji": {
+			"custom_emoji": {
+				"embeds": [
+					{
+						"title": "Emoji információk",
+						"fields": [
+							{
+								"name": "Név",
+								"value": "{emoji.name}",
+								"inline": true
+							},
+							{
+								"name": "ID",
+								"value": "{emoji.id}",
+								"inline": true
+							},
+							{
+								"name": "Animált?",
+								"value": "{emoji.animated}",
+								"inline": true
+							},
+							{
+								"name": "Készült",
+								"value": "{emoji.created}",
+								"inline": true
+							},
+							{
+								"name": "Ranghoz kötött?",
+								"value": "{emoji.roles}",
+								"inline": true
+							},
+							{
+								"name": "Szerver",
+								"value": "{emoji.guild}",
+								"inline": true
+							},
+							{
+								"name": "Bot kezeli?",
+								"value": "{emoji.bot_owned}",
+								"inline": true
+							}
+						],
+						"author": {
+							"name": "{emoji.name}",
+							"icon_url": "{emoji.url}"
+						}
+					}
+				]
+			},
+			"unicode_emoji": {
+				"embeds": [
+					{
+						"title": "Emoji információ",
+						"fields": [
+							{
+								"name": "Név",
+								"value": "{emoji.name}",
+								"inline": true
+							},
+							{
+								"name": "ID",
+								"value": "{emoji.id}",
+								"inline": true
+							},
+							{
+								"name": "Animált?",
+								"value": "{emoji.animated}",
+								"inline": true
+							},
+							{
+								"name": "Készült",
+								"value": "{emoji.created}",
+								"inline": true
+							}
+						],
+						"thumbnail": {
+							"url": "{emoji.url}"
+						}
+					}
+				]
+			}
+		},
+		"channel": {
+			"text": {
+				"embeds": [
+					{
+						"title": "Szöveges csatorna információk",
+						"fields": [
+							{
+								"name": "ID",
+								"value": "{channel.id}",
+								"inline": true
+							},
+							{
+								"name": "Téma",
+								"value": "{channel.topic}",
+								"inline": false
+							},
+							{
+								"name": "Kategória",
+								"value": "{channel.category.name}",
+								"inline": true
+							},
+							{
+								"name": "Lassítás (másodpercben)",
+								"value": "{channel.slowmode}",
+								"inline": true
+							},
+							{
+								"name": "NSFW?",
+								"value": "{channel.nsfw}",
+								"inline": true
+							},
+							{
+								"name": "Hozzáférő tagok",
+								"value": "{channel.members}",
+								"inline": true
+							},
+							{
+								"name": "Gondolatmenetek",
+								"value": "{channel.threads}",
+								"inline": true
+							},
+							{
+								"name": "Hírcsatorna?",
+								"value": "{channel.news}",
+								"inline": true
+							},
+							{
+								"name": "Készült",
+								"value": "{channel.created}",
+								"inline": true
+							},
+							{
+								"name": "Jogkezelések",
+								"value": "{channel.overwrites}",
+								"inline": true
+							},
+							{
+								"name": "Jogok szinkronizálva a kategóriával?",
+								"value": "{channel.permissions_synced}",
+								"inline": true
+							}
+						],
+						"author": {
+							"name": "#{channel.name}",
+							"url": "{channel.url}"
+						}
+					}
+				]
+			},
+			"voice": {
+				"embeds": [
+					{
+						"title": "Hangcsatorna információk",
+						"fields": [
+							{
+								"name": "ID",
+								"value": "{channel.id}",
+								"inline": true
+							},
+							{
+								"name": "Kategória",
+								"value": "{channel.category.name}",
+								"inline": true
+							},
+							{
+								"name": "Lassítás (másodpercben)",
+								"value": "{channel.slowmode}",
+								"inline": true
+							},
+							{
+								"name": "NSFW?",
+								"value": "{channel.nsfw}",
+								"inline": true
+							},
+							{
+								"name": "Régió",
+								"value": "{channel.region}",
+								"inline": true
+							},
+							{
+								"name": "Bitráta (kbps)",
+								"value": "{channel.bitrate}",
+								"inline": true
+							},
+							{
+								"name": "Taglimit",
+								"value": "{channel.user_limit}",
+								"inline": true
+							},
+							{
+								"name": "Készült",
+								"value": "{channel.created}",
+								"inline": true
+							},
+							{
+								"name": "Jogkezelések",
+								"value": "{channel.overwrites}",
+								"inline": true
+							},
+							{
+								"name": "Jogok kategóriához szinkronizálva?",
+								"value": "{channel.permissions_synced}",
+								"inline": true
+							},
+							{
+								"name": "Időzített események",
+								"value": "{channel.scheduled_events}",
+								"inline": true
+							},
+							{
+								"name": "Említés",
+								"value": "`{channel.mention}`",
+								"inline": true
+							}
+						],
+						"author": {
+							"name": "🔊 {channel.name}",
+							"url": "{channel.url}"
+						}
+					}
+				]
+			},
+			"stage": {
+				"embeds": [
+					{
+						"title": "Színpad információ",
+						"fields": [
+							{
+								"name": "ID",
+								"value": "{channel.id}",
+								"inline": true
+							},
+							{
+								"name": "Téma",
+								"value": "{channel.topic}",
+								"inline": false
+							},
+							{
+								"name": "Kategória",
+								"value": "{channel.category.name}",
+								"inline": true
+							},
+							{
+								"name": "Lassítás (másodperc)",
+								"value": "{channel.slowmode}",
+								"inline": true
+							},
+							{
+								"name": "NSFW?",
+								"value": "{channel.nsfw}",
+								"inline": true
+							},
+							{
+								"name": "Hozzáférő tagok",
+								"value": "{channel.members}",
+								"inline": true
+							},
+							{
+								"name": "Beszélők",
+								"value": "{channel.speakers}",
+								"inline": true
+							},
+							{
+								"name": "Hallgatók",
+								"value": "{channel.listeners}",
+								"inline": true
+							},
+							{
+								"name": "Szót kérnek",
+								"value": "{channel.requesting_to_speak}",
+								"inline": true
+							},
+							{
+								"name": "Színpadmoderátorok",
+								"value": "{channel.moderators}",
+								"inline": true
+							},
+							{
+								"name": "Készült",
+								"value": "{channel.created}",
+								"inline": true
+							},
+							{
+								"name": "Jogkezelések",
+								"value": "{channel.overwrites}",
+								"inline": true
+							},
+							{
+								"name": "Jogok kategóriához szinkronizálva?",
+								"value": "{channel.permissions_synced}",
+								"inline": true
+							}
+						],
+						"author": {
+							"name": "🎙️ {channel.name}",
+							"url": "{channel.url}"
+						}
+					}
+				]
+			},
+			"forum": {
+				"embeds": [
+					{
+						"title": "Fórum információk",
+						"fields": [
+							{
+								"name": "ID",
+								"value": "{channel.id}",
+								"inline": true
+							},
+							{
+								"name": "Topic",
+								"value": "{channel.topic}",
+								"inline": false
+							},
+							{
+								"name": "Kategória",
+								"value": "{channel.category.name}",
+								"inline": true
+							},
+							{
+								"name": "Lassítás (másodperc)",
+								"value": "{channel.slowmode}",
+								"inline": true
+							},
+							{
+								"name": "NSFW?",
+								"value": "{channel.nsfw}",
+								"inline": true
+							},
+							{
+								"name": "Hozzáférő tagok",
+								"value": "{channel.members}",
+								"inline": true
+							},
+							{
+								"name": "Posztok",
+								"value": "{channel.threads}",
+								"inline": true
+							},
+							{
+								"name": "Inaktivitás limit (percben)",
+								"value": "{channel.default_auto_archive_duration}",
+								"inline": true
+							},
+							{
+								"name": "Alapértelmezett lassítás (másodpercben)",
+								"value": "{channel.default_thread_slowmode_delay}",
+								"inline": true
+							},
+							{
+								"name": "Alapértelmezett reakció",
+								"value": "{channel.default_reaction_emoji}",
+								"inline": true
+							},
+							{
+								"name": "Média csatorna?",
+								"value": "{channel.media}",
+								"inline": true
+							},
+							{
+								"name": "Készült",
+								"value": "{channel.created}",
+								"inline": true
+							},
+							{
+								"name": "Jogkezelések",
+								"value": "{channel.overwrites}",
+								"inline": true
+							},
+							{
+								"name": "Jogok kategóriához szinkronizálva?",
+								"value": "{channel.permissions_synced}",
+								"inline": true
+							}
+						],
+						"author": {
+							"name": "#{channel.name}",
+							"url": "{channel.url}"
+						}
+					}
+				]
+			}
+		},
+		"pokemon": {
+			"embeds": [
+				{
+					"title": "Pokémon információ",
+					"fields": [
+						{
+							"name": "Dex",
+							"value": "{pokemon.dex}",
+							"inline": true
+						},
+						{
+							"name": "Típus(ok)",
+							"value": "{pokemon.type}",
+							"inline": true
+						},
+						{
+							"name": "Alap HP",
+							"value": "{pokemon.base_stats.hp}",
+							"inline": true
+						},
+						{
+							"name": "Alap támadás",
+							"value": "{pokemon.base_stats.attack}",
+							"inline": true
+						},
+						{
+							"name": "Alap védelem",
+							"value": "{pokemon.base_stats.defense}",
+							"inline": true
+						}
+					],
+					"thumbnail": {
+						"url": "{pokemon.image}"
+					}
+				}
+			]
+		},
+		"template": {
+			"embeds": [
+				{
+					"title": "Sablon információ",
+					"fields": [
+						{
+							"name": "Név",
+							"value": "{template.name}",
+							"inline": true
+						},
+						{
+							"name": "Szerver",
+							"value": "{template.guild.name}",
+							"inline": true
+						},
+						{
+							"name": "Készítette",
+							"value": "{template.author}",
+							"inline": true
+						},
+						{
+							"name": "Készült",
+							"value": "{template.created}",
+							"inline": true
+						},
+						{
+							"name": "Rangok száma",
+							"value": "{template.roles}",
+							"inline": true
+						},
+						{
+							"name": "Csatornák száma",
+							"value": "{template.channels}",
+							"inline": true
+						},
+						{
+							"name": "Használatok száma",
+							"value": "{template.uses}",
+							"inline": true
+						},
+						{
+							"name": "Frissítették",
+							"value": "{template.updated}",
+							"inline": true
+						},
+						{
+							"name": "Off-sync?",
+							"value": "{template.unsynced}"
+						},
+						{
+							"name": "Kód",
+							"value": "{template.code}",
+							"inline": true
+						},
+						{
+							"name": "Leírás",
+							"value": "{template.description}",
+							"inline": false
+						}
+					]
+				}
+			]
+		}
 	},
 	"permissions": {
 		"add_reactions": "Reakciók hozzáadása",
@@ -811,7 +1590,7 @@
 		"stream": "Videó",
 		"use_application_commands": "Alkalmazásparancsok használata",
 		"use_embedded_activities": "Tevékenységek használata",
-		"use_external_apps": "Use External Applications",
+		"use_external_apps": "Külső Alkalmazások Használata",
 		"use_external_emojis": "Külső emotikonok használata",
 		"use_external_sounds": "Külső hangok használata",
 		"use_external_stickers": "Külső matricák használata",
