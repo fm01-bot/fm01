@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --theme-bg: #ffffff;
+  --theme-text: #0f172a;
+  --theme-primary: #2563eb; /* Blue */
+  --theme-secondary: #475569; /* Slate */
+  --theme-accent: #f59e0b; /* Amber */
+}
+
+.dark {
+  --theme-bg: #1b1d1e;
+  --theme-text: #f8fafc;
+  --theme-primary: #5A72BC; /* Lighter Blue */
+  --theme-secondary: #768390; /* Lighter Slate */
+  --theme-accent: #E08A5B; /* Lighter Amber */
+}
+
+@theme {
+  --color-background: var(--theme-bg);
+  --color-text: var(--theme-text);
+  --color-primary: var(--theme-primary);
+  --color-secondary: var(--theme-secondary);
+  --color-accent: var(--theme-accent);
+}
+
+html {
+  background-color: var(--theme-bg);
+  color: var(--theme-text);
+}
