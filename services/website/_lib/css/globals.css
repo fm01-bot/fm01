@@ -3,19 +3,19 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --theme-bg: #ffffff;
-  --theme-text: #0f172a;
-  --theme-primary: #2563eb; /* Blue */
-  --theme-secondary: #475569; /* Slate */
-  --theme-accent: #f59e0b; /* Amber */
+  --theme-bg: #e2e3e4;
+  --theme-text: #030507;
+  --theme-primary: #435ba3;
+  --theme-secondary: #7d879b;
+  --theme-accent: #210576;
 }
 
 .dark {
   --theme-bg: #1b1d1e;
   --theme-text: #f8fafc;
-  --theme-primary: #5A72BC; /* Lighter Blue */
-  --theme-secondary: #768390; /* Lighter Slate */
-  --theme-accent: #E08A5B; /* Lighter Amber */
+  --theme-primary: #5A72BC;
+  --theme-secondary: #636C80;
+  --theme-accent: #A78BFA;
 }
 
 @theme {

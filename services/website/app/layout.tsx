@@ -1,7 +1,7 @@
 import { ThemeProvider } from 'next-themes';
 import '@lib/css/globals.css';
 
-export default function MainpageLayout({
+export default function Layout({
     children,
 }: {
     children: React.ReactNode

@@ -20,27 +20,24 @@ export default function ThemeToggle() {
     }
 
     return (
-        <div className="flex gap-2 p-2 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-700">
+        <div className="flex gap-2 p-2">
             <button
                 onClick={() => setTheme('light')}
-                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${theme === 'light' ? 'bg-white text-black shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
-                    }`}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors bg-primary text-white hover:opacity-90`}
             >
                 Light
             </button>
 
             <button
                 onClick={() => setTheme('dark')}
-                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${theme === 'dark' ? 'bg-gray-700 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
-                    }`}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors bg-secondary text-white hover:opacity-90`}
             >
                 Dark
             </button>
 
             <button
                 onClick={() => setTheme('system')}
-                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${theme === 'system' ? 'bg-white dark:bg-gray-700 text-black dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
-                    }`}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors border-2 border-accent text-accent hover:bg-accent hover:text-white`}
             >
                 System
             </button>
