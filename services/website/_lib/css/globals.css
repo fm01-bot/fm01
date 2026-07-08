@@ -30,3 +30,16 @@ html {
   background-color: var(--theme-bg);
   color: var(--theme-text);
 }
+
+.active {
+  anchor-name: --active-anchor;
+}
+
+.indicator {
+  position: absolute;
+  position-anchor: --active-anchor;
+  top: anchor(bottom);
+  left: anchor(left);
+  width: anchor-size(width);
+  transition: all 0.25s ease-in-out;
+}
