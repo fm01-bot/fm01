@@ -2,20 +2,27 @@
 
 @custom-variant dark (&:is(.dark *));
 
+
+* {
+  font-family: "Inter", sans-serif;
+  font-weight: 100;
+  font-style: normal;
+}
+
 :root {
   --theme-bg: #e2e3e4;
   --theme-text: #030507;
-  --theme-primary: #435ba3;
-  --theme-secondary: #7d879b;
-  --theme-accent: #210576;
+  --theme-primary: #5592FA;
+  --theme-secondary: #4d8bff;
+  --theme-accent: #4a027e;
 }
 
 .dark {
-  --theme-bg: #1b1d1e;
+  --theme-bg: #1b1c1d;
   --theme-text: #f8fafc;
-  --theme-primary: #5A72BC;
-  --theme-secondary: #636C80;
-  --theme-accent: #A78BFA;
+  --theme-primary: #5592FA;
+  --theme-secondary: #003EB3;
+  --theme-accent: #ca81fd;
 }
 
 @theme {
@@ -26,9 +33,52 @@
   --color-accent: var(--theme-accent);
 }
 
+.link {
+  color: var(--color-primary)
+
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+@utility primary-button {
+  @apply bg-primary text-base md:text-lg text-white py-2.5 px-5 rounded-lg transition-all;
+
+  &:hover {
+    @apply scale-110
+  }
+}
+
+@utility secondary-text {
+  @apply text-text/55 text-lg md:text-2xl font-bold! md:font-normal!
+}
+
+@utility secondary-button {
+  @apply bg-secondary/60 text-base md:text-lg text-white py-2.5 px-5 rounded-lg transition-all;
+  
+  &:hover {
+    @apply scale-110
+  }
+}
+
+h1 {
+  font-size: x-large;
+  font-weight: bold;
+}
+
 html {
   background-color: var(--theme-bg);
   color: var(--theme-text);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .active {
@@ -42,4 +92,65 @@ html {
   left: anchor(left);
   width: anchor-size(width);
   transition: all 0.25s ease-in-out;
+}
+
+/* From Uiverse.io by Cevorob */ 
+.burger {
+  position: relative;
+  width: 30px;  /* Downscaled to 30px */
+  height: 25px; /* Downscaled to 20px */
+  background: transparent;
+  cursor: pointer;
+  display: block;
+}
+
+.burger input {
+  display: none;
+}
+
+.burger span {
+  display: block;
+  position: absolute;
+  height: 3px; /* Scaled from 4px (4 * 0.75 = 3) */
+  width: 100%;
+  background: var(--color-text);
+  border-radius: 9px;
+  opacity: 1;
+  left: 0;
+  transform: rotate(0deg);
+  transition: .25s ease-in-out;
+}
+
+.burger span:nth-of-type(1) {
+  top: 0px;
+  transform-origin: left center;
+}
+
+.burger span:nth-of-type(2) {
+  top: 50%;
+  transform: translateY(-50%);
+  transform-origin: left center;
+}
+
+.burger span:nth-of-type(3) {
+  top: 100%;
+  transform-origin: left center;
+  transform: translateY(-100%);
+}
+
+.burger input:checked ~ span:nth-of-type(1) {
+  transform: rotate(45deg);
+  top: 0px;
+  left: 3.7px; /* Scaled from 5px (5 * 0.75 = 3.75) */
+}
+
+.burger input:checked ~ span:nth-of-type(2) {
+  width: 0%;
+  opacity: 0;
+}
+
+.burger input:checked ~ span:nth-of-type(3) {
+  transform: rotate(-45deg);
+  top: 18.5px; /* Scaled from 28px (28 * 0.666 = 18.66, adjusted to 18.5px to perfectly intersect with the 3px line height) */
+  left: 3.75px; /* Scaled from 5px */
 }

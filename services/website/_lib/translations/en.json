@@ -1,0 +1,82 @@
+{
+    "header": {
+        "home": "Home",
+        "about": "About",
+        "features": "Features",
+        "status": "Status",
+        "pricing": "Pricing",
+        "dashboard": "Dashboard"
+    },
+    "main": {
+        "hero": {
+            "title": [
+                "Your",
+                "all-in-one",
+                "bot"
+            ],
+            "subtext": [
+                "Moderation, protection, utility.",
+                "Take control of your community."
+            ],
+            "invite_btn": "Add to server!",
+            "support_btn": "Support",
+            "commands": [
+                {
+                    "name": "ban",
+                    "params": "[member] (reason)",
+                    "description": "Bans a user from the server. The user cannot rejoin until unbanned."
+                },
+                {
+                    "name": "kick",
+                    "params": "[member] (reason)",
+                    "description": "Removes a user from the server. The user can later rejoin using an invite link."
+                },
+                {
+                    "name": "mute",
+                    "params": "[member] [duration] (reason)",
+                    "description": "Prevents a user from interacting in the server for a specified duration."
+                },
+                {
+                    "name": "warn",
+                    "params": "[member] (duration) (reason)",
+                    "description": "Sends a warn message to a user with a reason specified by moderators."
+                },
+                {
+                    "name": "purge",
+                    "params": "[amount]",
+                    "description": "Mass-deletes a specified number of messages from the current channel."
+                },
+                {
+                    "name": "info user",
+                    "params": "(user)",
+                    "description": "Shows detailed information about a user, or yourself if no user is specified."
+                },
+                {
+                    "name": "play",
+                    "params": "(provider) [title]",
+                    "description": "Plays a song from a specified provider, which defaults to YouTube."
+                },
+                {
+                    "name": "info server",
+                    "params": "",
+                    "description": "Shows detailed information about the server that you are currently in."
+                }
+            ]
+        }
+    },
+    "footer": {
+        "contact": {
+            "title": "Contact",
+            "discord_invite": "Discord Invite"
+        },
+        "docs": {
+            "title": "Legal Documents",
+            "tos": "Terms of Service",
+            "privacy": "Privacy Policy",
+            "cookies": "Cookie Policy"
+        },
+        "copyright": "All rights reserved.",
+        "designer": "Designed by",
+        "service": "Hosted by"
+    }
+}

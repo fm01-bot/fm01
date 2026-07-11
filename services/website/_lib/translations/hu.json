@@ -1,0 +1,82 @@
+{
+    "header": {
+        "home": "Főoldal",
+        "about": "Rólunk",
+        "features": "Funkciók",
+        "status": "Státusz",
+        "pricing": "Áraink",
+        "dashboard": "Panel"
+    },
+    "main": {
+        "hero": {
+            "title": [
+                "A te",
+                "mindenes",
+                "botod"
+            ],
+            "subtext": [
+                "Moderáció, kényelem és védelem.",
+                "Faszommal a szádba élvezem."
+            ],
+            "invite_btn": "Hívj meg!",
+            "support_btn": "Support",
+            "commands": [
+                {
+                    "name": "ban",
+                    "params": "[felhasználó] (indok)",
+                    "description": "Kitilt egy tagot a szerverről. Addig nem csatlakozhat újra, amíg nem unbannolják."
+                },
+                {
+                    "name": "kick",
+                    "params": "[felhasználó] (indok)",
+                    "description": "Kirúg egy tagot a szerverről. Később visszaléphet a szerverre meghívóval."
+                },
+                {
+                    "name": "mute",
+                    "params": "[felhasználó] [hossz] (indok)",
+                    "description": "Eltiltja a felhasználót a kommunikációtól egy megadott ideig."
+                },
+                {
+                    "name": "warn",
+                    "params": "[felhasználó] (hossz) (indok)",
+                    "description": "Küld egy figyelmeztető üzenetet a tagnak egy megadott indokkal."
+                },
+                {
+                    "name": "töröl",
+                    "params": "[mennyiség]",
+                    "description": "Töröl egy megadott mennyiségű üzenetet az aktuális csatornából."
+                },
+                {
+                    "name": "info user",
+                    "params": "(felhasználó)",
+                    "description": "Részletes információt mutat a megadott felhasználóról, vagy rólad."
+                },
+                {
+                    "name": "play",
+                    "params": "(szolgáltató) [cím]",
+                    "description": "Lejátszik egy zeneszámot a megadott szolgáltatótól, ami alapból a YouTube."
+                },
+                {
+                    "name": "info server",
+                    "params": "",
+                    "description": "Részletes információt mutat arról a szerverről, ahol lefuttattad a parancsot."
+                }
+            ]
+        }
+    },
+    "footer": {
+        "contact": {
+            "title": "Kapcsolat",
+            "discord_invite": "Discord Csatlakozás"
+        },
+        "docs": {
+            "title": "Dokumentumok",
+            "tos": "Általános Szerződési Feltételek",
+            "privacy": "Adatvédelmi Tájékoztató",
+            "cookies": "Sütikezelési Tájékoztató"
+        },
+        "copyright": "Minden jog fenntartva.",
+        "designer": "Dizájnolta",
+        "service": "Üzemeltető"
+    }
+}
