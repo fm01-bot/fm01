@@ -2,9 +2,14 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* hide page scrollbar */
+html { scrollbar-width: none; } /* Firefox */
+body { -ms-overflow-style: none; } /* IE and Edge */
+body::-webkit-scrollbar, body::-webkit-scrollbar-button { display: none; } /* Chrome */
+/* end hide page scrollbar */
 
-* {
-  font-family: "Inter", sans-serif;
+h1,h2,h3,h4,h5,p,a {
+  font-family: "Inter";
   font-weight: 100;
   font-style: normal;
 }
@@ -40,6 +45,14 @@
 
 .link:hover {
   text-decoration: underline;
+}
+
+@utility title {
+  @apply text-3xl md:text-[4rem] font-bold!
+}
+
+@utility subtext {
+  @apply text-base md:text-[2rem] font-normal opacity-50
 }
 
 @utility primary-button {

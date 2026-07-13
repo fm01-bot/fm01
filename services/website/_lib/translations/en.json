@@ -4,7 +4,7 @@
         "about": "About",
         "features": "Features",
         "status": "Status",
-        "pricing": "Pricing",
+        "team": "Team",
         "dashboard": "Dashboard"
     },
     "main": {
@@ -62,12 +62,35 @@
                     "description": "Shows detailed information about the server that you are currently in."
                 }
             ]
+        },
+        "about": {
+            "title": "What is fm01?",
+            "subtext": "Making a community server feel at home is a hard task to do by yourself. Bots can help you engage with members more easily by allowing you to execute commands that perform pre-defined tasks.",
+            "tutorial": [
+                [
+                    "Type",
+                    "to see commands"
+                ],
+                "Select a command from the list",
+                "Perform an action"
+            ]
+        },
+        "features": {
+            "title": "Features",
+            "subtext": "I'd be too long to explain, just take a look for yourself!"
+        },
+        "status": {
+            "title": "Status"
+        },
+        "team": {
+            "title": "Meet the team",
+            "hiring": "We are hiring!"
         }
     },
     "footer": {
         "contact": {
             "title": "Contact",
-            "discord_invite": "Discord Invite"
+            "discord": "Discord Invite"
         },
         "docs": {
             "title": "Legal Documents",

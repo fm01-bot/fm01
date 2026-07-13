@@ -4,7 +4,7 @@
         "about": "Rólunk",
         "features": "Funkciók",
         "status": "Státusz",
-        "pricing": "Áraink",
+        "team": "Csapat",
         "dashboard": "Panel"
     },
     "main": {
@@ -62,12 +62,35 @@
                     "description": "Részletes információt mutat arról a szerverről, ahol lefuttattad a parancsot."
                 }
             ]
+        },
+        "about": {
+            "title": "Mi az fm01?",
+            "subtext": "Egy otthonos szerver létrehozása nehéz munka egy ember számára. A botok segítenek ebben, előre leprogramozott funkciókat tudsz parancsokkal futtatni.",
+            "tutorial": [
+                [
+                    "Írd be",
+                    "hogy lásd a parancsokat"
+                ],
+                "Válasz ki egy parancsot",
+                "Futtasd az automatizálást"
+            ]
+        },
+        "features": {
+            "title": "Funkciók",
+            "subtext": "Túl sok funkciónk van, nézd meg ami számodra érdekes!"
+        },
+        "status": {
+            "title": "Státusz"
+        },
+        "team": {
+            "title": "Ismerd meg a csapatot",
+            "hiring": "Tagfelvétel!"
         }
     },
     "footer": {
         "contact": {
             "title": "Kapcsolat",
-            "discord_invite": "Discord Csatlakozás"
+            "discord": "Discord Csatlakozás"
         },
         "docs": {
             "title": "Dokumentumok",

@@ -31,8 +31,8 @@ export default function CommandScroller() {
                             key={index}
                             className="group bg-background border border-text/40 rounded-xl p-5 flex flex-col gap-2 transition-all duration-200 shadow-md text-left hover:bg-text/3 hover:border-primary"
                         >
-                            <div className="text-secondary font-extrabold! text-[2rem] flex flex-row gap-1 items-center">
-                                {prefix}{cmd.name} <p className="opacity-0 group-hover:opacity-100 text-sm font-light">{cmd.params}</p>
+                            <div className="text-primary font-extrabold! text-3xl flex flex-row gap-2 items-center">
+                                {prefix}{cmd.name} <p className="opacity-0 group-hover:opacity-100 text-xl mt-1">{cmd.params}</p>
                             </div>
                             <div className="secondary-text text-base! text-[0.95rem] leading-relaxed group-hover:text-text!">
                                 {cmd.description}
