@@ -8,6 +8,10 @@ body { -ms-overflow-style: none; } /* IE and Edge */
 body::-webkit-scrollbar, body::-webkit-scrollbar-button { display: none; } /* Chrome */
 /* end hide page scrollbar */
 
+body:has(#burger:checked) {
+  overflow: hidden;
+}
+
 h1,h2,h3,h4,h5,p,a {
   font-family: "Inter";
   font-weight: 100;

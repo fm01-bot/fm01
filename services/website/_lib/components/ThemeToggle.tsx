@@ -1,13 +1,12 @@
 'use client'
 
-import { useTheme } from 'next-themes'
+import { useTheme } from '@teispace/next-themes';
 import { useEffect, useState } from 'react'
 
 export default function ThemeToggle() {
-    const { theme, setTheme } = useTheme()
+    const { setTheme } = useTheme()
     const [mounted, setMounted] = useState(false)
 
-    // useEffect only runs on the client, so now we can safely show the UI
     useEffect(() => {
         requestAnimationFrame(() => {
             setMounted(true)
@@ -15,7 +14,6 @@ export default function ThemeToggle() {
     }, [])
 
     if (!mounted) {
-        // Return a placeholder of the exact same size to prevent layout shift on load
         return <div className="h-10 w-32 opacity-0"></div>
     }
 

@@ -1,51 +1,48 @@
 "use client"
 import Link from "next/link";
 import { motion } from 'framer-motion';
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Logo from "../svg/Logo";
 import Dashboard from "../svg/Dashboard";
 import { HeaderJson } from "@lib/Types"
 
 export default function Header({ lang }: { lang: HeaderJson }) {
-    const NAV_LINKS = [
-        { href: "#home", label: lang.home },
-        { href: "#about", label: lang.about },
-        { href: "#features", label: lang.features },
-        { href: "#status", label: lang.status },
-        { href: "#team", label: lang.team },
-    ];
 
-    const [showMenus, setShowMenus] = useState(false);
-    // Track the active section by its href instead of the page URL
-    const [activeSection, setActiveSection] = useState(NAV_LINKS[0].href);
 
-    const [isScrolled, setIsScrolled] = useState(false);
+    const NAV_LINKS = useMemo(
+        () => [
+            { href: "#home", label: lang.home },
+            { href: "#about", label: lang.about },
+            { href: "#features", label: lang.features },
+            { href: "#status", label: lang.status },
+            { href: "#team", label: lang.team },
+        ], [lang]
+    )
+
+    const [showMenus, setShowMenus] = useState(false); // Variable used for displaying menu in mobile view
+
+    const [activeSection, setActiveSection] = useState(NAV_LINKS[0].href); // Variable to keep track of where the user is at on the page
+
+    const [isScrolled, setIsScrolled] = useState(false); // Variable to set navbar background if user scrolled
 
     useEffect(() => {
         const updateActiveSection = () => {
-
-            setIsScrolled(window.scrollY > 10);
-            // Define the point on the screen where a section becomes "active" (35% from the top)
-            const activationLine = window.scrollY + window.innerHeight * 0.35;
-            // Detect if the user has hit the absolute bottom of the page
-            const nearBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 24;
+            setIsScrolled(window.scrollY > 10); // Checks if user scrolled
+            const activationLine = window.scrollY + window.innerHeight * 0.35; // sets activation line for moving the active menu
+            const nearBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 24; // Fail guard, check if we are near the bottom of the page in case the last menu doesn't reach threashold
 
             let nextActive = NAV_LINKS[0].href;
 
             for (const link of NAV_LINKS) {
-                // Strip the '#' to get the actual DOM id (e.g., "#about" -> "about")
                 const id = link.href.substring(1);
                 const el = document.getElementById(id);
 
                 if (!el) continue;
-
-                // If the top of the element has crossed the activation line, it becomes active
                 if (el.offsetTop <= activationLine) {
                     nextActive = link.href;
                 }
             }
 
-            // Force the last item to be active if scrolled to the absolute bottom
             if (nearBottom) {
                 nextActive = NAV_LINKS[NAV_LINKS.length - 1].href;
             }
@@ -55,7 +52,6 @@ export default function Header({ lang }: { lang: HeaderJson }) {
             setActiveSection(nextActive);
         };
 
-        // Run once on mount, then attach to scroll/resize
         updateActiveSection();
         window.addEventListener('scroll', updateActiveSection, { passive: true });
         window.addEventListener('resize', updateActiveSection);
@@ -64,22 +60,7 @@ export default function Header({ lang }: { lang: HeaderJson }) {
             window.removeEventListener('scroll', updateActiveSection);
             window.removeEventListener('resize', updateActiveSection);
         };
-    }, []); // Empty dependency array ensures this only binds once
-
-    useEffect(() => {
-        if (showMenus) {
-            // Lock scrolling
-            document.body.style.overflow = 'hidden';
-        } else {
-            // Restore scrolling
-            document.body.style.overflow = '';
-        }
-
-        // Cleanup function ensures scrolling is restored if the component unmounts
-        return () => {
-            document.body.style.overflow = '';
-        };
-    }, [showMenus]);
+    }, [NAV_LINKS]);
 
     const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>, href: string) => {
         e.preventDefault();

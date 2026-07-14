@@ -31,7 +31,7 @@ export interface PageJson {
     team: TeamType
 }
 
-interface HeroType {
+export interface HeroType {
     title: string[],
     subtext: string[]
     invite_btn: string,
@@ -45,22 +45,94 @@ interface CommandType {
     description: string
 }
 
-interface TeamType {
+export interface TeamType {
     title: string,
     hiring: string
 }
 
-interface AboutType {
+export interface AboutType {
     title: string,
     subtext: string,
     tutorial: (string | string[])[]
 }
 
-interface FeaturesType {
+export interface FeaturesType {
     title: string,
-    subtext: string
+    subtext: string,
+    container: ContainerType
 }
 
-interface StatusType {
+export interface StatusType {
     title: string,
+}
+
+export enum ButtonColors {
+    PRIMARY,
+    SECONDARY,
+    DANGER,
+    SUCCESS
+}
+
+export interface ContainerType {
+    channels?: ChannelType[]
+}
+
+export interface ChannelType {
+    title: string,
+    description: string,
+    messages?: MessageType[]
+}
+
+export interface MessageType {
+    message: string,
+    username: string,
+    avatar: string,
+    embeds?: EmbedType[],
+    buttons?: [
+        [ButtonType?, ButtonType?, ButtonType?],
+        [ButtonType?, ButtonType?, ButtonType?],
+        [ButtonType?, ButtonType?, ButtonType?],
+    ]
+}
+
+export interface EmbedType {
+    title?: string,
+    description?: string,
+    url?: string,
+    color?: string,
+    fields?: FieldType[],
+    footer?: {
+        text?: string,
+        icon_url?: string
+    },
+    image?: {
+        url: string
+    },
+    thumbnail?: {
+        url: string
+    },
+    author?: {
+        name: string,
+        url?: string,
+        icon_url?: string
+    },
+    buttons?: [
+        [ButtonType?, ButtonType?, ButtonType?],
+        [ButtonType?, ButtonType?, ButtonType?],
+        [ButtonType?, ButtonType?, ButtonType?],
+    ]
+}
+
+export interface ButtonType {
+    label: string,
+    url?: string,
+    emoji?: string,
+    color?: ButtonColors,
+    disabled?: boolean
+}
+
+export interface FieldType {
+    name: string,
+    value: string,
+    inline?: boolean
 }

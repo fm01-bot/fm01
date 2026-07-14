@@ -77,7 +77,22 @@
         },
         "features": {
             "title": "Features",
-            "subtext": "I'd be too long to explain, just take a look for yourself!"
+            "subtext": "I'd be too long to explain, just take a look for yourself!",
+            "container": {
+                "channels": [
+                    {
+                        "title": "moderation",
+                        "description": "Handle rule breakers with ease!",
+                        "messages": [
+                            {
+                                "string": "This is a test",
+                                "username": "Test",
+                                "avatar": "test2"
+                            }
+                        ]
+                    }
+                ]
+            }
         },
         "status": {
             "title": "Status"

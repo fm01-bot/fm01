@@ -8,7 +8,7 @@ export default function Footer({ lang }: { lang: FooterJson }) {
     const currentYear = new Date().getFullYear();
     return (
         <div className="w-full flex items-center justify-center pb-5 px-5 flex-col py-10 md:pt-20 bg-text/7 md:[clip-path:polygon(0_0,100%_20%,100%_100%,0_100%)] [clip-path:polygon(0_0,100%_10%,100%_100%,0_100%)] pt-15">
-            <div className="w-full max-w-[70rem] flex items-center justify-around relative flex-wrap gap-10">
+            <div className="w-full max-w-280 flex items-center justify-around relative flex-wrap gap-10">
                 <div>
                     <Image src={logo} width={75} height={75} alt="fm01bot logoja" />
                 </div>
