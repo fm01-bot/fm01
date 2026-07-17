@@ -88,6 +88,7 @@ export interface MessageType {
     username: string,
     avatar: string,
     embeds?: EmbedType[],
+    bot?: boolean,
     buttons?: [
         [ButtonType?, ButtonType?, ButtonType?],
         [ButtonType?, ButtonType?, ButtonType?],
@@ -116,11 +117,7 @@ export interface EmbedType {
         url?: string,
         icon_url?: string
     },
-    buttons?: [
-        [ButtonType?, ButtonType?, ButtonType?],
-        [ButtonType?, ButtonType?, ButtonType?],
-        [ButtonType?, ButtonType?, ButtonType?],
-    ]
+    buttons?: ButtonType[]
 }
 
 export interface ButtonType {

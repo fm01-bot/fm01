@@ -7,13 +7,7 @@ export default function Channel({
     messages
 }: ChannelType) {
     return (
-        <div>
-            <span>
-                <span>#</span>
-                {title}
-                <span>·</span>
-                {description}
-            </span>
+        <div className='flex flex-col gap-3 w-full'>
             {
                 messages?.map((m, i) => {
                     return <Message key={`m-${i}`} {...m} />

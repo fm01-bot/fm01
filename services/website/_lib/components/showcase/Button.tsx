@@ -1,4 +1,7 @@
 import { ButtonColors, ButtonType } from "@/_lib/Types"
+import { faArrowUpRightFromSquare, faBoxOpen, faLink } from "@fortawesome/free-solid-svg-icons"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import Link from "next/link"
 
 export default function Button({
     label,
@@ -17,11 +20,10 @@ export default function Button({
 
     if (url) {
         return (
-            <>
+            <Link href={disabled ? "" : url} className={` ${disabled ? "opacity-50 hover:cursor-not-allowed!" : ""} rounded-lg bg-text/10 border border-text/30 px-2 py-1 flex items-center gap-1 hover:cursor-pointer grid-cols-subgrid col-span-1`}>
                 {label}
-                {url}
-                {disabled}
-            </>
+                <FontAwesomeIcon icon={faArrowUpRightFromSquare} />
+            </Link>
         )
     }
 

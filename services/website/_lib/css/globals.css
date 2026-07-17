@@ -2,6 +2,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+* {
+  transition: all;
+  transition-duration: 200ms;
+  transition-property: all;
+}
+
 /* hide page scrollbar */
 html { scrollbar-width: none; } /* Firefox */
 body { -ms-overflow-style: none; } /* IE and Edge */

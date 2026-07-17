@@ -85,9 +85,78 @@
                         "description": "Handle rule breakers with ease!",
                         "messages": [
                             {
-                                "string": "This is a test",
+                                "message": "Lorem ipsum dolor sit amet.",
+                                "username": "Pearoo",
+                                "avatar": "/images/logo.png",
+                                "bot": false
+                            },
+                            {
+                                "message": "Lorem ipsum dolor sit amet.",
                                 "username": "Test",
-                                "avatar": "test2"
+                                "avatar": "/images/logo.png",
+                                "bot": true
+                            }
+                        ]
+                    },
+                    {
+                        "title": "giveaways",
+                        "description": "Handle rule breakers with ease!",
+                        "messages": [
+                            {
+                                "message": "This is a test",
+                                "username": "Test",
+                                "avatar": "/images/logo.png",
+                                "embeds": [
+                                    {
+                                        "title": "Giveaway",
+                                        "description": "test",
+                                        "url": "fm01.bot",
+                                        "color": "#f56f42",
+                                        "fields": [
+                                            {
+                                                "name": "test",
+                                                "value": "test2",
+                                                "inline": true
+                                            },
+                                            {
+                                                "name": "test",
+                                                "value": "test2",
+                                                "inline": true
+                                            },
+                                            {
+                                                "name": "test",
+                                                "value": "test2",
+                                                "inline": true
+                                            }
+                                        ],
+                                        "thumbnail": {
+                                            "url": "/images/logo.png"
+                                        },
+                                        "author": {
+                                            "name": "test",
+                                            "url": "fm01.bot",
+                                            "icon_url": "/images/logo.png"
+                                        },
+                                        "buttons": [
+                                            {
+                                                "label": "Click me!",
+                                                "url": "https://fm01.bot",
+                                                "disabled": true
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "title": "economy",
+                        "description": "Handle rule breakers with ease!",
+                        "messages": [
+                            {
+                                "message": "This is a test",
+                                "username": "Test",
+                                "avatar": "/images/logo.png"
                             }
                         ]
                     }
