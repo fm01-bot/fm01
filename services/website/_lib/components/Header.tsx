@@ -5,190 +5,103 @@ import { useState, useEffect, useMemo } from "react";
 import Logo from "../svg/Logo";
 import Dashboard from "../svg/Dashboard";
 import { HeaderJson } from "@lib/Types"
+import { usePathname, useRouter } from "next/navigation";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faDesktop, faMoon, faSun } from "@fortawesome/free-solid-svg-icons";
+import { languages } from "@/app/[lang]/dictionaries";
+import { useTheme } from "@teispace/next-themes";
 
-export default function Header({ lang }: { lang: HeaderJson }) {
+export default function Header({ lang, code }: { lang: HeaderJson, code: string }) {
+
+    const page = usePathname().substring(3);
+
+    const router = useRouter();
+
+    const { theme, setTheme } = useTheme()
 
 
     const NAV_LINKS = useMemo(
         () => [
-            { href: "#home", label: lang.home },
-            { href: "#about", label: lang.about },
-            { href: "#features", label: lang.features },
-            { href: "#status", label: lang.status },
-            { href: "#team", label: lang.team },
+            { href: "/team", label: 'Team' },
+            { href: "/status", label: 'Status' },
+            { href: "docs.fm01.bot", label: 'Docs' },
+            { href: "/pricing", label: 'Pricing' }
         ], [lang]
     )
 
     const [showMenus, setShowMenus] = useState(false); // Variable used for displaying menu in mobile view
 
-    const [activeSection, setActiveSection] = useState(NAV_LINKS[0].href); // Variable to keep track of where the user is at on the page
 
     const [isScrolled, setIsScrolled] = useState(false); // Variable to set navbar background if user scrolled
 
     useEffect(() => {
-        const updateActiveSection = () => {
+        console.log(page)
+        const scrollCheck = () => {
             setIsScrolled(window.scrollY > 10); // Checks if user scrolled
-            const activationLine = window.scrollY + window.innerHeight * 0.35; // sets activation line for moving the active menu
-            const nearBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 24; // Fail guard, check if we are near the bottom of the page in case the last menu doesn't reach threashold
 
-            let nextActive = NAV_LINKS[0].href;
-
-            for (const link of NAV_LINKS) {
-                const id = link.href.substring(1);
-                const el = document.getElementById(id);
-
-                if (!el) continue;
-                if (el.offsetTop <= activationLine) {
-                    nextActive = link.href;
-                }
-            }
-
-            if (nearBottom) {
-                nextActive = NAV_LINKS[NAV_LINKS.length - 1].href;
-            }
-
-            console.log(nextActive)
-
-            setActiveSection(nextActive);
         };
 
-        updateActiveSection();
-        window.addEventListener('scroll', updateActiveSection, { passive: true });
-        window.addEventListener('resize', updateActiveSection);
+        scrollCheck();
+        window.addEventListener('scroll', scrollCheck, { passive: true });
+        window.addEventListener('resize', scrollCheck);
 
         return () => {
-            window.removeEventListener('scroll', updateActiveSection);
-            window.removeEventListener('resize', updateActiveSection);
+            window.removeEventListener('scroll', scrollCheck);
+            window.removeEventListener('resize', scrollCheck);
         };
     }, [NAV_LINKS]);
 
-    const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>, href: string) => {
-        e.preventDefault();
-
-        const id = href.substring(1);
-        const element = document.getElementById(id);
-
-        if (element) {
-            // Header is roughly 80px tall. We subtract this so the header doesn't overlap the section title.
-            const headerOffset = 100;
-            const elementPosition = element.getBoundingClientRect().top;
-            const offsetPosition = elementPosition + window.scrollY - headerOffset;
-
-            window.scrollTo({
-                top: offsetPosition,
-                behavior: "smooth"
-            });
-
-            // Update URL hash without causing a jump
-            window.history.pushState(null, "", href);
-        }
-
-        // Close mobile menu if it's open
-        setShowMenus(false);
-    };
-
     return (
-        <div className={`w-full max-w-screen fixed flex items-center justify-center py-5 px-5 z-10 top-0`}>
-            <div className={`w-screen h-22 fixed top-0 ${isScrolled ? "bg-background/90 backdrop-blur-md shadow-md border-b border-white/10" : "bg-transparent border-white/0 border-0 hidden"}`}>
-                <br ></br>
-                <br ></br>
-                <br ></br>
-                <br ></br>
-            </div>
-            <div className="w-280 max-w-full flex items-center justify-between relative">
-                <Link href="/">
-                    <Logo width={50} height={50} />
+        <div className={`w-full max-w-screen fixed top-0 left-0 z-10 flex items-center justify-center`}>
+            <div className="w-280 max-w-full flex items-center justify-between relative navbar py-4 px-2">
+                <Link href="/" className="flex flex-row items-center gap-1">
+                    <Logo width={30} height={30} fill={'fill-primary'} />
+                    <span className="text-3xl text-primary font-black">fm01</span>
                 </Link>
-
-                <div className="hidden items-center justify-between gap-13 relative md:flex">
-                    {NAV_LINKS.map((link) => {
-                        // Check against our scroll state instead of the pathname
-                        const isActive = activeSection === link.href;
-
-                        return (
-                            <Link
-                                key={link.href}
-                                href={link.href}
-                                onClick={(e) => handleSmoothScroll(e, link.href)}
-                                className={`relative pb-1 ${isActive ? "text-primary" : ""}`}
-                            >
-                                {link.label}
-
-                                {isActive && (
-                                    <motion.span
-                                        layoutId="active-indicator"
-                                        className="absolute left-0 -bottom-1 h-1 w-full bg-primary rounded-full"
-                                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                                    />
-                                )}
-                            </Link>
-                        );
-                    })}
+                <div className={`nav-links ${isScrolled ? "bg-contrast" : "bg-text/5"}`}>
+                    {
+                        NAV_LINKS.map((l, i) => {
+                            return (
+                                <Link key={i} href={l.href}>
+                                    {l.label}
+                                </Link>
+                            )
+                        })
+                    }
                 </div>
-
-                <div className="flex flex-row gap-3 items-center justify-center">
-                    <Link href="https://dash.fm01.bot" className="flex primary-button text-base p-2! flex-row items-center justify-center gap-1 md:py-2.5! md:px-5!">
-                        <Dashboard width={20} height={20} className="w-5 h-5 md:w-3.75 md:h-3.75" /> <p className="hidden md:block">{lang.dashboard}</p>
-                    </Link>
-                    <div className="block md:hidden z-2">
-                        <label
-                            className="relative block w-7.5 h-5 cursor-pointer"
-                            htmlFor="burger"
-                        >
-                            <input
-                                type="checkbox"
-                                id="burger"
-                                className="peer hidden"
-                                checked={showMenus}
-                                onChange={(e) => setShowMenus(e.target.checked)}
-                            />
-
-                            {/* Top line */}
-                            <span
-                                className="absolute left-0 top-0 block h-0.75 w-full rounded-full bg-text transition-all duration-300 ease-in-out 
-                            peer-checked:top-1/2 peer-checked:-translate-y-1/2 peer-checked:rotate-45"
-                            ></span>
-
-                            {/* Middle line */}
-                            <span
-                                className="absolute left-0 top-1/2 block h-0.75 w-full -translate-y-1/2 rounded-full bg-text transition-all duration-300 ease-in-out 
-                   peer-checked:opacity-0 peer-checked:scale-0"
-                            ></span>
-
-                            {/* Bottom line */}
-                            <span
-                                className="absolute left-0 bottom-0 block h-0.75 w-full rounded-full bg-text transition-all duration-300 ease-in-out 
-                            peer-checked:bottom-1/2 peer-checked:translate-y-1/2 peer-checked:-rotate-45"
-                            ></span>
-                        </label>
+                <div className="">
+                    {
+                        theme == "system" ? (
+                            <FontAwesomeIcon icon={faDesktop} onClick={() => {
+                                setTheme('light')
+                            }} />
+                        ) : theme == "light" ? (
+                            <FontAwesomeIcon icon={faSun} onClick={() => {
+                                setTheme('dark')
+                            }} />
+                        ) : (
+                            <FontAwesomeIcon icon={faMoon} onClick={() => {
+                                setTheme('system')
+                            }} />
+                        )
+                    }
+                    <div>
+                        <select className="lang-select gap-0 text-text!" style={{ lineHeight: "normal" }} defaultValue={code} onChange={(e) => {
+                            router.replace(`${e.target.value}/${page}`)
+                        }}>
+                            {
+                                languages.map((l, i) => {
+                                    return (
+                                        <option key={i} value={l}>{l.toLocaleUpperCase()}</option>
+                                    )
+                                })
+                            }
+                        </select>
                     </div>
-                </div>
-                <div className={`${showMenus ? "opacity-50" : "opacity-0 scale-[1.5] pointer-events-none z-1 "} duration-300 left-0 transition-all top-0 z-0 fixed w-screen h-screen bg-background blur-3xl`}>
-                </div>
-                <div className={`${showMenus ? "opacity-100" : "opacity-0 scale-[1.5] pointer-events-none z-2"} duration-300 left-0 flex transition-all top-0 z-1 fixed w-screen h-screen items-center justify-center flex-col gap-3 backdrop-blur-md`}>
-                    <Logo width={45} height={45} className="mb-4" />
-
-                    {NAV_LINKS.map((link) => {
-                        const isActive = activeSection === link.href;
-
-                        return (
-                            <Link
-                                key={link.href}
-                                href={link.href}
-                                className={` text-2xl relative pb-1 ${isActive ? "text-primary" : ""}`}
-                                onClick={(e) => { setShowMenus(false); handleSmoothScroll(e, link.href); }}
-                            >
-                                {link.label}
-                                {isActive && (
-                                    <motion.span
-                                        layoutId="active-indicator-2"
-                                        className="absolute left-0 -bottom-1 h-1 w-full bg-primary rounded-full"
-                                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                                    />
-                                )}
-                            </Link>
-                        );
-                    })}
+                    <Link href={`https://dash.fm01.bot`} className=" p-4 py-2.5 rounded-2xl bg-primary gap-2 flex flex-row items-center text-white">
+                        <Dashboard width={14} height={14} fill="fill-white" />
+                        <span style={{ lineHeight: "normal" }} >Dashboard</span>
+                    </Link>
                 </div>
             </div>
         </div>

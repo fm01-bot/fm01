@@ -77,7 +77,8 @@
         },
         "features": {
             "title": "Funkciók",
-            "subtext": "Túl sok funkciónk van, nézd meg ami számodra érdekes!"
+            "subtext": "Túl sok funkciónk van, nézd meg ami számodra érdekes!",
+            "container": {}
         },
         "status": {
             "title": "Státusz"

@@ -25,19 +25,21 @@ h1,h2,h3,h4,h5,p,a {
 }
 
 :root {
-  --theme-bg: #e2e3e4;
+  --theme-bg: #E2E3E4;
   --theme-text: #030507;
-  --theme-primary: #5592FA;
-  --theme-secondary: #4d8bff;
-  --theme-accent: #4a027e;
+  --theme-primary: #55B5FA;
+  --theme-secondary: #4D8BFF;
+  --theme-accent: #6400AD;
+  --theme-contrast: #CDCDD4;
 }
 
 .dark {
-  --theme-bg: #1b1c1d;
-  --theme-text: #f8fafc;
-  --theme-primary: #5592FA;
-  --theme-secondary: #003EB3;
-  --theme-accent: #ca81fd;
+  --theme-bg: #1B1C1D;
+  --theme-text: #F8FAFC;
+  --theme-primary: #4AB7FB;
+  --theme-secondary: #4F85DF;
+  --theme-accent: #FD81D8;
+  --theme-contrast: #0E0E0F;
 }
 
 @theme {
@@ -46,6 +48,7 @@ h1,h2,h3,h4,h5,p,a {
   --color-primary: var(--theme-primary);
   --color-secondary: var(--theme-secondary);
   --color-accent: var(--theme-accent);
+  --color-contrast: var(--theme-contrast);
 }
 
 .link {
@@ -73,6 +76,14 @@ h1,h2,h3,h4,h5,p,a {
   }
 }
 
+@utility accent-button {
+  @apply bg-accent py-3 px-6 rounded-2xl border-2 border-accent;
+}
+
+@utility accent-secondary-button {
+  @apply bg-transparent border-2 border-accent rounded-2xl py-3 px-6;
+}
+
 @utility secondary-text {
   @apply text-text/55 text-lg md:text-2xl font-bold! md:font-normal!
 }
@@ -84,6 +95,35 @@ h1,h2,h3,h4,h5,p,a {
     @apply scale-110
   }
 }
+
+.grid-bg {
+  @apply bg-size-[121px_121px] bg-[linear-gradient(to_right,--theme(--color-text/3%)_3px,transparent_1px),linear-gradient(to_bottom,--theme(--color-text/3%)_3px,transparent_1px)];
+  
+  -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+}
+
+@utility nav-links {
+  @apply p-4 gap-8! rounded-2xl border-2 border-text/10 backdrop-blur-[3px] hidden! md:flex!;
+
+  & a {
+    @apply leading-1 hover:text-primary hover:drop-shadow-primary drop-shadow-md;
+    &:last-child {
+      @apply text-accent hover:drop-shadow-accent;
+    }
+  }
+}
+
+@utility navbar {
+  & div {
+    @apply flex flex-row items-center gap-2;
+  }
+}
+
+@utility lang-select {
+  @apply text-text! bg-transparent font-bold text-base cursor-pointer focus:outline-none focus:ring-0 [&>option]:text-text;
+}
+
 
 h1 {
   font-size: x-large;

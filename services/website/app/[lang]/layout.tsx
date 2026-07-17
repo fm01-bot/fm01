@@ -4,6 +4,7 @@ import Footer from '@/_lib/components/Footer';
 import { notFound } from 'next/navigation';
 import { getDictionary, hasLocale } from './dictionaries';
 import { ThemeProvider } from '@teispace/next-themes';
+import { getTheme, getThemeScript } from '@teispace/next-themes/server';
 import type { Metadata } from 'next';
 
 type LayoutProps = {
@@ -36,11 +37,18 @@ export default async function Layout({
 
     const dict = await getDictionary(lang);
 
+    const initialTheme = await getTheme();
+
     return (
         < html lang={lang} suppressHydrationWarning >
             <body>
-                <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-                    <Header lang={dict.header} />
+                <ThemeProvider
+                    attribute="class"
+                    defaultTheme="system"
+                    enableSystem={true}
+                    initialTheme={initialTheme ?? undefined}
+                >
+                    <Header lang={dict.header} code={lang} />
                     <main>{children}</main>
                     <Footer lang={dict.footer} />
                 </ThemeProvider>

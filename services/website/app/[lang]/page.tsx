@@ -24,15 +24,12 @@ export default async function Page({ params }: PageProps) {
 
     return (
         <div className="w-full flex items-center justify-center max-w-screen">
-            <div className="w-280 max-w-screen flex flex-col gap-49 p-2 md:p-0">
-                <div className="h-22.5">
-                    <br />
-                    <br />
-                    <br />
-                    <br />
+            <div className="w-280 max-w-screen flex flex-col gap-49 p-2 md:p-0 mt-66">
+
+                <div className="absolute w-screen h-screen top-0 left-0 grid-bg -z-1">
+
                 </div>
 
-                { /* Hero section */}
                 <Hero lang={translation.hero} />
 
                 <About lang={translation.about} />

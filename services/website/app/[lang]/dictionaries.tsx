@@ -1,9 +1,10 @@
-import 'server-only'
 
 const dictionaries = {
     en: () => import('@lib/translations/en.json').then((module) => module.default),
     hu: () => import('@lib/translations/hu.json').then((module) => module.default),
 }
+
+export const languages = ['hu', 'en'];
 
 export type Locale = keyof typeof dictionaries
 

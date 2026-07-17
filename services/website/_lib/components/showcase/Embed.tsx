@@ -43,7 +43,9 @@ export default function Embed({
                             )
                         }
                     </div>
-                    <h1 className=" font-bold! text-base!">{title}</h1>
+                    {
+                        url ? (<Link href={url} className=" font-bold! text-base!">{title}</Link>) : (<h1 className=" font-bold! text-base!">{title}</h1>)
+                    }
                     <p className="text-sm font-light!">{description}</p>
                     <div className="grid grid-cols-3 gap-3">
                         {
