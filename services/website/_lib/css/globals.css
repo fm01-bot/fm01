@@ -1,0 +1,297 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+* {
+  transition: all;
+  transition-duration: 200ms;
+  transition-property: all;
+}
+
+/* hide page scrollbar */
+html { scrollbar-width: none; } /* Firefox */
+body { -ms-overflow-style: none; } /* IE and Edge */
+body::-webkit-scrollbar, body::-webkit-scrollbar-button { display: none; } /* Chrome */
+/* end hide page scrollbar */
+
+body:has(#burger:checked) {
+  overflow: hidden;
+}
+
+h1,h2,h3,h4,h5,p,a {
+  font-family: "Inter";
+  font-weight: 100;
+  font-style: normal;
+}
+
+:root {
+  --theme-bg: #E2E3E4;
+  --theme-text: #030507;
+  --theme-primary: #55B5FA;
+  --theme-secondary: #4D8BFF;
+  --theme-accent: #6400AD;
+  --theme-contrast: #CDCDD4;
+}
+
+.dark {
+  --theme-bg: #1B1C1D;
+  --theme-text: #F8FAFC;
+  --theme-primary: #4AB7FB;
+  --theme-secondary: #4F85DF;
+  --theme-accent: #FD81D8;
+  --theme-contrast: #0E0E0F;
+}
+
+@theme {
+  --color-background: var(--theme-bg);
+  --color-text: var(--theme-text);
+  --color-primary: var(--theme-primary);
+  --color-secondary: var(--theme-secondary);
+  --color-accent: var(--theme-accent);
+  --color-contrast: var(--theme-contrast);
+  --breakpoint-laptop: 54rem;
+  --breakpoint-zero: 0px;
+}
+
+.link {
+  color: var(--color-primary)
+
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+@utility title {
+  @apply text-3xl laptop:text-[4rem] font-bold! text-center mb-4
+}
+
+@utility subtext {
+  @apply text-base laptop:text-[2rem] font-normal opacity-50 text-center mb-8
+}
+
+@utility primary-button {
+  @apply bg-primary text-base laptop:text-lg text-white py-2.5 px-5 rounded-lg transition-all;
+
+  &:hover {
+    @apply scale-110
+  }
+}
+
+@utility accent-button {
+  @apply bg-accent py-3 px-6 rounded-2xl border-2 border-accent shadow-[0px_0px_20px_0px] hover:shadow-accent! shadow-transparent;
+}
+
+@utility accent-secondary-button {
+  @apply bg-transparent border-2 border-accent rounded-2xl py-3 px-6 text-accent hover:bg-accent hover:text-white;
+}
+
+@utility secondary-text {
+  @apply text-text/55 text-lg laptop:text-2xl font-bold! laptop:font-normal!
+}
+
+@utility secondary-button {
+  @apply bg-secondary/60 text-base laptop:text-lg text-white py-2.5 px-5 rounded-lg transition-all;
+  
+  &:hover {
+    @apply scale-110
+  }
+}
+
+@utility nav-links-container {
+
+  @variant zero {
+    @apply w-screen fixed; 
+  }
+
+  @variant laptop {
+    @apply absolute h-auto w-280 max-w-full flex flex-row items-center justify-center pointer-events-none;
+  }
+}
+
+@utility trust-subtext {
+  @apply text-base laptop:text-[2rem] font-normal text-center justify-center flex mb-8;
+  & > span:nth-child(even) {
+    @apply text-primary font-bold px-1.5;
+  }
+  & > span:nth-child(odd) {
+    @apply opacity-50;
+  }
+}
+
+.grid-bg {
+  @apply bg-size-[121px_121px] bg-[linear-gradient(to_right,--theme(--color-text/3%)_3px,transparent_1px),linear-gradient(to_bottom,--theme(--color-text/3%)_3px,transparent_1px)];
+  
+  -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+}
+
+@utility nav-links {
+  @apply p-4 gap-8! rounded-2xl border-2 border-text/10 backdrop-blur-[3px] hidden! laptop:flex!;
+
+  & a {
+    @apply leading-1 hover:text-primary hover:drop-shadow-primary drop-shadow-md;
+    &:last-child {
+      @apply text-accent hover:drop-shadow-accent;
+    }
+  }
+}
+
+@utility navbar {
+  & div {
+    @apply flex flex-row items-center gap-2;
+  }
+}
+
+@utility lang-select {
+  @apply text-text! bg-transparent font-bold text-base cursor-pointer focus:outline-none focus:ring-0 [&>option]:text-text;
+}
+
+@utility tier-cards {
+  @apply flex flex-col items-center justify-between h-90! w-82! p-6 bg-contrast rounded-2xl border-4 border-transparent;
+  
+  & .inner-container {
+    @apply w-full flex items-center justify-center flex-col gap-2.5;
+  }
+
+  & .tier-title {
+    @apply text-5xl font-black text-center w-full;
+  }
+
+  & .tier-price {
+    @apply text-xl font-bold text-center;
+  }
+
+  & .button {
+    @apply rounded-lg px-3.5 py-3 w-full text-center text-xl! font-extrabold!;
+  }
+
+  &#FREE {
+    & .button {
+    @apply bg-text text-background;
+  }
+  }
+
+  &#PREMIUM{
+    @apply border-primary!;
+    & .tier-title {
+      @apply text-primary;
+    }
+    & .button {
+    @apply bg-primary ;
+  }
+  }
+
+  &#CUSTOM {
+    & .tier-title {
+    @apply text-accent;
+  }
+  & .button {
+    @apply bg-accent;
+  }
+  }
+}
+
+@utility promoted-servers {
+  & ::first-line {
+    @apply -translate-x-100;
+  }
+}
+
+@utility promoted-servers-row {
+  @apply w-auto flex flex-row gap-2 absolute;
+}
+
+
+h1 {
+  font-size: x-large;
+  font-weight: bold;
+}
+
+html {
+  background-color: var(--theme-bg);
+  color: var(--theme-text);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.active {
+  anchor-name: --active-anchor;
+}
+
+.indicator {
+  position: absolute;
+  position-anchor: --active-anchor;
+  top: anchor(bottom);
+  left: anchor(left);
+  width: anchor-size(width);
+  transition: all 0.25s ease-in-out;
+}
+
+/* From Uiverse.io by Cevorob */ 
+.burger {
+  position: relative;
+  width: 30px;  /* Downscaled to 30px */
+  height: 25px; /* Downscaled to 20px */
+  background: transparent;
+  cursor: pointer;
+  display: block;
+}
+
+.burger input {
+  display: none;
+}
+
+.burger span {
+  display: block;
+  position: absolute;
+  height: 3px; /* Scaled from 4px (4 * 0.75 = 3) */
+  width: 100%;
+  background: var(--color-text);
+  border-radius: 9px;
+  opacity: 1;
+  left: 0;
+  transform: rotate(0deg);
+  transition: .25s ease-in-out;
+}
+
+.burger span:nth-of-type(1) {
+  top: 0px;
+  transform-origin: left center;
+}
+
+.burger span:nth-of-type(2) {
+  top: 50%;
+  transform: translateY(-50%);
+  transform-origin: left center;
+}
+
+.burger span:nth-of-type(3) {
+  top: 100%;
+  transform-origin: left center;
+  transform: translateY(-100%);
+}
+
+.burger input:checked ~ span:nth-of-type(1) {
+  transform: rotate(45deg);
+  top: 0px;
+  left: 3.7px; /* Scaled from 5px (5 * 0.75 = 3.75) */
+}
+
+.burger input:checked ~ span:nth-of-type(2) {
+  width: 0%;
+  opacity: 0;
+}
+
+.burger input:checked ~ span:nth-of-type(3) {
+  transform: rotate(-45deg);
+  top: 18.5px; /* Scaled from 28px (28 * 0.666 = 18.66, adjusted to 18.5px to perfectly intersect with the 3px line height) */
+  left: 3.75px; /* Scaled from 5px */
+}
