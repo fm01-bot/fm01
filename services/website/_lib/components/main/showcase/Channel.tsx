@@ -1,4 +1,4 @@
-import { ChannelType } from '@/_lib/Types';
+import { ChannelType } from '@/_lib/types/MainPageLang';
 import Message from './Message';
 
 export default function Channel({

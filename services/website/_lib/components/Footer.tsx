@@ -2,9 +2,9 @@ import logo from "@public/images/logo.png"
 import Image from "next/image";
 import Link from "next/link";
 
-import { FooterJson } from "@lib/Types"
+import { FooterLangJson } from "@/_lib/types/PageLang"
 
-export default function Footer({ lang }: { lang: FooterJson }) {
+export default function Footer({ lang }: { lang: FooterLangJson }) {
     const currentYear = new Date().getFullYear();
     return (
         <div className="w-full flex items-center justify-center pb-5 px-5 flex-col py-10 md:pt-20 bg-text/7 md:[clip-path:polygon(0_0,100%_20%,100%_100%,0_100%)] [clip-path:polygon(0_0,100%_10%,100%_100%,0_100%)] pt-15">

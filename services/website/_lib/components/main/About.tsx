@@ -1,5 +1,5 @@
 import Logo from "@/_lib/svg/Logo";
-import { AboutType } from "@/_lib/Types";
+import { AboutType } from "@/_lib/types/PageLang";
 
 export default function About({ lang }: { lang: AboutType }) {
 

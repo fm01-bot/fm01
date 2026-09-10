@@ -4,7 +4,7 @@ import Footer from '@/_lib/components/Footer';
 import { notFound } from 'next/navigation';
 import { getDictionary, hasLocale } from './dictionaries';
 import { ThemeProvider } from '@teispace/next-themes';
-import { getTheme, getThemeScript } from '@teispace/next-themes/server';
+import { getTheme } from '@teispace/next-themes/server';
 import type { Metadata } from 'next';
 
 type LayoutProps = {

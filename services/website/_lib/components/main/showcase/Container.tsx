@@ -1,9 +1,11 @@
 "use client"
-import { ContainerType } from "@/_lib/Types";
+import { MainPageLangJson } from "@/_lib/types/MainPageLang";
 import Channel from "./Channel";
 import { useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
 
-export default function Container({ lang }: { lang?: ContainerType }) {
+export default function Container({ lang }: { lang?: MainPageLangJson["features"]["container"] }) {
 
     const [active, setActive] = useState(0);
 
@@ -12,19 +14,19 @@ export default function Container({ lang }: { lang?: ContainerType }) {
     }
 
     return (
-        <div className="flex flex-row h-100 w-full rounded-lg overflow-hidden">
+        <div className="flex flex-row h-125 w-full rounded-lg overflow-hidden">
             <div className="dark:bg-[#09080b]/50 bg-text/10 w-67 max-w-[50%] rounded-bl-lg p-4">
-                <p className=" text-xl text-text/50">Showcase ▼</p>
-                <div className="flex flex-col items-start w-full gap-1">
+                <span className=" text-xl text-text/50">fm01 <FontAwesomeIcon icon={faChevronDown} className="w-3.75! h-3.75!" /></span>
+                <div className="flex flex-col items-start w-full gap-0.5 mt-2">
                     {
                         lang?.channels?.map((c, i) => {
                             return (
                                 <span
                                     onClick={() => { setActive(i) }}
                                     key={`cl-${i}`}
-                                    className={`text-text/50 flex items-center justify-start gap-[8px] py-[4px] px-[8px] hover:bg-text/20 hover:text-text rounded-lg w-full ${active == i ? "bg-text/20! text-text!" : ""}`}>
-                                    <span className="text-2xl leading-6">#</span>
-                                    <span>{c.title}</span>
+                                    className={`text-text/50 h-8 flex items-center justify-start gap-2 py-1 px-2 hover:bg-text/20 hover:text-text rounded-lg w-full ${active == i ? "bg-text/20! text-text!" : ""}`}>
+                                    <span className="text-xl leading-0 font-semibold">#</span>
+                                    <span className="leading-0">{c.title}</span>
                                 </span>
                             )
                         })

@@ -1,4 +1,4 @@
-import { FieldType } from "@/_lib/Types";
+import { FieldType } from "@/_lib/types/PageLang";
 
 export default function Field({ name, value, inline }: FieldType) {
     return (

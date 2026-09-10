@@ -1,11 +1,9 @@
-import { HeroType } from "@/_lib/Types";
-import CommandScroller from "../CommandScroller";
+import { MainPageLangJson } from "@/_lib/types/MainPageLang";
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { faDiscord } from "@fortawesome/free-brands-svg-icons";
 
-export default function Hero({ lang }: { lang: HeroType }) {
+export default function Hero({ lang }: { lang: MainPageLangJson["hero"] }) {
     return (
         <div className="flex flex-col gap-8">
             <div className="flex flex-col items-center w-full">
@@ -19,13 +17,13 @@ export default function Hero({ lang }: { lang: HeroType }) {
             </div>
             <div className="flex flex-row justify-center items-center gap-5 w-full">
                 <Link href={`https://dashboard.fm01.bot/`} className="accent-button flex flex-row gap-2 items-center text-white">
-                    <FontAwesomeIcon icon={faDiscord} width={15} />
-                    <span className="text-2xl">
+                    <FontAwesomeIcon icon={faDiscord} className="w-7.25! h-7.25!" />
+                    <span className="text-2xl font-extrabold leading-[normal]">
                         {lang.invite_btn}
                     </span>
                 </Link>
                 <Link href={`https://dc.fm01.bot/`} className="accent-secondary-button">
-                    <span className="text-2xl">
+                    <span className="text-2xl leading-[normal]">
                         {lang.support_btn}
                     </span>
                 </Link>

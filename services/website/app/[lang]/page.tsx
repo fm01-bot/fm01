@@ -1,12 +1,9 @@
-import ThemeToggle from "@/_lib/components/ThemeToggle"
-import { PageJson } from "@lib/Types"
 import { notFound } from 'next/navigation'
 import { getDictionary, hasLocale } from './dictionaries'
-import Hero from "@/_lib/components/page/Hero"
-import About from "@/_lib/components/page/About"
-import Features from "@/_lib/components/page/Features"
-import Status from "@/_lib/components/page/Status"
-import Team from "@/_lib/components/page/Team"
+import Hero from "@/_lib/components/main/Hero"
+import Features from "@/_lib/components/main/Features"
+import PromotedServers from "@/_lib/components/main/PromotedServers"
+import Premium from '@/_lib/components/main/Premium'
 
 type PageProps = {
     params: Promise<{ lang: string }>;
@@ -20,11 +17,11 @@ export default async function Page({ params }: PageProps) {
 
     const dict = await getDictionary(lang);
 
-    const translation: PageJson = dict.main;
+    const translation = dict.main;
 
     return (
         <div className="w-full flex items-center justify-center max-w-screen">
-            <div className="w-280 max-w-screen flex flex-col gap-49 p-2 md:p-0 mt-66">
+            <div className="w-280 max-w-screen flex flex-col gap-49 p-2 laptop:p-0 mt-66">
 
                 <div className="absolute w-screen h-screen top-0 left-0 grid-bg -z-1">
 
@@ -32,15 +29,11 @@ export default async function Page({ params }: PageProps) {
 
                 <Hero lang={translation.hero} />
 
-                <About lang={translation.about} />
+                <PromotedServers lang={translation.servers} />
 
                 <Features lang={translation.features} />
 
-                <Status lang={translation.status} />
-
-                <Team lang={translation.team} />
-
-                <ThemeToggle />
+                <Premium lang={translation.premium} />
             </div>
         </div>
     )

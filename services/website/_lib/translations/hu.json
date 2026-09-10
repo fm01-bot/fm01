@@ -1,106 +1,221 @@
 {
     "header": {
-        "home": "Főoldal",
-        "about": "Rólunk",
-        "features": "Funkciók",
-        "status": "Státusz",
-        "team": "Csapat",
-        "dashboard": "Panel"
+        "premium": "Premium",
+        "docs": "Docs",
+        "status": "Status",
+        "team": "Team",
+        "dashboard": "Dashboard"
+    },
+    "footer": {
+        "contact": {
+            "title": "Contact",
+            "discord": "Discord Invite"
+        },
+        "docs": {
+            "title": "Legal Documents",
+            "tos": "Terms of Service",
+            "privacy": "Privacy Policy",
+            "cookies": "Cookie Policy"
+        },
+        "copyright": "All rights reserved.",
+        "designer": "Designed by",
+        "service": "Hosted by"
     },
     "main": {
         "hero": {
             "title": [
-                "A te",
-                "mindenes",
-                "botod"
+                "Your",
+                "all-in-one",
+                "bot"
             ],
             "subtext": [
-                "Moderáció, kényelem és védelem.",
-                "Faszommal a szádba élvezem."
+                "Moderation, protection, utility.",
+                "Take control of your community."
             ],
-            "invite_btn": "Hívj meg!",
-            "support_btn": "Support",
-            "commands": [
-                {
-                    "name": "ban",
-                    "params": "[felhasználó] (indok)",
-                    "description": "Kitilt egy tagot a szerverről. Addig nem csatlakozhat újra, amíg nem unbannolják."
-                },
-                {
-                    "name": "kick",
-                    "params": "[felhasználó] (indok)",
-                    "description": "Kirúg egy tagot a szerverről. Később visszaléphet a szerverre meghívóval."
-                },
-                {
-                    "name": "mute",
-                    "params": "[felhasználó] [hossz] (indok)",
-                    "description": "Eltiltja a felhasználót a kommunikációtól egy megadott ideig."
-                },
-                {
-                    "name": "warn",
-                    "params": "[felhasználó] (hossz) (indok)",
-                    "description": "Küld egy figyelmeztető üzenetet a tagnak egy megadott indokkal."
-                },
-                {
-                    "name": "töröl",
-                    "params": "[mennyiség]",
-                    "description": "Töröl egy megadott mennyiségű üzenetet az aktuális csatornából."
-                },
-                {
-                    "name": "info user",
-                    "params": "(felhasználó)",
-                    "description": "Részletes információt mutat a megadott felhasználóról, vagy rólad."
-                },
-                {
-                    "name": "play",
-                    "params": "(szolgáltató) [cím]",
-                    "description": "Lejátszik egy zeneszámot a megadott szolgáltatótól, ami alapból a YouTube."
-                },
-                {
-                    "name": "info server",
-                    "params": "",
-                    "description": "Részletes információt mutat arról a szerverről, ahol lefuttattad a parancsot."
-                }
-            ]
+            "invite_btn": "Try it now",
+            "support_btn": "Support"
         },
-        "about": {
-            "title": "Mi az fm01?",
-            "subtext": "Egy otthonos szerver létrehozása nehéz munka egy ember számára. A botok segítenek ebben, előre leprogramozott funkciókat tudsz parancsokkal futtatni.",
-            "tutorial": [
-                [
-                    "Írd be",
-                    "hogy lásd a parancsokat"
-                ],
-                "Válasz ki egy parancsot",
-                "Futtasd az automatizálást"
+        "servers": {
+            "title": "Trusted by communities",
+            "subtext": [
+                "fm01 is already in",
+                "servers serving",
+                "members combined."
+            ],
+            "memberstext": "members",
+            "invitetext": [
+                "Your Server",
+                "Invite now"
             ]
         },
         "features": {
-            "title": "Funkciók",
-            "subtext": "Túl sok funkciónk van, nézd meg ami számodra érdekes!",
-            "container": {}
+            "title": "Features",
+            "subtext": "I'd be too long to explain, just take a look for yourself!",
+            "container": {
+                "channels": [
+                    {
+                        "title": "moderation",
+                        "description": "Handle rule breakers with ease!",
+                        "messages": [
+                            {
+                                "message": "Lorem ipsum dolor sit amet.",
+                                "username": "Pearoo",
+                                "avatar": "/images/logo.png",
+                                "bot": false
+                            },
+                            {
+                                "message": "User has been warned successfully.",
+                                "username": "fm01",
+                                "avatar": "/images/logo.png",
+                                "bot": true
+                            }
+                        ]
+                    },
+                    {
+                        "title": "giveaways",
+                        "description": "Easily reward your community!",
+                        "messages": [
+                            {
+                                "message": "Giveaway starting now!",
+                                "username": "fm01",
+                                "avatar": "/images/logo.png",
+                                "bot": true,
+                                "embeds": [
+                                    {
+                                        "title": "Nitro Classic Giveaway",
+                                        "description": "React with 🎉 to enter!",
+                                        "url": "https://fm01.bot",
+                                        "color": "#f56f42",
+                                        "fields": [
+                                            {
+                                                "name": "Hosted by",
+                                                "value": "@Pearoo",
+                                                "inline": true
+                                            },
+                                            {
+                                                "name": "Ends in",
+                                                "value": "2 days",
+                                                "inline": true
+                                            },
+                                            {
+                                                "name": "Winners",
+                                                "value": "1",
+                                                "inline": true
+                                            }
+                                        ],
+                                        "thumbnail": {
+                                            "url": "/images/logo.png"
+                                        },
+                                        "author": {
+                                            "name": "Giveaway System",
+                                            "url": "https://fm01.bot",
+                                            "icon_url": "/images/logo.png"
+                                        },
+                                        "buttons": [
+                                            [
+                                                {
+                                                    "label": "Enter Giveaway",
+                                                    "url": "https://fm01.bot/giveaways",
+                                                    "disabled": true,
+                                                    "color": 0
+                                                }
+                                            ]
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "message": "Red buzi!",
+                                "username": "fm01",
+                                "avatar": "/images/logo.png",
+                                "bot": true
+                            }
+                        ]
+                    },
+                    {
+                        "title": "economy",
+                        "description": "Engage members with a global economy!",
+                        "messages": [
+                            {
+                                "message": "You just earned 500 coins!",
+                                "username": "fm01",
+                                "avatar": "/images/logo.png",
+                                "bot": true
+                            }
+                        ]
+                    }
+                ]
+            }
         },
-        "status": {
-            "title": "Státusz"
+        "premium": {
+            "title": "Supercharge your server",
+            "subtext": "Unlock advanced limits and premium customization.",
+            "tiers": {
+                "free": {
+                    "name": "Basic",
+                    "features": [],
+                    "price": "$0/mo",
+                    "button": "Current Plan",
+                    "recommend": ""
+                },
+                "premium": {
+                    "name": "Premium",
+                    "features": [],
+                    "price": "$4.99/mo",
+                    "button": "Upgrade Now",
+                    "recommend": "Most Popular"
+                },
+                "custom": {
+                    "name": "Enterprise",
+                    "features": [],
+                    "price": "Custom",
+                    "button": "Contact Sales",
+                    "recommend": ""
+                }
+            },
+            "disclosure": "Prices are subject to change. Cancel anytime."
         },
-        "team": {
-            "title": "Ismerd meg a csapatot",
-            "hiring": "Tagfelvétel!"
+        "invite": {
+            "title": "Ready to get started?",
+            "subtext": "Add fm01 to your server in just two clicks."
         }
     },
-    "footer": {
-        "contact": {
-            "title": "Kapcsolat",
-            "discord": "Discord Csatlakozás"
+    "team": {
+        "hero": {
+            "title": [
+                "Meet",
+                "the",
+                "brains"
+            ]
         },
-        "docs": {
-            "title": "Dokumentumok",
-            "tos": "Általános Szerződési Feltételek",
-            "privacy": "Adatvédelmi Tájékoztató",
-            "cookies": "Sütikezelési Tájékoztató"
+        "members": {
+            "name": "John Doe",
+            "alias": "Pearoo",
+            "aliases": [
+                "Pear",
+                "Dev"
+            ],
+            "role": "Lead Developer",
+            "connect": {
+                "github": "https://github.com/your-profile",
+                "twitter": "https://twitter.com/your-profile"
+            },
+            "introduction": "Hello! I am a full-stack developer working hard (or hardly working) to bring you the best Discord bot experience. Reach out if you have any questions!"
+        }
+    },
+    "status": {
+        "hero": {
+            "title": [
+                "System",
+                "Status"
+            ]
         },
-        "copyright": "Minden jog fenntartva.",
-        "designer": "Dizájnolta",
-        "service": "Üzemeltető"
+        "shards": {
+            "title": "Shard Connectivity",
+            "subtext": "All shards are currently operational and processing events normally."
+        }
+    },
+    "premium": {
+        "title": "Manage your Premium Subscription"
     }
 }

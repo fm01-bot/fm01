@@ -1,9 +1,9 @@
-import { FeaturesType } from "@/_lib/Types";
-import Container from "../showcase/Container";
+import { MainPageLangJson } from "@/_lib/types/MainPageLang";
+import Container from "./showcase/Container";
 
-export default function Features({ lang }: { lang: FeaturesType }) {
+export default function Features({ lang }: { lang: MainPageLangJson["features"] }) {
     return (
-        <div id="features" className="h-screen">
+        <div id="features" className="h-fit">
             <p className="title">
                 {lang.title}
             </p>

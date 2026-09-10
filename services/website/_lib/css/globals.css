@@ -49,6 +49,8 @@ h1,h2,h3,h4,h5,p,a {
   --color-secondary: var(--theme-secondary);
   --color-accent: var(--theme-accent);
   --color-contrast: var(--theme-contrast);
+  --breakpoint-laptop: 54rem;
+  --breakpoint-zero: 0px;
 }
 
 .link {
@@ -61,15 +63,15 @@ h1,h2,h3,h4,h5,p,a {
 }
 
 @utility title {
-  @apply text-3xl md:text-[4rem] font-bold!
+  @apply text-3xl laptop:text-[4rem] font-bold! text-center mb-4
 }
 
 @utility subtext {
-  @apply text-base md:text-[2rem] font-normal opacity-50
+  @apply text-base laptop:text-[2rem] font-normal opacity-50 text-center mb-8
 }
 
 @utility primary-button {
-  @apply bg-primary text-base md:text-lg text-white py-2.5 px-5 rounded-lg transition-all;
+  @apply bg-primary text-base laptop:text-lg text-white py-2.5 px-5 rounded-lg transition-all;
 
   &:hover {
     @apply scale-110
@@ -77,22 +79,43 @@ h1,h2,h3,h4,h5,p,a {
 }
 
 @utility accent-button {
-  @apply bg-accent py-3 px-6 rounded-2xl border-2 border-accent;
+  @apply bg-accent py-3 px-6 rounded-2xl border-2 border-accent shadow-[0px_0px_20px_0px] hover:shadow-accent! shadow-transparent;
 }
 
 @utility accent-secondary-button {
-  @apply bg-transparent border-2 border-accent rounded-2xl py-3 px-6;
+  @apply bg-transparent border-2 border-accent rounded-2xl py-3 px-6 text-accent hover:bg-accent hover:text-white;
 }
 
 @utility secondary-text {
-  @apply text-text/55 text-lg md:text-2xl font-bold! md:font-normal!
+  @apply text-text/55 text-lg laptop:text-2xl font-bold! laptop:font-normal!
 }
 
 @utility secondary-button {
-  @apply bg-secondary/60 text-base md:text-lg text-white py-2.5 px-5 rounded-lg transition-all;
+  @apply bg-secondary/60 text-base laptop:text-lg text-white py-2.5 px-5 rounded-lg transition-all;
   
   &:hover {
     @apply scale-110
+  }
+}
+
+@utility nav-links-container {
+
+  @variant zero {
+    @apply w-screen fixed; 
+  }
+
+  @variant laptop {
+    @apply absolute h-auto w-280 max-w-full flex flex-row items-center justify-center pointer-events-none;
+  }
+}
+
+@utility trust-subtext {
+  @apply text-base laptop:text-[2rem] font-normal text-center justify-center flex mb-8;
+  & > span:nth-child(even) {
+    @apply text-primary font-bold px-1.5;
+  }
+  & > span:nth-child(odd) {
+    @apply opacity-50;
   }
 }
 
@@ -104,7 +127,7 @@ h1,h2,h3,h4,h5,p,a {
 }
 
 @utility nav-links {
-  @apply p-4 gap-8! rounded-2xl border-2 border-text/10 backdrop-blur-[3px] hidden! md:flex!;
+  @apply p-4 gap-8! rounded-2xl border-2 border-text/10 backdrop-blur-[3px] hidden! laptop:flex!;
 
   & a {
     @apply leading-1 hover:text-primary hover:drop-shadow-primary drop-shadow-md;
@@ -122,6 +145,61 @@ h1,h2,h3,h4,h5,p,a {
 
 @utility lang-select {
   @apply text-text! bg-transparent font-bold text-base cursor-pointer focus:outline-none focus:ring-0 [&>option]:text-text;
+}
+
+@utility tier-cards {
+  @apply flex flex-col items-center justify-between h-90! w-82! p-6 bg-contrast rounded-2xl border-4 border-transparent;
+  
+  & .inner-container {
+    @apply w-full flex items-center justify-center flex-col gap-2.5;
+  }
+
+  & .tier-title {
+    @apply text-5xl font-black text-center w-full;
+  }
+
+  & .tier-price {
+    @apply text-xl font-bold text-center;
+  }
+
+  & .button {
+    @apply rounded-lg px-3.5 py-3 w-full text-center text-xl! font-extrabold!;
+  }
+
+  &#FREE {
+    & .button {
+    @apply bg-text text-background;
+  }
+  }
+
+  &#PREMIUM{
+    @apply border-primary!;
+    & .tier-title {
+      @apply text-primary;
+    }
+    & .button {
+    @apply bg-primary ;
+  }
+  }
+
+  &#CUSTOM {
+    & .tier-title {
+    @apply text-accent;
+  }
+  & .button {
+    @apply bg-accent;
+  }
+  }
+}
+
+@utility promoted-servers {
+  & ::first-line {
+    @apply -translate-x-100;
+  }
+}
+
+@utility promoted-servers-row {
+  @apply w-auto flex flex-row gap-2 absolute;
 }
 
 

@@ -1,4 +1,4 @@
-import { EmbedType } from "@/_lib/Types";
+import { EmbedType } from "@/_lib/types/PageLang";
 import Button from "./Button";
 import Field from "./Field";
 import Link from "next/link";

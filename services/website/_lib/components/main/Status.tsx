@@ -1,4 +1,4 @@
-import { StatusType } from "@/_lib/Types";
+import { StatusType } from "@/_lib/types/PageLang";
 
 export default function Status({ lang }: { lang: StatusType }) {
     return (

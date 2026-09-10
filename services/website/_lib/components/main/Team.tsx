@@ -1,4 +1,4 @@
-import { TeamType } from "@/_lib/Types";
+import { TeamType } from "@/_lib/types/PageLang";
 
 export default function Team({ lang }: { lang: TeamType }) {
     return (
