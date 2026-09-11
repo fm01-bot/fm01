@@ -1,0 +1,45 @@
+name: Sync subtrees
+
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [sync-subtree]
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout parent repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Identity configuration
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Subtree (bot)
+        run: |
+          git subtree pull --prefix=bot \
+            https://github.com/${{ github.repository_owner }}/bot.git main \
+            --squash -m "chore: sync bot subtree" || echo "Bot subtree already up to date or unchanged."
+
+      - name: Subtree (website)
+        run: |
+          git subtree pull --prefix=website \
+            https://github.com/${{ github.repository_owner }}/website.git main \
+            --squash -m "chore: sync website subtree" || echo "Website subtree already up to date or unchanged."
+
+      - name: Push updates
+        run: |
+          if [ $(git rev-parse HEAD) != $(git rev-parse origin/main) ]; then
+            git push origin main
+          else
+            echo "No subtree updates to push."
+          fi
