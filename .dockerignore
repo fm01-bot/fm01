@@ -1,0 +1,12 @@
+.env
+.gitignore
+.venv
+.ruff_cache
+__pycache__
+*.py[cod]
+CODE_OF_CONDUCT.md
+compose.yml
+crowdin.yml
+Dockerfile
+README.md
+SECURITY.md

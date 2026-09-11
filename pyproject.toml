@@ -1,0 +1,56 @@
+[project]
+name = "fm01"
+version = "0.8.0"
+description = "All-in-one Discord bot for general purposes"
+authors = [{ name = "Pearoo", email = "contact@pearoo.dev" }]
+readme = "README.md"
+requires-python = ">=3.12,<3.14"
+license = "MIT"
+
+dependencies = [
+    "discord-localization>=1.1.5",
+    "discord>=2.3.2",
+    "pyyaml>=6.0.2",
+    "asyncpg>=0.30.0",
+    "python-dotenv>=1.1.0",
+    "docutils-stubs>=0.0.22",
+    "uvloop; sys_platform == 'linux' or sys_platform == 'darwin'",
+    "psutil>=7.0.0",
+    "py-cpuinfo>=9.0.0",
+    "emoji>=2.14.1",
+    "pypokedex>=1.6.0",
+    "art>=6.5",
+    "ruff>=0.14.8",
+    "pillow>=11.3.0",
+    "asyncpraw>=7.8.1",
+    "pytemperature>=1.1",
+    "ty>=0.0.1a33",
+    "wavelink>=3.5.2",
+    "jishaku>=2.7.5",
+]
+
+[dependency-groups]
+dev = ["ruff>=0.14.8"]
+
+[tool.setuptools]
+packages = ["helpers"]
+
+[tool.uv]
+
+[tool.ruff]
+line-length = 120
+src = ["core", "helpers", "cogs"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["E402", "F403", "F401"]
+
+[tool.ruff.format]
+docstring-code-format = true
+indent-style = "tab"
+skip-magic-trailing-comma = true
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ty.rules]
+#invalid-method-override = "ignore"
