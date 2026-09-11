@@ -1,0 +1,3 @@
+preview.fm01.bot {
+    reverse_proxy website:3007
+}
