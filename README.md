@@ -13,3 +13,5 @@ We never commit into this repo if we want to make changes to our service. Every 
 For this reason, we most likely won't be accepting pull requests that often.
 
 In the future, we might use this repo's Issues tab for every bug or enchancement you have with fm01.
+
+<sub>maintainer cheat sheet: `git subtree add --prefix=[directoryName] https://github.com/fm01-bot/[repo].git main --squash`</sub>
