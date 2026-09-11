@@ -1,0 +1,46 @@
+name: 🗞️ Format using Ruff
+on:
+  push:
+    branches:
+      - "dev"
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12.5"
+
+      - name: Install Ruff
+        run: pip install ruff
+
+      - name: Show Ruff config
+        run: |
+          ruff config
+          cat pyproject.toml
+
+      - name: Run Ruff Format
+        run: ruff format --config pyproject.toml .
+
+      - name: Auto-commit
+        run: |
+          if [[ `git status --porcelain` ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add .
+            git commit -m "🤖 chore: auto-format code using ruff"
+            git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:dev --force
+          else
+            echo "Code was formatted successfully"
+          fi
