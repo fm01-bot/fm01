@@ -6,7 +6,7 @@ import { faDiscord } from "@fortawesome/free-brands-svg-icons";
 export default function Hero({ lang }: { lang: MainPageLangJson["hero"] }) {
     return (
         <div className="flex flex-col gap-8">
-            <div className="flex flex-col items-center w-full">
+            <div className="flex flex-row gap-5 items-center justify-center w-full">
                 <h1 className="font-extrabold! text-6xl! md:text-8xl! leading-[85%]">{lang.title[0]}</h1>
                 <h1 className="font-extrabold! text-6xl! md:text-8xl! leading-[85%] text-primary">{lang.title[1]}</h1>
                 <h1 className="font-extrabold! text-6xl! md:text-8xl! leading-[85%]">{lang.title[2]}</h1>
@@ -22,7 +22,7 @@ export default function Hero({ lang }: { lang: MainPageLangJson["hero"] }) {
                         {lang.invite_btn}
                     </span>
                 </Link>
-                <Link href={`https://dc.fm01.bot/`} className="accent-secondary-button">
+                <Link href={`https://dc.fm01.bot/`} className="btn-sec">
                     <span className="text-2xl leading-[normal]">
                         {lang.support_btn}
                     </span>

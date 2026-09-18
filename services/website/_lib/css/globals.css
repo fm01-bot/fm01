@@ -27,18 +27,18 @@ h1,h2,h3,h4,h5,p,a {
 :root {
   --theme-bg: #E2E3E4;
   --theme-text: #030507;
-  --theme-primary: #55B5FA;
-  --theme-secondary: #4D8BFF;
-  --theme-accent: #6400AD;
+  --theme-primary: #4D8BFF;
+  --theme-secondary: #3865B2;
+  --theme-accent: #BF3FD9;
   --theme-contrast: #CDCDD4;
 }
 
 .dark {
   --theme-bg: #1B1C1D;
   --theme-text: #F8FAFC;
-  --theme-primary: #4AB7FB;
-  --theme-secondary: #4F85DF;
-  --theme-accent: #FD81D8;
+  --theme-primary: #6094EB;
+  --theme-secondary: #3865B2;
+  --theme-accent: #DA47F8;
   --theme-contrast: #0E0E0F;
 }
 
@@ -95,6 +95,14 @@ h1,h2,h3,h4,h5,p,a {
   
   &:hover {
     @apply scale-110
+  }
+}
+
+@utility btn-sec {
+  @apply rounded-xl bg-text/10 backdrop-blur-[2px] px-6 py-3;
+
+  &:hover {
+    @apply bg-text/20;
   }
 }
 

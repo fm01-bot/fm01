@@ -5,7 +5,7 @@ import { faDiscord } from "@fortawesome/free-brands-svg-icons";
 
 export default function AddNow({ lang }: { lang: MainPageLangJson["invite"] }) {
     return (
-        <div className="flex flex-col gap-8 h-[50vh]">
+        <div className="flex flex-col h-fit mb-28">
             <p className="text-6xl font-bold title">
                 {lang.title}
             </p>
