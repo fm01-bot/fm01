@@ -18,7 +18,7 @@
             "cookies": "Cookie Policy"
         },
         "copyright": "All rights reserved.",
-        "designer": "Designed by",
+        "designer": "Created by",
         "service": "Hosted by"
     },
     "main": {
@@ -244,7 +244,7 @@
             }
         },
         "premium": {
-            "title": "Supercharge your server",
+            "title": "Premium",
             "subtext": "Unlock advanced limits and premium customization.",
             "tiers": {
                 "free": {
@@ -279,11 +279,11 @@
                     "button": "Inquire"
                 }
             },
-            "disclosure": "The bot can be self-hosted with free premium access by downloading the source code from our GitHub."
+            "disclosure": "The bot can be self-hosted with free premium access by downloading the source code from our "
         },
         "invite": {
-            "title": "Ready to get started?",
-            "subtext": "Add fm01 to your server in just two clicks."
+            "title": "What are you waiting for?",
+            "subtext": "Get started for free"
         }
     },
     "team": {

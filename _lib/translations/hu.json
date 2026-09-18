@@ -18,7 +18,7 @@
             "cookies": "Cookie Policy"
         },
         "copyright": "All rights reserved.",
-        "designer": "Designed by",
+        "designer": "Created by",
         "service": "Hosted by"
     },
     "main": {
@@ -143,41 +143,147 @@
                                 "bot": true
                             }
                         ]
+                    },
+                    {
+                        "title": "security",
+                        "description": "Engage members with a global economy!",
+                        "messages": [
+                            {
+                                "message": "You just earned 500 coins!",
+                                "username": "fm01",
+                                "avatar": "/images/logo.png",
+                                "bot": true
+                            }
+                        ]
+                    },
+                    {
+                        "title": "role-management",
+                        "description": "Engage members with a global economy!",
+                        "messages": [
+                            {
+                                "message": "You just earned 500 coins!",
+                                "username": "fm01",
+                                "avatar": "/images/logo.png",
+                                "bot": true
+                            }
+                        ]
+                    },
+                    {
+                        "title": "localization",
+                        "description": "Engage members with a global economy!",
+                        "messages": [
+                            {
+                                "message": "You just earned 500 coins!",
+                                "username": "fm01",
+                                "avatar": "/images/logo.png",
+                                "bot": true
+                            }
+                        ]
+                    },
+                    {
+                        "title": "custom-messages",
+                        "description": "Engage members with a global economy!",
+                        "messages": [
+                            {
+                                "message": "You just earned 500 coins!",
+                                "username": "fm01",
+                                "avatar": "/images/logo.png",
+                                "bot": true
+                            }
+                        ]
+                    },
+                    {
+                        "title": "music",
+                        "description": "Engage members with a global economy!",
+                        "messages": [
+                            {
+                                "message": "You just earned 500 coins!",
+                                "username": "fm01",
+                                "avatar": "/images/logo.png",
+                                "bot": true
+                            }
+                        ]
+                    },
+                    {
+                        "title": "logging",
+                        "description": "Engage members with a global economy!",
+                        "messages": [
+                            {
+                                "message": "You just earned 500 coins!",
+                                "username": "fm01",
+                                "avatar": "/images/logo.png",
+                                "bot": true
+                            }
+                        ]
+                    },
+                    {
+                        "title": "information",
+                        "description": "Engage members with a global economy!",
+                        "messages": [
+                            {
+                                "message": "You just earned 500 coins!",
+                                "username": "fm01",
+                                "avatar": "/images/logo.png",
+                                "bot": true
+                            }
+                        ]
+                    },
+                    {
+                        "title": "custom-branding",
+                        "description": "Engage members with a global economy!",
+                        "messages": [
+                            {
+                                "message": "You just earned 500 coins!",
+                                "username": "fm01",
+                                "avatar": "/images/logo.png",
+                                "bot": true
+                            }
+                        ]
                     }
                 ]
             }
         },
         "premium": {
-            "title": "Supercharge your server",
+            "title": "Premium",
             "subtext": "Unlock advanced limits and premium customization.",
             "tiers": {
                 "free": {
-                    "name": "Basic",
-                    "features": [],
-                    "price": "$0/mo",
-                    "button": "Current Plan",
-                    "recommend": ""
+                    "name": "Base",
+                    "features": [
+                        "10 customizable message",
+                        "Full dashboard access",
+                        "Out of the box localization",
+                        "All modules",
+                        "Server & User install"
+                    ],
+                    "price": "Free",
+                    "button": "Add to server"
                 },
                 "premium": {
                     "name": "Premium",
-                    "features": [],
-                    "price": "$4.99/mo",
-                    "button": "Upgrade Now",
-                    "recommend": "Most Popular"
+                    "features": [
+                        "Every message customizable",
+                        "Priority support",
+                        "Custom role on the support server"
+                    ],
+                    "price": "5€/mo",
+                    "button": "Go Premium"
                 },
                 "custom": {
-                    "name": "Enterprise",
-                    "features": [],
-                    "price": "Custom",
-                    "button": "Contact Sales",
-                    "recommend": ""
+                    "name": "Custom",
+                    "features": [
+                        "Premium plan included",
+                        "Custom name, avatar and bio"
+                    ],
+                    "price": "10€/mo",
+                    "button": "Inquire"
                 }
             },
-            "disclosure": "Prices are subject to change. Cancel anytime."
+            "disclosure": "The bot can be self-hosted with free premium access by downloading the source code from our "
         },
         "invite": {
-            "title": "Ready to get started?",
-            "subtext": "Add fm01 to your server in just two clicks."
+            "title": "What are you waiting for?",
+            "subtext": "Get started for free"
         }
     },
     "team": {
