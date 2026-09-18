@@ -46,6 +46,12 @@ export async function getPromotedServers() {
             invite: "https://fm01.bot",
             icon: "https://picsum.photos/1080/1080",
             name: "asd"
+        },
+        {
+            count: 1000,
+            invite: "https://fm01.bot",
+            icon: "https://picsum.photos/1080/1080",
+            name: "asd"
         }
     ]
 

@@ -1,7 +1,7 @@
-import { MainPageLangJson } from "@/_lib/types/MainPageLang";
-import { faCircleCheck } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Link from "next/link";
+import { MainPageLangJson } from "@/_lib/types/MainPageLang";
+import { faAdd, faCircleCheck, faCoins, faMailBulk } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export default function Premium({ lang }: { lang: MainPageLangJson["premium"] }) {
     const FREE = lang.tiers.free;
@@ -9,7 +9,7 @@ export default function Premium({ lang }: { lang: MainPageLangJson["premium"] })
     const CUSTOM = lang.tiers.custom;
     return (
         <div id="features" className="h-fit">
-            <p className="tier-title">
+            <p className="title">
                 {lang.title}
             </p>
             <p className="subtext">
@@ -36,7 +36,7 @@ export default function Premium({ lang }: { lang: MainPageLangJson["premium"] })
                         </div>
                     </div>
                     <Link href={"https://add.fm01.bot"} className="button">
-                        {FREE.button}
+                        <FontAwesomeIcon icon={faAdd} /> {FREE.button}
                     </Link>
                 </div>
                 <div id="PREMIUM" className="tier-cards">
@@ -59,7 +59,7 @@ export default function Premium({ lang }: { lang: MainPageLangJson["premium"] })
                         </div>
                     </div>
                     <Link href={"https://add.fm01.bot"} className="button">
-                        {PREMIUM.button}
+                        <FontAwesomeIcon icon={faCoins} /> {PREMIUM.button}
                     </Link>
                 </div>
                 <div id="CUSTOM" className="tier-cards">
@@ -82,10 +82,11 @@ export default function Premium({ lang }: { lang: MainPageLangJson["premium"] })
                         </div>
                     </div>
                     <Link href={"https://add.fm01.bot"} className="button">
-                        {CUSTOM.button}
+                        <FontAwesomeIcon icon={faMailBulk} /> {CUSTOM.button}
                     </Link>
                 </div>
             </div>
+            <p className="text-center text-text/50 text-xl mt-8">{lang.disclosure}<Link href={`https://github.com/fm01-bot`} className="link">GitHub</Link>.</p>
         </div >
     );
 }
