@@ -4,6 +4,7 @@ import Hero from "@/_lib/components/main/Hero"
 import Features from "@/_lib/components/main/Features"
 import PromotedServers from "@/_lib/components/main/PromotedServers"
 import Premium from '@/_lib/components/main/Premium'
+import AddNow from '@/_lib/components/main/AddNow'
 
 type PageProps = {
     params: Promise<{ lang: string }>;
@@ -34,6 +35,8 @@ export default async function Page({ params }: PageProps) {
                 <Features lang={translation.features} />
 
                 <Premium lang={translation.premium} />
+
+                <AddNow lang={translation.invite} />
             </div>
         </div>
     )
