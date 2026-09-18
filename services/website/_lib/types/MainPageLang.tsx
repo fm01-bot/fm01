@@ -35,31 +35,20 @@ interface FeaturesLangJson {
     container: ContainerType
 }
 
-interface PremiumLangJson {
+interface PremiumTierLangJson {
+    name: string,
+    features: string[],
+    price: string,
+    button: string,
+}
+
+export interface PremiumLangJson {
     title: string,
     subtext: string,
     tiers: {
-        free: {
-            name: string,
-            features: [],
-            price: string,
-            button: string,
-            recommend: string,
-        },
-        premium: {
-            name: string,
-            features: []
-            price: string,
-            button: string,
-            recommend: string,
-        },
-        custom: {
-            name: string,
-            features: []
-            price: string,
-            button: string,
-            recommend: string,
-        }
+        free: PremiumTierLangJson,
+        premium: PremiumTierLangJson,
+        custom: PremiumTierLangJson,
     },
     disclosure: string
 }

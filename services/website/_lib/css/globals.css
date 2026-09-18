@@ -193,15 +193,36 @@ h1,h2,h3,h4,h5,p,a {
 }
 
 @utility promoted-servers {
-  & ::first-line {
-    @apply -translate-x-100;
+  @apply relative w-full overflow-hidden py-2;
+
+  & .promoted-servers-row:nth-child(even) .promoted-servers-track {
+    animation-direction: reverse;
   }
 }
 
 @utility promoted-servers-row {
-  @apply w-auto flex flex-row gap-2 absolute;
+  @apply relative w-full overflow-hidden;
 }
 
+@utility promoted-servers-track {
+  @apply flex w-max flex-row;
+  animation: promoted-servers-scroll 20s linear infinite;
+  will-change: transform;
+}
+
+@utility promoted-servers-group {
+  @apply flex shrink-0 flex-row gap-2 pr-2;
+}
+
+@keyframes promoted-servers-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
 
 h1 {
   font-size: x-large;
