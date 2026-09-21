@@ -39,7 +39,7 @@ export default function Header({ lang, code }: { lang: WebLangJson["header"], co
     }, [NAV_LINKS]);
 
     return (
-        <header className="navbar">
+        <header className={`navbar ${isScrolled ? "bg-text/5 backdrop-blur-xs" : ""}`}>
             <div className="navbar-inner">
                 <Link href="/" className="brand">
                     <Logo width={30} height={30} fill={'fill-primary'} />
@@ -91,15 +91,13 @@ export default function Header({ lang, code }: { lang: WebLangJson["header"], co
                         </label>
 
                         <div className="overlay">
-                            {NAV_LINKS.map((l, i) => (
-                                <Link key={i} href={l.href} className="overlay-link">
-                                    {l.label}
-                                </Link>
-                            ))}
-                            <Link href="https://dash.fm01.bot" className="dashboard-btn mt-4">
-                                <Dashboard width={14} height={14} fill="fill-white" />
-                                <span>Dashboard</span>
-                            </Link>
+                            <div className="overlay-links">
+                                {NAV_LINKS.map((l, i) => (
+                                    <Link key={i} href={l.href} className="overlay-link">
+                                        <span>{l.label}</span>
+                                    </Link>
+                                ))}
+                            </div>
                             <div className="flex flex-row gap-4">
                                 <div className="overlay-theme">
                                     {theme === "system" ? (

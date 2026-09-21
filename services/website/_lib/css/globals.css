@@ -37,7 +37,7 @@ h5,
 p,
 a {
   font-family: 'Inter';
-  font-weight: 100;
+  font-weight: 400;
   font-style: normal;
 }
 
@@ -90,10 +90,10 @@ a {
   @apply w-full max-w-screen fixed top-0 left-0 z-10 flex items-center justify-center;
 
   & .navbar-inner {
-    @apply w-full max-w-full self-stretch flex flex-row items-center justify-between! relative py-4 px-4;
+    @apply w-full max-w-full self-stretch flex flex-row items-center justify-between! relative p-2;
 
     @variant laptop {
-      @apply w-280;
+      @apply w-280 p-4;
     }
   }
 
@@ -141,7 +141,11 @@ a {
     }
     
     & .dashboard-btn {
-      @apply px-4 py-2.5 rounded-2xl bg-primary gap-2 flex flex-row items-center text-white;
+      @apply px-3 py-2 rounded-lg bg-primary gap-2 flex flex-row items-center text-white font-extrabold!;
+
+      @variant laptop {
+        @apply rounded-2xl px-4 py-2;
+      }
       & span {
         @apply leading-normal;
       }
@@ -149,8 +153,7 @@ a {
 
     /* Target ONLY direct children so we don't hide the mobile overlay elements */
     & > .theme, 
-    & > .lang-select, 
-    & > .dashboard-btn {
+    & > .lang-select {
       @apply hidden;
       
       @variant laptop {
@@ -195,10 +198,18 @@ a {
 
       /* Overlay Styles */
       & .overlay {
-        @apply fixed w-screen h-screen top-0 left-[-105vw] bg-background/95 backdrop-blur-lg z-40 flex flex-col gap-4 items-center justify-center transition-all duration-300;
+        @apply fixed! w-screen h-screen top-0! left-[-105vw]! bg-background/95! backdrop-blur-lg! z-40 flex flex-col gap-4 items-center justify-center transition-all duration-300;
 
         & .overlay-link {
-          @apply text-2xl font-bold;
+          @apply text-2xl font-bold!;
+        }
+
+        & .overlay-links {
+          @apply flex flex-col items-center justify-center gap-4;
+        }
+
+        & .overlay-link:last-child {
+          @apply text-accent!;
         }
         
         & .overlay-theme {
@@ -215,7 +226,7 @@ a {
       }
 
       & input:checked ~ .overlay {
-        @apply left-0;
+        @apply left-0!;
       }
     }
   }
@@ -245,31 +256,39 @@ a {
 }
 
 @utility primary-button {
-  @apply bg-primary text-base text-white py-2.5 px-5 rounded-lg transition-all;
+  @apply bg-primary text-base text-white py-2 px-4 rounded-lg transition-all;
 
   &:hover {
     @apply scale-110;
   }
 
   @variant laptop {
-@apply text-lg;
+@apply text-lg py-4 px-8 rounded-2xl;
 
   }
 }
 
 @utility accent-button {
-  @apply bg-accent laptop:px-6 laptop:py-3 py-2 px-3 laptop:rounded-2xl rounded-lg shadow-[0px_0px_20px_0px] shadow-transparent;
+  @apply bg-accent py-2 px-3 laptop:rounded-2xl rounded-lg shadow-[0px_0px_20px_0px] shadow-transparent;
 
   &:hover {
     @apply shadow-accent!;
   }
+
+  @variant laptop {
+    @apply px-6 py-3;
+  }
 }
 
 @utility btn-sec {
-  @apply laptop:rounded-2xl rounded-lg bg-text/10 backdrop-blur-[2px] laptop:px-6 laptop:py-3 py-2 px-3;
+  @apply laptop:rounded-2xl rounded-lg bg-text/10 backdrop-blur-[2px] py-2 px-4;
 
   &:hover {
     @apply bg-text/20;
+  }
+
+  @variant laptop {
+    @apply py-3 px-6;
   }
 }
 
@@ -294,23 +313,63 @@ a {
   mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
 }
 
+@utility premium-disclamer {
+  @apply text-text/50 text-base mt-8 text-left;
+
+  @variant laptop {
+    @apply text-xl text-center;
+  }
+}
+
+@utility tier-container {
+  @apply flex flex-row flex-wrap w-full items-center justify-center gap-4;
+}
+
 @utility tier-cards {
-  @apply flex flex-col items-center justify-between h-90! w-82! p-6 bg-contrast rounded-2xl border-4 border-transparent;
+  @apply w-full flex flex-col items-center justify-between bg-contrast rounded-2xl border-4 border-transparent p-4;
+
+  @variant laptop {
+    @apply h-90! w-82! p-6;
+  }
+
+  & .features {
+    @apply flex flex-col w-full mb-8!;
+
+    @variant laptop {
+      @apply w-fit;
+    }
+  }
 
   & .inner-container {
-    @apply w-full flex items-center justify-center flex-col gap-2.5;
+    @apply w-full flex items-center justify-between flex-row gap-2.5 flex-wrap;
+
+    @variant laptop {
+      @apply flex-col flex-nowrap;
+    }
   }
 
   & .tier-title {
-    @apply text-5xl font-black text-center w-full;
+    @apply text-3xl font-black text-center w-fit pl-0.5;
+
+    @variant laptop {
+      @apply w-full text-5xl pl-0;
+    }
   }
 
   & .tier-price {
-    @apply text-xl font-bold text-center;
+    @apply text-2xl font-bold text-center w-fit;
+
+    @variant laptop {
+      @apply w-full text-xl;
+    }
   }
 
   & .button {
-    @apply rounded-lg px-3.5 py-3 w-full text-center text-xl! font-extrabold!;
+    @apply rounded-lg py-2 px-4 w-full text-center text-xl! font-extrabold! text-white;
+
+    @variant laptop {
+      @apply py-3 px-3.5;
+    }
   }
 
   &#FREE {
@@ -335,6 +394,10 @@ a {
     }
     & .button {
       @apply bg-accent;
+    }
+
+    & .features {
+      @apply text-accent;
     }
   }
 }

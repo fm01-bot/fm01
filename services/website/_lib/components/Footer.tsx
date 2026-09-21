@@ -1,5 +1,3 @@
-import logo from "@public/images/logo.png"
-import Image from "next/image";
 import Link from "next/link";
 
 import { FooterLangJson } from "@/_lib/types/PageLang"
@@ -38,8 +36,8 @@ export default function Footer({ lang }: { lang: FooterLangJson }) {
     ]
 
     return (
-        <div className="w-full flex items-center justify-center pb-5 px-5 flex-col py-10 md:pt-20 bg-text/7 md:[clip-path:polygon(0_0,100%_20%,100%_100%,0_100%)] [clip-path:polygon(0_0,100%_10%,100%_100%,0_100%)] pt-15">
-            <div className="w-full max-w-280 flex items-start justify-around relative flex-wrap gap-10">
+        <div className="w-full flex items-center justify-center pb-5 px-5 flex-col py-10 md:pt-20 bg-text/7 laptop:[clip-path:polygon(0_0,100%_10%,100%_100%,0_100%)] pt-15">
+            <div className="w-full max-w-280 flex flex-col laptop:flex-row items-start laptop:flex-wrap laptop:justify-around relative flex-wrap gap-10">
                 <div>
                     <h1 className="pb-2">{lang.contact.title}</h1>
                     <p>Erdei Olivér Márton E.V.</p>
@@ -74,11 +72,11 @@ export default function Footer({ lang }: { lang: FooterLangJson }) {
                     </div>
                 </div>
             </div>
-            <div className="w-full max-w-275 flex items-center flex-col justify-around text-sm pt-5 flex-wrap">
+            <div className="w-full max-w-275 flex laptop:items-center flex-col justify-around text-sm pt-5 flex-wrap">
                 <span>
                     fm01 © {currentYear}. {lang.copyright}
                 </span>
-                <span>{lang.affiliate}</span>
+                <span className="text-text/50">{lang.affiliate}</span>
             </div>
         </div>
     )

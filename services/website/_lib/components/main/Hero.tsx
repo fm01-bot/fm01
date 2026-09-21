@@ -15,15 +15,15 @@ export default function Hero({ lang }: { lang: MainPageLangJson["hero"] }) {
                 <p className="secondary-text">{lang.subtext[0]}</p>
                 <p className="secondary-text">{lang.subtext[1]}</p>
             </div>
-            <div className="flex flex-row justify-center items-center gap-5 w-full">
-                <Link href={`https://dashboard.fm01.bot/`} className="accent-button flex flex-row gap-2 items-center text-white">
-                    <FontAwesomeIcon icon={faDiscord} className="laptop:w-7.25! laptop:h-7.25! w-6! h-6!" />
+            <div className="flex flex-row justify-center items-center gap-2.5 laptop:gap-5 w-full">
+                <Link href={`https://dashboard.fm01.bot/`} className="accent-button flex flex-row gap-1 laptop:gap-2 items-center text-white">
+                    <FontAwesomeIcon icon={faDiscord} className="laptop:w-7.25! laptop:h-7.25! w-5! h-5! p-0.5" />
                     <span className="text-base laptop:text-2xl font-extrabold leading-[normal]">
                         {lang.invite_btn}
                     </span>
                 </Link>
                 <Link href={`https://dc.fm01.bot/`} className="btn-sec">
-                    <span className="text-base laptop:text-2xl leading-[normal]">
+                    <span className="text-base font-normal laptop:text-2xl leading-[normal]">
                         {lang.support_btn}
                     </span>
                 </Link>

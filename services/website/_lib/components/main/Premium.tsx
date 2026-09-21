@@ -15,7 +15,7 @@ export default function Premium({ lang }: { lang: MainPageLangJson["premium"] })
             <p className="subtext">
                 {lang.subtext}
             </p>
-            <div className="flex flex-row flex-wrap w-full items-center justify-center gap-4">
+            <div className="tier-container">
                 <div id="FREE" className="tier-cards">
                     <div className="inner-container">
                         <span className="tier-title">
@@ -24,7 +24,7 @@ export default function Premium({ lang }: { lang: MainPageLangJson["premium"] })
                         <span className="tier-price">
                             {FREE.price}
                         </span>
-                        <div className="flex flex-col features">
+                        <div className="features">
                             {
                                 FREE.features.map((a, i) => (
                                     <span key={i}>
@@ -47,7 +47,7 @@ export default function Premium({ lang }: { lang: MainPageLangJson["premium"] })
                         <span className="tier-price">
                             {PREMIUM.price}
                         </span>
-                        <div className="flex flex-col features">
+                        <div className="features">
                             {
                                 PREMIUM.features.map((a, i) => (
                                     <span key={i}>
@@ -70,7 +70,7 @@ export default function Premium({ lang }: { lang: MainPageLangJson["premium"] })
                         <span className="tier-price">
                             {CUSTOM.price}
                         </span>
-                        <div className="flex flex-col">
+                        <div className="features">
                             {
                                 CUSTOM.features.map((a, i) => (
                                     <span key={i}>
@@ -86,7 +86,7 @@ export default function Premium({ lang }: { lang: MainPageLangJson["premium"] })
                     </Link>
                 </div>
             </div>
-            <p className="text-center text-text/50 text-xl mt-8">{lang.disclosure}<Link href={`https://github.com/fm01-bot`} className="link">GitHub</Link>.</p>
+            <p className="premium-disclamer">{lang.disclosure}<Link href={`https://github.com/fm01-bot`} className="link">GitHub</Link>.</p>
         </div >
     );
 }

@@ -64,7 +64,7 @@ export default async function PromotedServers({ lang }: { lang: MainPageLangJson
                                                             <div className="flex flex-col">
                                                                 <span className="text-2xl font-semibold">{s.name}</span>
                                                                 <span className="flex flex-row items-center gap-1">
-                                                                    <Members width={20} height={15} className="opacity-10 mt-1" />
+                                                                    <Members width={20} height={15} className="opacity-100 dark:opacity-40 mt-1" />
                                                                     <span className=" leading-[normal]! text-xl! font-light! opacity-50">{new Intl.NumberFormat().format(s.count)} {lang.memberstext}</span>
                                                                 </span>
                                                             </div>
@@ -81,7 +81,7 @@ export default async function PromotedServers({ lang }: { lang: MainPageLangJson
                 }
             </div>
 
-            <div className=" w-full items-center flex justify-center mt-20 -mb-20">
+            <div className=" w-full items-center flex justify-center mt-20 -mb-20 text-white">
                 <Link href={`add.fm01.bot`} className=" flex items-center justify-center gap-2 py-3 px-6 bg-primary w-fit rounded-2xl text-2xl font-extrabold hover:shadow-primary shadow-transparent shadow-[0px_0px_20px_0px]">
                     <FontAwesomeIcon icon={faDiscord} />
                     <span className=" font-extrabold">Join Them!</span>
