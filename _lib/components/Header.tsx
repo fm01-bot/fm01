@@ -1,6 +1,5 @@
 "use client"
 import Link from "next/link";
-import { motion } from 'framer-motion';
 import { useState, useEffect, useMemo } from "react";
 import Logo from "../svg/Logo";
 import Dashboard from "../svg/Dashboard";
@@ -12,13 +11,9 @@ import { languages } from "@/app/[lang]/dictionaries";
 import { useTheme } from "@teispace/next-themes";
 
 export default function Header({ lang, code }: { lang: WebLangJson["header"], code: string }) {
-
     const page = usePathname().substring(3);
-
     const router = useRouter();
-
     const { theme, setTheme } = useTheme()
-
 
     const NAV_LINKS = useMemo(
         () => [
@@ -29,16 +24,10 @@ export default function Header({ lang, code }: { lang: WebLangJson["header"], co
         ], [lang]
     )
 
-    const [showMenus, setShowMenus] = useState(false); // Variable used for displaying menu in mobile view
-
-
-    const [isScrolled, setIsScrolled] = useState(false); // Variable to set navbar background if user scrolled
+    const [isScrolled, setIsScrolled] = useState(false);
 
     useEffect(() => {
-        const scrollCheck = () => {
-            setIsScrolled(window.scrollY > 10);
-        };
-
+        const scrollCheck = () => setIsScrolled(window.scrollY > 10);
         scrollCheck();
         window.addEventListener('scroll', scrollCheck, { passive: true });
         window.addEventListener('resize', scrollCheck);
@@ -50,62 +39,86 @@ export default function Header({ lang, code }: { lang: WebLangJson["header"], co
     }, [NAV_LINKS]);
 
     return (
-        <div className={`w-full max-w-screen fixed top-0 left-0 z-10 flex items-center justify-center`}>
-            <div className="w-280 max-w-full self-stretch flex flex-row items-center justify-between! relative navbar py-4">
-                <Link href="/" className="flex flex-row items-center gap-1 self-stretch">
+        <header className={`navbar ${isScrolled ? "bg-text/5 backdrop-blur-xs" : ""}`}>
+            <div className="navbar-inner">
+                <Link href="/" className="brand">
                     <Logo width={30} height={30} fill={'fill-primary'} />
-                    <span className="text-3xl text-primary font-black ">fm01</span>
+                    <span>fm01</span>
                 </Link>
-                <div className={`nav-links-container`}>
-                    <div className={`nav-links self-stretch pointer-events-auto ${isScrolled ? "bg-contrast" : "bg-text/5"}`}>
-                        {
-                            NAV_LINKS.map((l, i) => {
-                                return (
-                                    <Link key={i} href={l.href}>
-                                        {l.label}
-                                    </Link>
-                                )
-                            })
-                        }
+
+                <nav className="nav-links-container">
+                    <div className={`nav-links ${isScrolled ? "bg-contrast" : "bg-text/5"}`}>
+                        {NAV_LINKS.map((l, i) => (
+                            <Link key={i} href={l.href}>
+                                {l.label}
+                            </Link>
+                        ))}
                     </div>
-                </div>
-                <div className="self-stretch flex flex-row items-center gap-0!">
-                    <div className="flex flex-row items-center gap-6! p-4">
-                        {
-                            theme == "system" ? (
-                                <FontAwesomeIcon icon={faDesktop} onClick={() => {
-                                    setTheme('light')
-                                }} />
-                            ) : theme == "light" ? (
-                                <FontAwesomeIcon icon={faSun} onClick={() => {
-                                    setTheme('dark')
-                                }} />
-                            ) : (
-                                <FontAwesomeIcon icon={faMoon} onClick={() => {
-                                    setTheme('system')
-                                }} />
-                            )
-                        }
-                        <div>
-                            <select className="lang-select gap-0 text-text!" style={{ lineHeight: "normal" }} defaultValue={code} onChange={(e) => {
-                                router.replace(`${e.target.value}/${page}`)
-                            }}>
-                                {
-                                    languages.map((l, i) => {
-                                        return (
-                                            <option key={i} value={l}>{l.toLocaleUpperCase()}</option>
-                                        )
-                                    })
-                                }
-                            </select>
+                </nav>
+
+                <div className="actions">
+                    {/* Desktop Theme Toggle */}
+                    <div className="theme">
+                        {theme === "system" ? (
+                            <FontAwesomeIcon icon={faDesktop} onClick={() => setTheme('light')} className="cursor-pointer" />
+                        ) : theme === "light" ? (
+                            <FontAwesomeIcon icon={faSun} onClick={() => setTheme('dark')} className="cursor-pointer" />
+                        ) : (
+                            <FontAwesomeIcon icon={faMoon} onClick={() => setTheme('system')} className="cursor-pointer" />
+                        )}
+                    </div>
+
+                    {/* Desktop Lang Select */}
+                    <select className="lang-select" defaultValue={code} onChange={(e) => router.replace(`${e.target.value}/${page}`)}>
+                        {languages.map((l, i) => (
+                            <option key={i} value={l}>{l.toLocaleUpperCase()}</option>
+                        ))}
+                    </select>
+
+                    {/* Desktop Dashboard Button */}
+                    <Link href="https://dash.fm01.bot" className="dashboard-btn">
+                        <Dashboard width={14} height={14} fill="fill-white" />
+                        <span>Dashboard</span>
+                    </Link>
+
+                    {/* Mobile Menu Wrapper */}
+                    <div className="mobile-menu">
+                        <input type="checkbox" id="burger" />
+                        <label className="burger" htmlFor="burger">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </label>
+
+                        <div className="overlay">
+                            <div className="overlay-links">
+                                {NAV_LINKS.map((l, i) => (
+                                    <Link key={i} href={l.href} className="overlay-link">
+                                        <span>{l.label}</span>
+                                    </Link>
+                                ))}
+                            </div>
+                            <div className="flex flex-row gap-4">
+                                <div className="overlay-theme">
+                                    {theme === "system" ? (
+                                        <FontAwesomeIcon icon={faDesktop} onClick={() => setTheme('light')} className="cursor-pointer" />
+                                    ) : theme === "light" ? (
+                                        <FontAwesomeIcon icon={faSun} onClick={() => setTheme('dark')} className="cursor-pointer" />
+                                    ) : (
+                                        <FontAwesomeIcon icon={faMoon} onClick={() => setTheme('system')} className="cursor-pointer" />
+                                    )}
+                                </div>
+
+                                <select className="lang-select" defaultValue={code} onChange={(e) => router.replace(`${e.target.value}/${page}`)}>
+                                    {languages.map((l, i) => (
+                                        <option key={i} value={l}>{l.toLocaleUpperCase()}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
                     </div>
-                    <Link href={`https://dash.fm01.bot`} className=" p-4 py-2.5 rounded-2xl bg-primary gap-2 flex flex-row items-center text-white">
-                        <Dashboard width={14} height={14} fill="fill-white" />
-                        <span style={{ lineHeight: "normal" }} >Dashboard</span>
-                    </Link>
                 </div>
             </div>
-        </div>
+        </header>
     )
 }

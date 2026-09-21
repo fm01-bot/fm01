@@ -9,17 +9,23 @@
     "footer": {
         "contact": {
             "title": "Contact",
-            "discord": "Discord Invite"
+            "discord": "Join our Discord server"
         },
-        "docs": {
-            "title": "Legal Documents",
+        "links": {
+            "title": "Links",
             "tos": "Terms of Service",
             "privacy": "Privacy Policy",
-            "cookies": "Cookie Policy"
+            "cookies": "Cookie Policy",
+            "github": "GitHub",
+            "providers": "Providers"
+        },
+        "special": {
+            "title": "Special thanks to",
+            "dev": "Developed by",
+            "host": "Hosted by"
         },
         "copyright": "All rights reserved.",
-        "designer": "Created by",
-        "service": "Hosted by"
+        "affiliate": "Not affiliated with Discord Inc."
     },
     "main": {
         "hero": {
@@ -29,11 +35,11 @@
                 "bot"
             ],
             "subtext": [
-                "Moderation, protection, utility.",
-                "Take control of your community."
+                "Used in over 30,000 servers,",
+                "fm01 does everything for you."
             ],
             "invite_btn": "Try it now",
-            "support_btn": "Support"
+            "support_btn": "Features"
         },
         "servers": {
             "title": "Trusted by communities",

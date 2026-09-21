@@ -1,6 +1,9 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+
 
 @custom-variant dark (&:is(.dark *));
+
+/* ==================== Global CSS ==================== */
 
 * {
   transition: all;
@@ -9,37 +12,54 @@
 }
 
 /* hide page scrollbar */
-html { scrollbar-width: none; } /* Firefox */
-body { -ms-overflow-style: none; } /* IE and Edge */
-body::-webkit-scrollbar, body::-webkit-scrollbar-button { display: none; } /* Chrome */
+html {
+  scrollbar-width: none;
+} /* Firefox */
+body {
+  -ms-overflow-style: none;
+} /* IE and Edge */
+body::-webkit-scrollbar,
+body::-webkit-scrollbar-button {
+  display: none;
+} /* Chrome */
+
 /* end hide page scrollbar */
 
 body:has(#burger:checked) {
   overflow: hidden;
 }
 
-h1,h2,h3,h4,h5,p,a {
-  font-family: "Inter";
-  font-weight: 100;
+h1,
+h2,
+h3,
+h4,
+h5,
+p,
+a {
+  font-family: 'Inter';
+  font-weight: 400;
   font-style: normal;
 }
 
 :root {
-  --theme-bg: #E2E3E4;
+--theme-bg: #e2e3e4;
+
   --theme-text: #030507;
-  --theme-primary: #55B5FA;
-  --theme-secondary: #4D8BFF;
-  --theme-accent: #6400AD;
-  --theme-contrast: #CDCDD4;
+--theme-primary: #4d8bff;
+--theme-secondary: #3865b2;
+--theme-accent: #bf3fd9;
+--theme-contrast: #cdcdd4;
+
 }
 
 .dark {
-  --theme-bg: #1B1C1D;
-  --theme-text: #F8FAFC;
-  --theme-primary: #4AB7FB;
-  --theme-secondary: #4F85DF;
-  --theme-accent: #FD81D8;
-  --theme-contrast: #0E0E0F;
+--theme-bg: #1b1c1d;
+--theme-text: #f8fafc;
+--theme-primary: #6094eb;
+--theme-secondary: #3865b2;
+--theme-accent: #da47f8;
+--theme-contrast: #0e0e0f;
+
 }
 
 @theme {
@@ -49,146 +69,336 @@ h1,h2,h3,h4,h5,p,a {
   --color-secondary: var(--theme-secondary);
   --color-accent: var(--theme-accent);
   --color-contrast: var(--theme-contrast);
-  --breakpoint-laptop: 54rem;
+--breakpoint-laptop: 54rem; /* 864px */
+
   --breakpoint-zero: 0px;
 }
 
-.link {
-  color: var(--color-primary)
-
+@utility link {
+  @apply text-primary;
+  &:hover {
+    @apply underline;
+  }
 }
 
-.link:hover {
-  text-decoration: underline;
+/* ==================== Global CSS ==================== */
+
+
+/* ==================== Navbar CSS ==================== */
+
+@utility navbar {
+  @apply w-full max-w-screen fixed top-0 left-0 z-10 flex items-center justify-center;
+
+  & .navbar-inner {
+    @apply w-full max-w-full self-stretch flex flex-row items-center justify-between! relative p-2;
+
+    @variant laptop {
+      @apply w-280 p-4;
+    }
+  }
+
+  & .brand {
+    @apply flex flex-row items-center gap-1 self-stretch;
+
+    & span {
+      @apply text-3xl text-primary font-black;
+    }
+  }
+
+  & .nav-links-container {
+    @apply w-screen fixed;
+
+    @variant laptop {
+      @apply absolute h-auto w-280 max-w-full flex flex-row items-center justify-center pointer-events-none;
+    }
+  }
+
+  & .nav-links {
+    @apply p-4 gap-8! rounded-2xl border-2 border-text/10 backdrop-blur-[3px] hidden! self-stretch pointer-events-auto;
+
+    @variant laptop {
+      @apply flex!;
+    }
+
+    & a {
+      @apply leading-1 drop-shadow-md;
+
+      &:hover {
+        @apply text-primary drop-shadow-primary;
+      }
+      &:last-child {
+        @apply text-accent hover:drop-shadow-accent;
+      }
+    }
+  }
+
+  & .actions {
+    @apply self-stretch flex flex-row items-center gap-5;
+
+    /* Base styles applied to BOTH desktop and mobile elements */
+    & .lang-select {
+      @apply text-text! bg-transparent font-bold text-base leading-normal cursor-pointer focus:outline-none focus:ring-0 [&>option]:text-text;
+    }
+    
+    & .dashboard-btn {
+      @apply px-3 py-2 rounded-lg bg-primary gap-2 flex flex-row items-center text-white font-extrabold!;
+
+      @variant laptop {
+        @apply rounded-2xl px-4 py-2;
+      }
+      & span {
+        @apply leading-normal;
+      }
+    }
+
+    /* Target ONLY direct children so we don't hide the mobile overlay elements */
+    & > .theme, 
+    & > .lang-select {
+      @apply hidden;
+      
+      @variant laptop {
+        @apply flex;
+      }
+    }
+
+    /* Mobile Menu Implementation */
+    & .mobile-menu {
+      @apply block;
+
+      @variant laptop {
+        @apply hidden;
+      }
+
+      & input {
+        @apply hidden;
+      }
+
+      & .burger {
+        @apply relative w-10 h-7.5 bg-transparent cursor-pointer block z-50; /* z-50 keeps it above overlay */
+        
+        & span {
+          @apply block z-10 absolute h-1 w-full bg-text rounded-full opacity-100 left-0 rotate-0 transition-all duration-250 ease-in-out;
+          
+          &:nth-of-type(1) { @apply top-0 origin-left; }
+          &:nth-of-type(2) { @apply top-1/2 -translate-y-1/2 origin-left; }
+          &:nth-of-type(3) { @apply top-full -translate-y-full origin-left; }
+        }
+      }
+
+      /* Burger checked states using adjacent sibling combinator (+) */
+      & input:checked + .burger span:nth-of-type(1) {
+        @apply rotate-45 top-0 left-1.25;
+      }
+      & input:checked + .burger span:nth-of-type(2) {
+        @apply w-0 opacity-0;
+      }
+      & input:checked + .burger span:nth-of-type(3) {
+        @apply -rotate-45 top-8! left-1.25;
+      }
+
+      /* Overlay Styles */
+      & .overlay {
+        @apply fixed! w-screen h-screen top-0! left-[-105vw]! bg-background/95! backdrop-blur-lg! z-40 flex flex-col gap-4 items-center justify-center transition-all duration-300;
+
+        & .overlay-link {
+          @apply text-2xl font-bold!;
+        }
+
+        & .overlay-links {
+          @apply flex flex-col items-center justify-center gap-4;
+        }
+
+        & .overlay-link:last-child {
+          @apply text-accent!;
+        }
+        
+        & .overlay-theme {
+          @apply text-2xl;
+        }
+
+        & .lang-select {
+          @apply text-xl block; 
+        }
+
+        & .dashboard-btn {
+          @apply text-xl px-6 py-3; 
+        }
+      }
+
+      & input:checked ~ .overlay {
+        @apply left-0!;
+      }
+    }
+  }
 }
+
+/* ==================== Navbar CSS ==================== */
 
 @utility title {
-  @apply text-3xl laptop:text-[4rem] font-bold! text-center mb-4
+  @apply text-3xl font-bold! text-center mb-4;
+
+  @variant laptop {
+    @apply text-6xl;
+  }
 }
 
 @utility subtext {
-  @apply text-base laptop:text-[2rem] font-normal opacity-50 text-center mb-8
+  @apply text-base font-normal opacity-50 text-center mb-8;
+
+  @variant laptop {
+@apply text-3xl;
+
+  }
+}
+
+@utility secondary-text {
+  @apply text-text/55 text-lg laptop:text-2xl font-medium! laptop:font-normal!;
 }
 
 @utility primary-button {
-  @apply bg-primary text-base laptop:text-lg text-white py-2.5 px-5 rounded-lg transition-all;
+  @apply bg-primary text-base text-white py-2 px-4 rounded-lg transition-all;
 
   &:hover {
-    @apply scale-110
+    @apply scale-110;
+  }
+
+  @variant laptop {
+@apply text-lg py-4 px-8 rounded-2xl;
+
   }
 }
 
 @utility accent-button {
-  @apply bg-accent py-3 px-6 rounded-2xl border-2 border-accent shadow-[0px_0px_20px_0px] hover:shadow-accent! shadow-transparent;
-}
+  @apply bg-accent py-2 px-3 laptop:rounded-2xl rounded-lg shadow-[0px_0px_20px_0px] shadow-transparent;
 
-@utility accent-secondary-button {
-  @apply bg-transparent border-2 border-accent rounded-2xl py-3 px-6 text-accent hover:bg-accent hover:text-white;
-}
-
-@utility secondary-text {
-  @apply text-text/55 text-lg laptop:text-2xl font-bold! laptop:font-normal!
-}
-
-@utility secondary-button {
-  @apply bg-secondary/60 text-base laptop:text-lg text-white py-2.5 px-5 rounded-lg transition-all;
-  
   &:hover {
-    @apply scale-110
-  }
-}
-
-@utility nav-links-container {
-
-  @variant zero {
-    @apply w-screen fixed; 
+    @apply shadow-accent!;
   }
 
   @variant laptop {
-    @apply absolute h-auto w-280 max-w-full flex flex-row items-center justify-center pointer-events-none;
+    @apply px-6 py-3;
+  }
+}
+
+@utility btn-sec {
+  @apply laptop:rounded-2xl rounded-lg bg-text/10 backdrop-blur-[2px] py-2 px-4;
+
+  &:hover {
+    @apply bg-text/20;
+  }
+
+  @variant laptop {
+    @apply py-3 px-6;
   }
 }
 
 @utility trust-subtext {
-  @apply text-base laptop:text-[2rem] font-normal text-center justify-center flex mb-8;
+  @apply text-base font-normal text-center justify-center flex mb-8 text-nowrap flex-wrap flex-row max-w-screen;
   & > span:nth-child(even) {
     @apply text-primary font-bold px-1.5;
   }
   & > span:nth-child(odd) {
     @apply opacity-50;
   }
+
+  @variant laptop {
+    @apply text-[2rem];
+  }
 }
 
-.grid-bg {
+@utility grid-bg {
   @apply bg-size-[121px_121px] bg-[linear-gradient(to_right,--theme(--color-text/3%)_3px,transparent_1px),linear-gradient(to_bottom,--theme(--color-text/3%)_3px,transparent_1px)];
-  
+
   -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
   mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
 }
 
-@utility nav-links {
-  @apply p-4 gap-8! rounded-2xl border-2 border-text/10 backdrop-blur-[3px] hidden! laptop:flex!;
+@utility premium-disclamer {
+  @apply text-text/50 text-base mt-8 text-left;
 
-  & a {
-    @apply leading-1 hover:text-primary hover:drop-shadow-primary drop-shadow-md;
-    &:last-child {
-      @apply text-accent hover:drop-shadow-accent;
-    }
+  @variant laptop {
+    @apply text-xl text-center;
   }
 }
 
-@utility navbar {
-  & div {
-    @apply flex flex-row items-center gap-2;
-  }
-}
-
-@utility lang-select {
-  @apply text-text! bg-transparent font-bold text-base cursor-pointer focus:outline-none focus:ring-0 [&>option]:text-text;
+@utility tier-container {
+  @apply flex flex-row flex-wrap w-full items-center justify-center gap-4;
 }
 
 @utility tier-cards {
-  @apply flex flex-col items-center justify-between h-90! w-82! p-6 bg-contrast rounded-2xl border-4 border-transparent;
-  
+  @apply w-full flex flex-col items-center justify-between bg-contrast rounded-2xl border-4 border-transparent p-4;
+
+  @variant laptop {
+    @apply h-90! w-82! p-6;
+  }
+
+  & .features {
+    @apply flex flex-col w-full mb-8!;
+
+    @variant laptop {
+      @apply w-fit;
+    }
+  }
+
   & .inner-container {
-    @apply w-full flex items-center justify-center flex-col gap-2.5;
+    @apply w-full flex items-center justify-between flex-row gap-2.5 flex-wrap;
+
+    @variant laptop {
+      @apply flex-col flex-nowrap;
+    }
   }
 
   & .tier-title {
-    @apply text-5xl font-black text-center w-full;
+    @apply text-3xl font-black text-center w-fit pl-0.5;
+
+    @variant laptop {
+      @apply w-full text-5xl pl-0;
+    }
   }
 
   & .tier-price {
-    @apply text-xl font-bold text-center;
+    @apply text-2xl font-bold text-center w-fit;
+
+    @variant laptop {
+      @apply w-full text-xl;
+    }
   }
 
   & .button {
-    @apply rounded-lg px-3.5 py-3 w-full text-center text-xl! font-extrabold!;
+    @apply rounded-lg py-2 px-4 w-full text-center text-xl! font-extrabold! text-white;
+
+    @variant laptop {
+      @apply py-3 px-3.5;
+    }
   }
 
   &#FREE {
     & .button {
-    @apply bg-text text-background;
-  }
+      @apply bg-text text-background;
+    }
   }
 
-  &#PREMIUM{
+  &#PREMIUM {
     @apply border-primary!;
     & .tier-title {
       @apply text-primary;
     }
     & .button {
-    @apply bg-primary ;
-  }
+      @apply bg-primary;
+    }
   }
 
   &#CUSTOM {
     & .tier-title {
-    @apply text-accent;
-  }
-  & .button {
-    @apply bg-accent;
-  }
+      @apply text-accent;
+    }
+    & .button {
+      @apply bg-accent;
+    }
+
+    & .features {
+      @apply text-accent;
+    }
   }
 }
 
@@ -254,65 +464,4 @@ html {
   left: anchor(left);
   width: anchor-size(width);
   transition: all 0.25s ease-in-out;
-}
-
-/* From Uiverse.io by Cevorob */ 
-.burger {
-  position: relative;
-  width: 30px;  /* Downscaled to 30px */
-  height: 25px; /* Downscaled to 20px */
-  background: transparent;
-  cursor: pointer;
-  display: block;
-}
-
-.burger input {
-  display: none;
-}
-
-.burger span {
-  display: block;
-  position: absolute;
-  height: 3px; /* Scaled from 4px (4 * 0.75 = 3) */
-  width: 100%;
-  background: var(--color-text);
-  border-radius: 9px;
-  opacity: 1;
-  left: 0;
-  transform: rotate(0deg);
-  transition: .25s ease-in-out;
-}
-
-.burger span:nth-of-type(1) {
-  top: 0px;
-  transform-origin: left center;
-}
-
-.burger span:nth-of-type(2) {
-  top: 50%;
-  transform: translateY(-50%);
-  transform-origin: left center;
-}
-
-.burger span:nth-of-type(3) {
-  top: 100%;
-  transform-origin: left center;
-  transform: translateY(-100%);
-}
-
-.burger input:checked ~ span:nth-of-type(1) {
-  transform: rotate(45deg);
-  top: 0px;
-  left: 3.7px; /* Scaled from 5px (5 * 0.75 = 3.75) */
-}
-
-.burger input:checked ~ span:nth-of-type(2) {
-  width: 0%;
-  opacity: 0;
-}
-
-.burger input:checked ~ span:nth-of-type(3) {
-  transform: rotate(-45deg);
-  top: 18.5px; /* Scaled from 28px (28 * 0.666 = 18.66, adjusted to 18.5px to perfectly intersect with the 3px line height) */
-  left: 3.75px; /* Scaled from 5px */
 }

@@ -25,13 +25,19 @@ export interface FooterLangJson {
         title: string,
         discord: string
     },
-    docs: {
+    links: {
         title: string,
         tos: string,
         privacy: string,
-        cookies: string
+        cookies: string,
+        github: string,
+        providers: string,
+    },
+    special: {
+        title: string,
+        dev: string,
+        host: string
     },
     copyright: string,
-    designer: string,
-    service: string
+    affiliate: string,
 }
