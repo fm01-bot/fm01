@@ -39,7 +39,7 @@ export default function Header({ lang, code }: { lang: WebLangJson["header"], co
     }, [NAV_LINKS]);
 
     return (
-        <header className={`navbar ${isScrolled ? "bg-text/5 backdrop-blur-xs" : ""}`}>
+        <header className={`navbar ${isScrolled ? "bg-text/5 backdrop-blur-xs laptop:bg-transparent laptop:backdrop-blur-none" : ""}`}>
             <div className="navbar-inner">
                 <Link href="/" className="brand">
                     <Logo width={30} height={30} fill={'fill-primary'} />

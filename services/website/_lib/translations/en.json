@@ -1,333 +1,601 @@
 {
-    "header": {
-        "premium": "Premium",
-        "docs": "Docs",
-        "status": "Status",
-        "team": "Team",
-        "dashboard": "Dashboard"
+  "header": {
+    "premium": "Premium",
+    "docs": "Docs",
+    "status": "Status",
+    "team": "Team",
+    "dashboard": "Dashboard"
+  },
+  "footer": {
+    "contact": {
+      "title": "Contact",
+      "discord": "Join our Discord server"
     },
-    "footer": {
-        "contact": {
-            "title": "Contact",
-            "discord": "Join our Discord server"
-        },
-        "links": {
-            "title": "Links",
-            "tos": "Terms of Service",
-            "privacy": "Privacy Policy",
-            "cookies": "Cookie Policy",
-            "github": "GitHub",
-            "providers": "Providers"
-        },
-        "special": {
-            "title": "Special thanks to",
-            "dev": "Developed by",
-            "host": "Hosted by"
-        },
-        "copyright": "All rights reserved.",
-        "affiliate": "Not affiliated with Discord Inc."
+    "links": {
+      "title": "Links",
+      "tos": "Terms of Service",
+      "privacy": "Privacy Policy",
+      "cookies": "Cookie Policy",
+      "github": "GitHub",
+      "providers": "Providers"
     },
-    "main": {
-        "hero": {
-            "title": [
-                "Your",
-                "all-in-one",
-                "bot"
-            ],
-            "subtext": [
-                "Used in over 30,000 servers,",
-                "fm01 does everything for you."
-            ],
-            "invite_btn": "Try it now",
-            "support_btn": "Features"
-        },
-        "servers": {
-            "title": "Trusted by communities",
-            "subtext": [
-                "fm01 is already in",
-                "servers serving",
-                "members combined."
-            ],
-            "memberstext": "members",
-            "invitetext": [
-                "Your Server",
-                "Invite now"
+    "special": {
+      "title": "Special thanks to",
+      "dev": "Developed by",
+      "host": "Hosted by"
+    },
+    "copyright": "All rights reserved.",
+    "affiliate": "Not affiliated with Discord Inc."
+  },
+  "main": {
+    "hero": {
+      "title": [
+        "Your",
+        "all-in-one",
+        "bot"
+      ],
+      "subtext": [
+        "Used in over 30,000 servers,",
+        "fm01 does everything for you."
+      ],
+      "invite_btn": "Try it now",
+      "support_btn": "Features"
+    },
+    "servers": {
+      "title": "Trusted by communities",
+      "subtext": [
+        "fm01 is already in",
+        "servers serving",
+        "members combined."
+      ],
+      "memberstext": "members",
+      "invitetext": [
+        "Your Server",
+        "Invite now"
+      ]
+    },
+    "features": {
+      "title": "Features",
+      "subtext": "I'd be too long to explain, just take a look for yourself!",
+      "container": {
+        "channels": [
+          {
+            "title": "moderation",
+            "description": "Handle rule breakers with ease!",
+            "messages": [
+              {
+                "message": "Lorem ipsum dolor sit amet.",
+                "username": "Pearoo",
+                "avatar": "/images/logo.png",
+                "bot": false
+              },
+              {
+                "message": "User has been warned successfully.",
+                "username": "fm01",
+                "avatar": "/images/logo.png",
+                "bot": true
+              }
             ]
-        },
-        "features": {
-            "title": "Features",
-            "subtext": "I'd be too long to explain, just take a look for yourself!",
-            "container": {
-                "channels": [
-                    {
-                        "title": "moderation",
-                        "description": "Handle rule breakers with ease!",
-                        "messages": [
-                            {
-                                "message": "Lorem ipsum dolor sit amet.",
-                                "username": "Pearoo",
-                                "avatar": "/images/logo.png",
-                                "bot": false
-                            },
-                            {
-                                "message": "User has been warned successfully.",
-                                "username": "fm01",
-                                "avatar": "/images/logo.png",
-                                "bot": true
-                            }
-                        ]
+          },
+          {
+            "title": "giveaways",
+            "description": "Easily reward your community!",
+            "messages": [
+              {
+                "message": "Giveaway starting now!",
+                "username": "fm01",
+                "avatar": "/images/logo.png",
+                "bot": true,
+                "embeds": [
+                  {
+                    "title": "Nitro Classic Giveaway",
+                    "description": "React with 🎉 to enter!",
+                    "url": "https://fm01.bot",
+                    "color": "#f56f42",
+                    "fields": [
+                      {
+                        "name": "Hosted by",
+                        "value": "@Pearoo",
+                        "inline": true
+                      },
+                      {
+                        "name": "Ends in",
+                        "value": "2 days",
+                        "inline": true
+                      },
+                      {
+                        "name": "Winners",
+                        "value": "1",
+                        "inline": true
+                      }
+                    ],
+                    "thumbnail": {
+                      "url": "/images/logo.png"
                     },
-                    {
-                        "title": "giveaways",
-                        "description": "Easily reward your community!",
-                        "messages": [
-                            {
-                                "message": "Giveaway starting now!",
-                                "username": "fm01",
-                                "avatar": "/images/logo.png",
-                                "bot": true,
-                                "embeds": [
-                                    {
-                                        "title": "Nitro Classic Giveaway",
-                                        "description": "React with 🎉 to enter!",
-                                        "url": "https://fm01.bot",
-                                        "color": "#f56f42",
-                                        "fields": [
-                                            {
-                                                "name": "Hosted by",
-                                                "value": "@Pearoo",
-                                                "inline": true
-                                            },
-                                            {
-                                                "name": "Ends in",
-                                                "value": "2 days",
-                                                "inline": true
-                                            },
-                                            {
-                                                "name": "Winners",
-                                                "value": "1",
-                                                "inline": true
-                                            }
-                                        ],
-                                        "thumbnail": {
-                                            "url": "/images/logo.png"
-                                        },
-                                        "author": {
-                                            "name": "Giveaway System",
-                                            "url": "https://fm01.bot",
-                                            "icon_url": "/images/logo.png"
-                                        },
-                                        "buttons": [
-                                            [
-                                                {
-                                                    "label": "Enter Giveaway",
-                                                    "url": "https://fm01.bot/giveaways",
-                                                    "disabled": true,
-                                                    "color": 0
-                                                }
-                                            ]
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "message": "Red buzi!",
-                                "username": "fm01",
-                                "avatar": "/images/logo.png",
-                                "bot": true
-                            }
-                        ]
+                    "author": {
+                      "name": "Giveaway System",
+                      "url": "https://fm01.bot",
+                      "icon_url": "/images/logo.png"
                     },
-                    {
-                        "title": "economy",
-                        "description": "Engage members with a global economy!",
-                        "messages": [
-                            {
-                                "message": "You just earned 500 coins!",
-                                "username": "fm01",
-                                "avatar": "/images/logo.png",
-                                "bot": true
-                            }
-                        ]
-                    },
-                    {
-                        "title": "security",
-                        "description": "Engage members with a global economy!",
-                        "messages": [
-                            {
-                                "message": "You just earned 500 coins!",
-                                "username": "fm01",
-                                "avatar": "/images/logo.png",
-                                "bot": true
-                            }
-                        ]
-                    },
-                    {
-                        "title": "role-management",
-                        "description": "Engage members with a global economy!",
-                        "messages": [
-                            {
-                                "message": "You just earned 500 coins!",
-                                "username": "fm01",
-                                "avatar": "/images/logo.png",
-                                "bot": true
-                            }
-                        ]
-                    },
-                    {
-                        "title": "localization",
-                        "description": "Engage members with a global economy!",
-                        "messages": [
-                            {
-                                "message": "You just earned 500 coins!",
-                                "username": "fm01",
-                                "avatar": "/images/logo.png",
-                                "bot": true
-                            }
-                        ]
-                    },
-                    {
-                        "title": "custom-messages",
-                        "description": "Engage members with a global economy!",
-                        "messages": [
-                            {
-                                "message": "You just earned 500 coins!",
-                                "username": "fm01",
-                                "avatar": "/images/logo.png",
-                                "bot": true
-                            }
-                        ]
-                    },
-                    {
-                        "title": "music",
-                        "description": "Engage members with a global economy!",
-                        "messages": [
-                            {
-                                "message": "You just earned 500 coins!",
-                                "username": "fm01",
-                                "avatar": "/images/logo.png",
-                                "bot": true
-                            }
-                        ]
-                    },
-                    {
-                        "title": "logging",
-                        "description": "Engage members with a global economy!",
-                        "messages": [
-                            {
-                                "message": "You just earned 500 coins!",
-                                "username": "fm01",
-                                "avatar": "/images/logo.png",
-                                "bot": true
-                            }
-                        ]
-                    },
-                    {
-                        "title": "information",
-                        "description": "Engage members with a global economy!",
-                        "messages": [
-                            {
-                                "message": "You just earned 500 coins!",
-                                "username": "fm01",
-                                "avatar": "/images/logo.png",
-                                "bot": true
-                            }
-                        ]
-                    },
-                    {
-                        "title": "custom-branding",
-                        "description": "Engage members with a global economy!",
-                        "messages": [
-                            {
-                                "message": "You just earned 500 coins!",
-                                "username": "fm01",
-                                "avatar": "/images/logo.png",
-                                "bot": true
-                            }
-                        ]
-                    }
+                    "buttons": [
+                      [
+                        {
+                          "label": "Enter Giveaway",
+                          "url": "https://fm01.bot/giveaways",
+                          "disabled": true,
+                          "color": 0
+                        }
+                      ]
+                    ]
+                  }
                 ]
-            }
-        },
-        "premium": {
-            "title": "Premium",
-            "subtext": "Unlock advanced limits and premium customization.",
-            "tiers": {
-                "free": {
-                    "name": "Base",
-                    "features": [
-                        "10 customizable message",
-                        "Full dashboard access",
-                        "Out of the box localization",
-                        "All modules",
-                        "Server & User install"
-                    ],
-                    "price": "Free",
-                    "button": "Add to server"
-                },
-                "premium": {
-                    "name": "Premium",
-                    "features": [
-                        "Every message customizable",
-                        "Priority support",
-                        "Custom role on the support server"
-                    ],
-                    "price": "5€/mo",
-                    "button": "Go Premium"
-                },
-                "custom": {
-                    "name": "Custom",
-                    "features": [
-                        "Premium plan included",
-                        "Custom name, avatar and bio"
-                    ],
-                    "price": "10€/mo",
-                    "button": "Inquire"
-                }
-            },
-            "disclosure": "The bot can be self-hosted with free premium access by downloading the source code from our "
-        },
-        "invite": {
-            "title": "What are you waiting for?",
-            "subtext": "Get started for free"
-        }
-    },
-    "team": {
-        "hero": {
-            "title": [
-                "Meet",
-                "the",
-                "brains"
+              },
+              {
+                "message": "Red buzi!",
+                "username": "fm01",
+                "avatar": "/images/logo.png",
+                "bot": true
+              }
             ]
-        },
-        "members": {
-            "name": "John Doe",
-            "alias": "Pearoo",
-            "aliases": [
-                "Pear",
-                "Dev"
-            ],
-            "role": "Lead Developer",
-            "connect": {
-                "github": "https://github.com/your-profile",
-                "twitter": "https://twitter.com/your-profile"
-            },
-            "introduction": "Hello! I am a full-stack developer working hard (or hardly working) to bring you the best Discord bot experience. Reach out if you have any questions!"
-        }
-    },
-    "status": {
-        "hero": {
-            "title": [
-                "System",
-                "Status"
+          },
+          {
+            "title": "economy",
+            "description": "Engage members with a global economy!",
+            "messages": [
+              {
+                "message": "You just earned 500 coins!",
+                "username": "fm01",
+                "avatar": "/images/logo.png",
+                "bot": true
+              }
             ]
-        },
-        "shards": {
-            "title": "Shard Connectivity",
-            "subtext": "All shards are currently operational and processing events normally."
-        }
+          },
+          {
+            "title": "security",
+            "description": "Engage members with a global economy!",
+            "messages": [
+              {
+                "message": "You just earned 500 coins!",
+                "username": "fm01",
+                "avatar": "/images/logo.png",
+                "bot": true
+              }
+            ]
+          },
+          {
+            "title": "role-management",
+            "description": "Engage members with a global economy!",
+            "messages": [
+              {
+                "message": "You just earned 500 coins!",
+                "username": "fm01",
+                "avatar": "/images/logo.png",
+                "bot": true
+              }
+            ]
+          },
+          {
+            "title": "localization",
+            "description": "Engage members with a global economy!",
+            "messages": [
+              {
+                "message": "You just earned 500 coins!",
+                "username": "fm01",
+                "avatar": "/images/logo.png",
+                "bot": true
+              }
+            ]
+          },
+          {
+            "title": "custom-messages",
+            "description": "Engage members with a global economy!",
+            "messages": [
+              {
+                "message": "You just earned 500 coins!",
+                "username": "fm01",
+                "avatar": "/images/logo.png",
+                "bot": true
+              }
+            ]
+          },
+          {
+            "title": "music",
+            "description": "Engage members with a global economy!",
+            "messages": [
+              {
+                "message": "You just earned 500 coins!",
+                "username": "fm01",
+                "avatar": "/images/logo.png",
+                "bot": true
+              }
+            ]
+          },
+          {
+            "title": "logging",
+            "description": "Engage members with a global economy!",
+            "messages": [
+              {
+                "message": "You just earned 500 coins!",
+                "username": "fm01",
+                "avatar": "/images/logo.png",
+                "bot": true
+              }
+            ]
+          },
+          {
+            "title": "information",
+            "description": "Engage members with a global economy!",
+            "messages": [
+              {
+                "message": "You just earned 500 coins!",
+                "username": "fm01",
+                "avatar": "/images/logo.png",
+                "bot": true
+              }
+            ]
+          },
+          {
+            "title": "custom-branding",
+            "description": "Engage members with a global economy!",
+            "messages": [
+              {
+                "message": "You just earned 500 coins!",
+                "username": "fm01",
+                "avatar": "/images/logo.png",
+                "bot": true
+              }
+            ]
+          }
+        ]
+      }
     },
     "premium": {
-        "title": "Manage your Premium Subscription"
+      "title": "Premium",
+      "subtext": "Unlock advanced limits and premium customization.",
+      "tiers": {
+        "free": {
+          "name": "Base",
+          "features": [
+            "10 customizable message",
+            "Full dashboard access",
+            "Out of the box localization",
+            "All modules",
+            "Server & User install"
+          ],
+          "price": "Free",
+          "button": "Add to server"
+        },
+        "premium": {
+          "name": "Premium",
+          "features": [
+            "Every message customizable",
+            "Priority support",
+            "Custom role on the support server"
+          ],
+          "price": "5€/mo",
+          "button": "Go Premium"
+        },
+        "custom": {
+          "name": "Custom",
+          "features": [
+            "Premium plan included",
+            "Custom name, avatar and bio"
+          ],
+          "price": "10€/mo",
+          "button": "Inquire"
+        }
+      },
+      "disclosure": "The bot can be self-hosted with free premium access by downloading the source code from our "
+    },
+    "invite": {
+      "title": "What are you waiting for?",
+      "subtext": "Get started for free"
     }
+  },
+  "team": {
+    "hero": {
+      "title": [
+        "Meet",
+        "the",
+        "brains"
+      ]
+    },
+    "members": {
+      "name": "John Doe",
+      "alias": "Pearoo",
+      "aliases": [
+        "Pear",
+        "Dev"
+      ],
+      "role": "Lead Developer",
+      "connect": {
+        "github": "https://github.com/your-profile",
+        "twitter": "https://twitter.com/your-profile"
+      },
+      "introduction": "Hello! I am a full-stack developer working hard (or hardly working) to bring you the best Discord bot experience. Reach out if you have any questions!"
+    }
+  },
+  "status": {
+    "hero": {
+      "title": [
+        "System",
+        "Status"
+      ]
+    },
+    "shards": {
+      "title": "Shard Connectivity",
+      "subtext": "All shards are currently operational and processing events normally."
+    }
+  },
+  "premium": {
+    "title": "Manage your Premium Subscription"
+  },
+  "bot-locale": {
+    "warn": [
+      {
+        "title": "Warn",
+        "description": "Warned {warn.user.mention}.",
+        "fields": [
+          {
+            "name": "Reason",
+            "value": "{warn.reason}"
+          },
+          {
+            "name": "Expires",
+            "value": "{warn.length}"
+          }
+        ],
+        "footer": {
+          "text": "{warn.id}"
+        }
+      }
+    ],
+    "giveaway": {
+      "embed": {
+        "title": "🎉 Giveaway!",
+        "description": "{prize}",
+        "fields": [
+          {
+            "name": "Winners",
+            "value": "{winners}",
+            "inline": true
+          },
+          {
+            "name": "Ends",
+            "value": "{ends}",
+            "inline": true
+          }
+        ],
+        "footer": {
+          "text": "Click the button below to enter!"
+        },
+        "buttons": [
+          {
+            "label": "🎉 {participants}"
+          }
+        ]
+      }
+    },
+    "work": {
+      "embeds": [
+        {
+          "title": "Work",
+          "description": "{random}",
+          "color": 6656243
+        }
+      ],
+      "random": [
+        "You arrived home from work and saw that **${amount}** was added to your account.",
+        "You've reached the end of a tiring day. You received **${amount}** for your hard work!",
+        "You've successfully completed your first day at work. Your reward: **${amount}**.",
+        "You've been promoted at your company, so you received a **${amount}** bonus!",
+        "You received **${amount}** dividend on your shares.",
+        "You've been successfully promoted at your workplace! You received an advance of **${amount}**",
+        "As a taxi driver, you earned **${amount}** today.",
+        "You went to the store, bought noodles, but the cashier gave you the wrong change. You received **${amount}** and a pack of noodles.",
+        "You had a hard day on the fields and earned **${amount}**."
+      ]
+    },
+    "music": {
+      "embed": {
+        "title": "Now playing",
+        "description": "**[{track.title}]({track.url})**",
+        "fields": [
+          {
+            "name": "Artist",
+            "value": "{track.author}",
+            "inline": true
+          },
+          {
+            "name": "Duration",
+            "value": "{track.duration}",
+            "inline": true
+          },
+          {
+            "name": "Position in queue",
+            "value": "Now",
+            "inline": true
+          }
+        ],
+        "footer": {
+          "text": "{author.name}",
+          "icon_url": "{author.avatar}"
+        },
+        "color": 5793266
+      }
+    },
+    "info": {
+      "user": {
+        "title": "User information",
+        "fields": [
+          {
+            "name": "Username",
+            "value": "{member.username}",
+            "inline": true
+          },
+          {
+            "name": "Displayed name",
+            "value": "{member.display_name}",
+            "inline": true
+          },
+          {
+            "name": "Discriminator",
+            "value": "{member.discriminator}",
+            "inline": true
+          },
+          {
+            "name": "ID",
+            "value": "{member.id}",
+            "inline": true
+          },
+          {
+            "name": "Bot?",
+            "value": "{member.bot}"
+          },
+          {
+            "name": "Account created",
+            "value": "{member.created_at.long}"
+          }
+        ],
+        "author": {
+          "name": "{member}",
+          "icon_url": "{member.avatar}",
+          "url": "https://discord.com/users/{member.id}"
+        },
+        "timestamp": "{now}"
+      },
+      "server": {
+        "title": "Server information",
+        "fields": [
+          {
+            "name": "Description",
+            "value": "{server.description}",
+            "inline": true
+          },
+          {
+            "name": "ID",
+            "value": "{server.id}",
+            "inline": true
+          },
+          {
+            "name": "Owner",
+            "value": "{server.owner.mention}",
+            "inline": true
+          },
+          {
+            "name": "Server created at",
+            "value": "{server.created_at.long}",
+            "inline": true
+          },
+          {
+            "name": "Language",
+            "value": "{server.language}",
+            "inline": true
+          },
+          {
+            "name": "Vanity URL",
+            "value": "{server.vanity_url}",
+            "inline": true
+          },
+          {
+            "name": "Boost tier",
+            "value": "{server.boost_tier}",
+            "inline": true
+          },
+          {
+            "name": "Number of boosters",
+            "value": "{server.boosters}",
+            "inline": true
+          },
+          {
+            "name": "Boost role",
+            "value": "{server.boost_role}",
+            "inline": true
+          },
+          {
+            "name": "Roles",
+            "value": "{server.roles}",
+            "inline": true
+          },
+          {
+            "name": "Emojis",
+            "value": "{server.emojis}",
+            "inline": true
+          },
+          {
+            "name": "Bitrate limit",
+            "value": "{server.bitrate_limit} kbps",
+            "inline": true
+          },
+          {
+            "name": "Upload limit",
+            "value": "{server.upload_limit} MB"
+          }
+        ],
+        "author": {
+          "name": "{server.name}",
+          "icon_url": "{server.icon}"
+        },
+        "image": {
+          "url": "{server.banner}"
+        },
+        "timestamp": "{now}"
+      },
+      "role": {
+        "title": "Role information",
+        "fields": [
+          {
+            "name": "Name",
+            "value": "{role.name}",
+            "inline": true
+          },
+          {
+            "name": "ID",
+            "value": "{role.id}",
+            "inline": true
+          },
+          {
+            "name": "Position",
+            "value": "{role.position}",
+            "inline": true
+          },
+          {
+            "name": "Hoisted?",
+            "value": "{role.hoist}",
+            "inline": true
+          },
+          {
+            "name": "Managed by integration?",
+            "value": "{role.managed}",
+            "inline": true
+          },
+          {
+            "name": "Mentionable by everyone?",
+            "value": "{role.mentionable}",
+            "inline": true
+          },
+          {
+            "name": "Bot role?",
+            "value": "{role.bot}",
+            "inline": true
+          },
+          {
+            "name": "Role created",
+            "value": "{role.created}",
+            "inline": true
+          },
+          {
+            "name": "Members",
+            "value": "{role.members}",
+            "inline": true
+          },
+          {
+            "name": "Permissions",
+            "value": "```{role.permissions}```",
+            "inline": false
+          }
+        ]
+      }
+    }
+  }
 }
