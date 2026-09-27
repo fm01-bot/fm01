@@ -83,7 +83,7 @@ export default async function PromotedServers({ lang }: { lang: MainPageLangJson
 
             <div className=" w-full items-center flex justify-center mt-20 -mb-20 text-white">
                 <Link href={`add.fm01.bot`} className=" flex items-center justify-center gap-2 py-3 px-6 bg-primary w-fit rounded-2xl text-2xl font-extrabold hover:shadow-primary shadow-transparent shadow-[0px_0px_20px_0px]">
-                    <FontAwesomeIcon icon={faDiscord} />
+                    <FontAwesomeIcon icon={faDiscord} className="laptop:w-8! laptop:h-8! w-5! h-5! p-0.5" />
                     <span className=" font-extrabold">Join Them!</span>
                 </Link>
             </div>

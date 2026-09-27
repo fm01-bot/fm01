@@ -28,8 +28,6 @@ export default async function translationFetcher() {
             url: entry.download_url,
         }));
 
-    console.log(locales)
-
     await Promise.all(
         locales.map(async ({ lang, url }: { lang: string, url: string }) => {
             const data = await (await fetch(url)).json();
@@ -70,6 +68,4 @@ export default async function translationFetcher() {
 
         })
     )
-
-    console.log(response.data)
 }

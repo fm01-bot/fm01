@@ -25,7 +25,11 @@ export default function Message({
                 <div className='flex flex-col'>
                     <div className={`flex flex-row ${bot ? "" : "gap-1"}`}>
                         <span className='text-primary/70'>{username}</span>
-                        {bot ? (<div className='bg-[#5865F2] px-1.5 rounded-sm text-sm leading-6 font-bold scale-70 mt-px'><FontAwesomeIcon icon={faCheck} />APP</div>) : (<></>)}
+                        {bot ? (
+                            <div className='bg-[#5865F2] px-1.5 rounded-sm text-sm leading-6 font-bold scale-70 mt-px flex flex-row items-center justify-center gap-1'>
+                                <FontAwesomeIcon icon={faCheck} className='h-4 w-4' />
+                                <span>APP</span>
+                            </div>) : (<></>)}
                         <span className='text-xs mt-1.5 text-text/50'>{new Date().toLocaleDateString("en", { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                     <div>
