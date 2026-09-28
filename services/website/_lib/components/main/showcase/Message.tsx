@@ -6,6 +6,24 @@ import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 
+function MessageComp({ message }: { message: string }) {
+    if (!message) return
+    const mentionPattern = /(?<!\w)@[^\s]+/;
+    const parts = message.split(/((?<!\w)@[^\s]+)/g);
+
+    return (
+        <p className="message-content">
+            {parts.map((part, index) =>
+                mentionPattern.test(part) ? (
+                    <span className="mention" key={index}>{part}</span>
+                ) : (
+                    part
+                )
+            )}
+        </p>
+    )
+}
+
 export default function Message({
     message,
     embeds,
@@ -33,8 +51,10 @@ export default function Message({
                         <span className='text-xs mt-1.5 text-text/50'>{new Date().toLocaleDateString("en", { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                     <div>
-                        <span className='pb-2'>{message}</span>
-                        {embeds?.map((e: EmbedType, i: number) => {
+                        <span className='pb-2'>
+                            <MessageComp message={message} />
+                        </span>
+                        {embeds?.map((e, i) => {
                             return <Embed key={i} {...e} />
                         })}
                         {

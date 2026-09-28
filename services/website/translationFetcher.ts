@@ -62,7 +62,6 @@ export default async function translationFetcher() {
                     "role": data.info.role.embeds[0]
                 }
             }
-            localData['bot-locale']['warn'] = data.mod.warn.response.embeds
 
             await fs.writeFile(file, JSON.stringify(localData, null, 2), 'utf-8');
 

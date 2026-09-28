@@ -14,7 +14,7 @@ export default function Container({ lang }: { lang?: MainPageLangJson["features"
     }
 
     return (
-        <div className="flex flex-row h-125 w-full rounded-lg overflow-hidden">
+        <div className="flex flex-row h-125 w-full rounded-lg overflow-hidden feat-container">
             <div className="dark:bg-[#09080b]/50 bg-text/10 w-67 max-w-[50%] rounded-bl-lg p-4">
                 <span className=" text-xl text-text/50">fm01 <FontAwesomeIcon icon={faChevronDown} className="w-3.75! h-3.75!" /></span>
                 <div className="flex flex-col items-start w-full gap-0.5 mt-2">

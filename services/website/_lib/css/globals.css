@@ -434,6 +434,16 @@ a {
   }
 }
 
+@utility feat-container {
+  & .message-content span {
+    @apply bg-primary/10 text-primary/75 rounded-lg p-0.5 px-1;
+    color: color-mix(in oklab, var(--color-primary) 97%, #ffffff 3%);
+    &:hover {
+      @apply bg-primary/60 text-text;
+    }
+  }
+}
+
 h1 {
   font-size: x-large;
   font-weight: bold;

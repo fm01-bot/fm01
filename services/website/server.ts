@@ -7,7 +7,7 @@ import translationFetcher from './translationFetcher'
 const port = parseInt(process.env.PORT || '3007', 10)
 const dev = process.env.NODE_ENV !== 'production'
 
-const app = next({ dev, hostname: 'localhost', port })
+const app = next({ dev })
 const handle = app.getRequestHandler()
 
 app.prepare().then(async () => {
@@ -16,13 +16,11 @@ app.prepare().then(async () => {
         handle(req, res, parsedUrl)
     })
 
-    // Catch the WebSocket upgrade request and pass it to Next.js HMR
-    server.on('upgrade', (req, socket, head) => {
-        const parsedUrl = parse(req.url || '', true)
-        if (parsedUrl.pathname === '/_next/webpack-hmr') {
+    if (dev) {
+        server.on('upgrade', (req, socket, head) => {
             app.getUpgradeHandler()(req, socket, head)
-        }
-    })
+        })
+    }
 
     server.listen(port, () => {
         console.log(

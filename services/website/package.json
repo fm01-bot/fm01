@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "PORT=3007 TURBOPACK=0 NEXT_TURBOPACK=0 tsx watch --ignore \"{app,pages,components,_lib}/**\" server.ts",
+    "dev": "PORT=3007 tsx server.ts",
     "build": "next build",
     "start": "NODE_ENV=production PORT=3007 tsx server.ts",
     "lint": "eslint"

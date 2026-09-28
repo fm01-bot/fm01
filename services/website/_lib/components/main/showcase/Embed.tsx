@@ -1,4 +1,4 @@
-import { EmbedType } from "@/_lib/types/PageLang";
+import { EmbedType } from "@/_lib/types/EmbedLang";
 import Button from "./Button";
 import Field from "./Field";
 import Link from "next/link";
@@ -12,7 +12,6 @@ function Author({ author }: EmbedType) {
         </>
     )
 }
-
 export default function Embed({
     title,
     description,

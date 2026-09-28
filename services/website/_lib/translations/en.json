@@ -65,15 +65,23 @@
             "messages": [
               {
                 "message": "Hahaha I'll hack your server!",
+                "username": "rnxm",
+                "avatar": "/images/rnxm.png",
+                "bot": false
+              },
+              {
+                "message": "?!warn @rnxm 1w Hacking threats",
                 "username": "Pearoo",
                 "avatar": "/images/pearoo.png",
                 "bot": false
               },
               {
-                "message": "User has been warned successfully.",
                 "username": "fm01",
                 "avatar": "/images/logo.png",
-                "bot": true
+                "bot": true,
+                "embeds": [
+                  "bot-locale.warn.embed"
+                ]
               }
             ]
           },
@@ -331,8 +339,8 @@
     "title": "Manage your Premium Subscription"
   },
   "bot-locale": {
-    "warn": [
-      {
+    "warn": {
+      "embed": {
         "title": "Warn",
         "description": "Warned {warn.user.mention}.",
         "fields": [
@@ -349,7 +357,7 @@
           "text": "{warn.id}"
         }
       }
-    ],
+    },
     "giveaway": {
       "embed": {
         "title": "🎉 Giveaway!",
