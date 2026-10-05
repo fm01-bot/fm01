@@ -14,17 +14,17 @@ export default function Container({ lang }: { lang?: MainPageLangJson["features"
     }
 
     return (
-        <div className="flex flex-row h-125 w-full rounded-lg overflow-hidden feat-container">
+        <div className="flex flex-row h-125 w-full rounded-lg overflow-hidden feat-container select-none">
             <div className="dark:bg-[#09080b]/50 bg-text/10 w-67 max-w-[50%] rounded-bl-lg p-4">
-                <span className=" text-xl text-text/50">fm01 <FontAwesomeIcon icon={faChevronDown} className="w-3.75! h-3.75!" /></span>
+                <span className=" text-xl text-text/50 flex items-center gap-2">fm01 <FontAwesomeIcon icon={faChevronDown} className="w-3.75! h-3.75!" /></span>
                 <div className="flex flex-col items-start w-full gap-0.5 mt-2">
                     {
                         lang?.channels?.map((c, i) => {
                             return (
                                 <span
-                                    onClick={() => { setActive(i) }}
+                                    onClick={() => { setActive(i); console.log(i) }}
                                     key={`cl-${i}`}
-                                    className={`text-text/50 h-8 flex items-center justify-start gap-2 py-1 px-2 hover:bg-text/20 hover:text-text rounded-lg w-full ${active == i ? "bg-text/20! text-text!" : ""}`}>
+                                    className={`text-text/50 h-8 flex items-center justify-start gap-2 py-1 px-2 hover:bg-text/20 hover:text-text rounded-lg w-full hover:cursor-pointer ${active == i ? "bg-text/20! text-text!" : ""}`}>
                                     <span className="text-xl leading-0 font-semibold">#</span>
                                     <span className="leading-0">{c.title}</span>
                                 </span>

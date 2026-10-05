@@ -377,13 +377,11 @@
       }
     },
     "work": {
-      "embeds": [
-        {
-          "title": "Munka",
-          "description": "{random}",
-          "color": 6656243
-        }
-      ],
+      "embed": {
+        "title": "Munka",
+        "description": "{random}",
+        "color": 6656243
+      },
       "random": [
         "Hazaértél, és láttad, hogy **{amount} Ft-al** bővült a számlád egyenlege.",
         "Egy nehéz nap után **{amount} Ft-ot** kaptál fizetségül!",

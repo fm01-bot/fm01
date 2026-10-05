@@ -90,59 +90,19 @@
             "description": "Easily reward your community!",
             "messages": [
               {
-                "message": "Giveaway starting now!",
+                "message": "?!giveaway 2d 2 nitro ($10)",
+                "username": "Pearoo",
+                "avatar": "/images/pearoo.png",
+                "bot": false
+              },
+              {
+                "message": "",
                 "username": "fm01",
                 "avatar": "/images/logo.png",
                 "bot": true,
                 "embeds": [
-                  {
-                    "title": "Nitro Classic Giveaway",
-                    "description": "React with 🎉 to enter!",
-                    "url": "https://fm01.bot",
-                    "color": "#f56f42",
-                    "fields": [
-                      {
-                        "name": "Hosted by",
-                        "value": "@Pearoo",
-                        "inline": true
-                      },
-                      {
-                        "name": "Ends in",
-                        "value": "2 days",
-                        "inline": true
-                      },
-                      {
-                        "name": "Winners",
-                        "value": "1",
-                        "inline": true
-                      }
-                    ],
-                    "thumbnail": {
-                      "url": "/images/logo.png"
-                    },
-                    "author": {
-                      "name": "Giveaway System",
-                      "url": "https://fm01.bot",
-                      "icon_url": "/images/logo.png"
-                    },
-                    "buttons": [
-                      [
-                        {
-                          "label": "Enter Giveaway",
-                          "url": "https://fm01.bot/giveaways",
-                          "disabled": true,
-                          "color": 0
-                        }
-                      ]
-                    ]
-                  }
+                  "bot-locale.giveaway.embed"
                 ]
-              },
-              {
-                "message": "Red buzi!",
-                "username": "fm01",
-                "avatar": "/images/logo.png",
-                "bot": true
               }
             ]
           },
@@ -151,10 +111,19 @@
             "description": "Engage members with a global economy!",
             "messages": [
               {
-                "message": "You just earned 500 coins!",
+                "message": "?!work",
+                "username": "Pearoo",
+                "avatar": "/images/pearoo.png",
+                "bot": false
+              },
+              {
+                "message": "",
                 "username": "fm01",
                 "avatar": "/images/logo.png",
-                "bot": true
+                "bot": true,
+                "embeds": [
+                  "bot-locale.work.embed"
+                ]
               }
             ]
           },
@@ -211,10 +180,19 @@
             "description": "Engage members with a global economy!",
             "messages": [
               {
-                "message": "You just earned 500 coins!",
+                "message": "?!play rick ashley",
+                "username": "Pearoo",
+                "avatar": "/images/pearoo.png",
+                "bot": false
+              },
+              {
+                "message": "",
                 "username": "fm01",
                 "avatar": "/images/logo.png",
-                "bot": true
+                "bot": true,
+                "embeds": [
+                  "bot-locale.music.embed"
+                ]
               }
             ]
           },
@@ -385,13 +363,11 @@
       }
     },
     "work": {
-      "embeds": [
-        {
-          "title": "Work",
-          "description": "{random}",
-          "color": 6656243
-        }
-      ],
+      "embed": {
+        "title": "Work",
+        "description": "{random}",
+        "color": 6656243
+      },
       "random": [
         "You arrived home from work and saw that **${amount}** was added to your account.",
         "You've reached the end of a tiring day. You received **${amount}** for your hard work!",

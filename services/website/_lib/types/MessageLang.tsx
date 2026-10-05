@@ -11,7 +11,7 @@ export interface MessageType {
     message: string,
     username: string,
     avatar: string,
-    embeds?: (EmbedType)[],
+    embeds?: (EmbedType | string)[],
     bot?: boolean,
     buttons?: [
         [ButtonType?, ButtonType?, ButtonType?],

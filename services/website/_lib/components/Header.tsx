@@ -9,6 +9,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faDesktop, faMoon, faSun } from "@fortawesome/free-solid-svg-icons";
 import { languages } from "@/app/[lang]/dictionaries";
 import { useTheme } from "@teispace/next-themes";
+import LangSelector from "./LangSelector";
 
 export default function Header({ lang, code }: { lang: WebLangJson["header"], code: string }) {
     const page = usePathname().substring(3);
@@ -57,23 +58,32 @@ export default function Header({ lang, code }: { lang: WebLangJson["header"], co
                 </nav>
 
                 <div className="actions">
-                    {/* Desktop Theme Toggle */}
-                    <div className="theme">
-                        {theme === "system" ? (
-                            <FontAwesomeIcon icon={faDesktop} onClick={() => setTheme('light')} className="cursor-pointer" />
-                        ) : theme === "light" ? (
-                            <FontAwesomeIcon icon={faSun} onClick={() => setTheme('dark')} className="cursor-pointer" />
-                        ) : (
-                            <FontAwesomeIcon icon={faMoon} onClick={() => setTheme('system')} className="cursor-pointer" />
-                        )}
+                    {/* The parent container is relative, but no longer has the blur or bg directly */}
+                    <div className="relative flex items-center gap-4 border-2 border-text/10 p-2 px-4 rounded-2xl langlight">
+
+                        {/* 1. The blurred background layer (sits behind the buttons, doesn't trap them) */}
+                        <div className={`absolute inset-0 -z-10 rounded-2xl backdrop-blur-md pointer-events-none ${isScrolled ? "bg-contrast" : "bg-text/5"}`}></div>
+
+                        {/* 2. Desktop Theme Toggle */}
+                        <div className="theme leading-1">
+                            {theme === "system" ? (
+                                <FontAwesomeIcon icon={faDesktop} onClick={() => setTheme('light')} className="cursor-pointer" />
+                            ) : theme === "light" ? (
+                                <FontAwesomeIcon icon={faSun} onClick={() => setTheme('dark')} className="cursor-pointer" />
+                            ) : (
+                                <FontAwesomeIcon icon={faMoon} onClick={() => setTheme('system')} className="cursor-pointer" />
+                            )}
+                        </div>
+
+                        {/* 3. Desktop Lang Select */}
+                        <LangSelector currentLangCode={code} />
                     </div>
 
-                    {/* Desktop Lang Select */}
-                    <select className="lang-select" defaultValue={code} onChange={(e) => router.replace(`${e.target.value}/${page}`)}>
+                    {/* <select className="lang-select" defaultValue={code} onChange={(e) => router.replace(`${e.target.value}/${page}`)}>
                         {languages.map((l, i) => (
                             <option key={i} value={l}>{l.toLocaleUpperCase()}</option>
                         ))}
-                    </select>
+                    </select> */}
 
                     {/* Desktop Dashboard Button */}
                     <Link href="https://dash.fm01.bot" className="dashboard-btn">

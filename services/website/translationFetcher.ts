@@ -50,7 +50,7 @@ export default async function translationFetcher() {
                     }
                 },
                 "work": {
-                    "embeds": data.work.embeds,
+                    "embed": data.work.embeds[0],
                     "random": data.work.random
                 },
                 "music": {
