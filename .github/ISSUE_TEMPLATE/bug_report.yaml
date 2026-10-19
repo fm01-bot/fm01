@@ -1,0 +1,54 @@
+
+name: Bug report
+description: Create a report to help us improve
+labels: bug
+type: Bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to report a bug.
+        Please note that responses might take a while - we are a small team.
+  - type: textarea
+    id: desc
+    attributes:
+      label: Description
+      description: A clear, long and concise description of what happened
+      placeholder: I did this, but then that happened...
+    validations:
+      required: true
+  - type: textare
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Describe exactly what you did when you encountered this error
+      placeholder: |
+        1. Went into this server
+        1. Used that command
+        1. Changed this in my server's settings
+        1. Sent the command
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Result
+      description: A clear and concise description of what you expected to happen. *(optional if obvious)*
+      placeholder: This user should've got banned, but they turned into a meatloaf instead.
+  - type: upload
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: If applicable, add screenshots to help explain your problem.
+    validations:
+      accepted: ".png,.jpg,.jpeg,.gif,.svg,.webp,.mp4,.mov,.webm"
+  - type: checkboxes
+    attributes:
+      label: Environment
+      description: Some information to help us identify the exact cause of the bug.
+      options:
+      - label: An automated error message was sent, which I will provide below.
+      - label: No automated error message was sent.
+    validations:
+      required: true
+  - type: 
