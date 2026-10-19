@@ -67,3 +67,4 @@ body:
       - label: "This happened on the public bot or I'm self-hosting but didn't change anything in the source code."
         required: true
       - label: "I acknowledge that it might take a while for maintainers to handle this issue."
+        required: true
