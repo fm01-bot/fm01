@@ -34,7 +34,7 @@ body:
     attributes:
       label: Expected Result
       description: A clear and concise description of what you expected to happen. *(optional if obvious)*
-      placeholder: This user should've got banned, but they turned into a meatloaf instead.
+      placeholder: "This user should've gotten banned, but they turned into a meatloaf instead."
   - type: upload
     id: screenshots
     attributes:
