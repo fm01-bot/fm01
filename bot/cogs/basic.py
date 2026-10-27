@@ -16,7 +16,7 @@ class Basic(commands.Cog, name="Basic"):
 		await self.client.db.execute("SELECT 1")
 		database = perf_counter() - database_start
 
-		await ctx.send("ping", latency=float(self.client.latency), db=float(database))
+		await ctx.send("ping", latency=float(self.client.latency), bd=float(database))
 
 
 async def setup(client: Bot):
