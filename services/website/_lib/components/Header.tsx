@@ -4,24 +4,16 @@ import { useState, useEffect, useMemo } from "react";
 import Logo from "../svg/Logo";
 import Dashboard from "../svg/Dashboard";
 import { WebLangJson } from "@/_lib/types/PageLang"
-import { usePathname, useRouter } from "next/navigation";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faDesktop, faMoon, faSun } from "@fortawesome/free-solid-svg-icons";
-import { languages } from "@/app/[lang]/dictionaries";
-import { useTheme } from "@teispace/next-themes";
 import LangSelector from "./LangSelector";
 
 export default function Header({ lang, code }: { lang: WebLangJson["header"], code: string }) {
-    const page = usePathname().substring(3);
-    const router = useRouter();
-    const { theme, setTheme } = useTheme()
 
     const NAV_LINKS = useMemo(
         () => [
-            { href: "/team", label: lang.team },
-            { href: "/status", label: lang.status },
+            { href: `/features`, label: lang.features },
+            { href: `/status`, label: lang.status },
             { href: "https://docs.fm01.bot", label: lang.docs },
-            { href: "/premium", label: lang.premium }
+            { href: `/premium`, label: lang.premium }
         ], [lang]
     )
 
@@ -40,7 +32,7 @@ export default function Header({ lang, code }: { lang: WebLangJson["header"], co
     }, [NAV_LINKS]);
 
     return (
-        <header className={`navbar ${isScrolled ? "bg-text/5 backdrop-blur-xs laptop:bg-transparent laptop:backdrop-blur-none" : ""}`}>
+        <header className={`navbar ${isScrolled ? " bg-text/5 backdrop-blur-xs laptop:bg-transparent laptop:backdrop-blur-none" : ""}`}>
             <div className="navbar-inner">
                 <Link href="/" className="brand">
                     <Logo width={30} height={30} fill={'fill-primary'} />
@@ -48,9 +40,9 @@ export default function Header({ lang, code }: { lang: WebLangJson["header"], co
                 </Link>
 
                 <nav className="nav-links-container">
-                    <div className={`nav-links ${isScrolled ? "bg-contrast" : "bg-text/5"}`}>
+                    <div className={`nav-links`}>
                         {NAV_LINKS.map((l, i) => (
-                            <Link key={i} href={l.href}>
+                            <Link key={i} href={l.href} >
                                 {l.label}
                             </Link>
                         ))}
@@ -58,47 +50,48 @@ export default function Header({ lang, code }: { lang: WebLangJson["header"], co
                 </nav>
 
                 <div className="actions">
-                    {/* The parent container is relative, but no longer has the blur or bg directly */}
-                    <div className="relative flex items-center gap-4 border-2 border-text/10 p-2 px-4 rounded-2xl langlight">
+                    <div className="langlight">
 
-                        {/* 1. The blurred background layer (sits behind the buttons, doesn't trap them) */}
-                        <div className={`absolute inset-0 -z-10 rounded-2xl backdrop-blur-md pointer-events-none ${isScrolled ? "bg-contrast" : "bg-text/5"}`}></div>
+                        {/* FIX: Replaced 'inset-0' with explicit negative offsets to bleed under the border */}
+                        <div className={`absolute hidden laptop:block -top-0.5 -bottom-0.5 -left-0.5 right-0 -z-10 rounded-2xl bg-contrast/30 backdrop-blur-xl pointer-events-none`}></div>
 
                         {/* 2. Desktop Theme Toggle */}
-                        <div className="theme leading-1">
-                            {theme === "system" ? (
-                                <FontAwesomeIcon icon={faDesktop} onClick={() => setTheme('light')} className="cursor-pointer" />
-                            ) : theme === "light" ? (
-                                <FontAwesomeIcon icon={faSun} onClick={() => setTheme('dark')} className="cursor-pointer" />
-                            ) : (
-                                <FontAwesomeIcon icon={faMoon} onClick={() => setTheme('system')} className="cursor-pointer" />
-                            )}
-                        </div>
+                        {/* <div className="theme" onClick={() => {
+                            console.log("asd");
+                            if (theme === "system") setTheme("light");
+                            if (theme === "light") setTheme("dark");
+                            if (theme === "dark") setTheme("system")
+                        }}>
+                            <FontAwesomeIcon
+                                icon={theme === "system" ? faDesktop : theme === "light" ? faSun : faMoon}
+                                className="w-4 h-4 cursor-pointer"
+                            />
+                        </div> */}
 
                         {/* 3. Desktop Lang Select */}
-                        <LangSelector currentLangCode={code} />
+                        <div className="hidden laptop:block">
+                            <LangSelector currentLangCode={code} />
+                        </div>
+
+                        <Link href="https://dash.fm01.bot" className="-my-0.5 dashboard-btn">
+                            <Dashboard width={14} height={14} fill="fill-white" />
+                            <span>Dashboard</span>
+                        </Link>
                     </div>
 
-                    {/* <select className="lang-select" defaultValue={code} onChange={(e) => router.replace(`${e.target.value}/${page}`)}>
-                        {languages.map((l, i) => (
-                            <option key={i} value={l}>{l.toLocaleUpperCase()}</option>
-                        ))}
-                    </select> */}
 
                     {/* Desktop Dashboard Button */}
-                    <Link href="https://dash.fm01.bot" className="dashboard-btn">
-                        <Dashboard width={14} height={14} fill="fill-white" />
-                        <span>Dashboard</span>
-                    </Link>
 
                     {/* Mobile Menu Wrapper */}
                     <div className="mobile-menu">
-                        <input type="checkbox" id="burger" />
-                        <label className="burger" htmlFor="burger">
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                        </label>
+                        <div className="burger-class">
+                            <input type="checkbox" id="overlay" />
+                            <label className="burger" htmlFor="overlay">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </label>
+                        </div>
 
                         <div className="overlay">
                             <div className="overlay-links">
@@ -109,21 +102,7 @@ export default function Header({ lang, code }: { lang: WebLangJson["header"], co
                                 ))}
                             </div>
                             <div className="flex flex-row gap-4">
-                                <div className="overlay-theme">
-                                    {theme === "system" ? (
-                                        <FontAwesomeIcon icon={faDesktop} onClick={() => setTheme('light')} className="cursor-pointer" />
-                                    ) : theme === "light" ? (
-                                        <FontAwesomeIcon icon={faSun} onClick={() => setTheme('dark')} className="cursor-pointer" />
-                                    ) : (
-                                        <FontAwesomeIcon icon={faMoon} onClick={() => setTheme('system')} className="cursor-pointer" />
-                                    )}
-                                </div>
-
-                                <select className="lang-select" defaultValue={code} onChange={(e) => router.replace(`${e.target.value}/${page}`)}>
-                                    {languages.map((l, i) => (
-                                        <option key={i} value={l}>{l.toLocaleUpperCase()}</option>
-                                    ))}
-                                </select>
+                                <LangSelector currentLangCode={code} />
                             </div>
                         </div>
                     </div>

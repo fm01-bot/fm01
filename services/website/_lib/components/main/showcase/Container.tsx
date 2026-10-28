@@ -1,50 +1,97 @@
 "use client"
 import { MainPageLangJson } from "@/_lib/types/MainPageLang";
 import Channel from "./Channel";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faChevronDown } from "@fortawesome/free-solid-svg-icons";
 
 export default function Container({ lang }: { lang?: MainPageLangJson["features"]["container"] }) {
 
     const [active, setActive] = useState(0);
+    const [channelsOpen, setChannelsOpen] = useState(false);
+    const touchStartX = useRef<number | null>(null);
 
     if (!lang || !lang.channels) {
         return (<></>);
     }
 
+    const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+        touchStartX.current = event.touches[0]?.clientX ?? null;
+    };
+
+    const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+        if (touchStartX.current === null) {
+            return;
+        }
+
+        const touchEndX = event.changedTouches[0]?.clientX;
+        if (touchEndX === undefined) {
+            touchStartX.current = null;
+            return;
+        }
+
+        const swipeDistance = touchEndX - touchStartX.current;
+        if (swipeDistance > 70) {
+            setChannelsOpen(true);
+        } else if (swipeDistance < -70) {
+            setChannelsOpen(false);
+        }
+
+        touchStartX.current = null;
+    };
+
     return (
-        <div className="flex flex-row h-125 w-full rounded-lg overflow-hidden feat-container select-none">
-            <div className="dark:bg-[#09080b]/50 bg-text/10 w-67 max-w-[50%] rounded-bl-lg p-4">
-                <span className=" text-xl text-text/50 flex items-center gap-2">fm01 <FontAwesomeIcon icon={faChevronDown} className="w-3.75! h-3.75!" /></span>
-                <div className="flex flex-col items-start w-full gap-0.5 mt-2">
+        <div
+            className={`showcase-container ${channelsOpen ? "channels-open" : ""}`}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+        >
+            <div className="channels">
+                <span className="server-title">fm01 <FontAwesomeIcon icon={faChevronDown} className="w-3.75! h-3.75!" /></span>
+                <div className="channel-list">
                     {
                         lang?.channels?.map((c, i) => {
                             return (
                                 <span
                                     onClick={() => { setActive(i); console.log(i) }}
                                     key={`cl-${i}`}
-                                    className={`text-text/50 h-8 flex items-center justify-start gap-2 py-1 px-2 hover:bg-text/20 hover:text-text rounded-lg w-full hover:cursor-pointer ${active == i ? "bg-text/20! text-text!" : ""}`}>
-                                    <span className="text-xl leading-0 font-semibold">#</span>
-                                    <span className="leading-0">{c.title}</span>
+                                    className={`channel-name ${active == i ? "bg-text/20! text-text!" : ""}`}>
+                                    <span>#</span>
+                                    <span>{c.title}</span>
                                 </span>
                             )
                         })
                     }
                 </div>
             </div>
-            <div className="bg-text/3 w-full flex flex-col h-full relative">
-                <span className="w-full flex items-center justify-start gap-1 py-2 border-b border-b-text/30 px-3 shrink-0">
-                    <span className="text-xl text-text/50">#</span>
-                    {lang.channels[active].title}
-                    <span className="text-[#09080b]/30 text-sm px-1">●</span>
-                    <span className="text-text/50">{lang.channels[active].description}</span>
-                </span>
-                <div className="flex-1 overflow-y-scroll p-2 flex items-end">
+            {channelsOpen && (
+                <button
+                    className="channels-backdrop"
+                    type="button"
+                    aria-label="Close channel list"
+                    onClick={() => setChannelsOpen(false)}
+                />
+            )}
+            <div className="channel-container">
+                <div className="channel-title">
+                    <button
+                        className="channel-back"
+                        type="button"
+                        aria-label="Show channel list"
+                        onClick={() => setChannelsOpen(true)}
+                    >
+                        <FontAwesomeIcon icon={faArrowLeft} />
+                    </button>
+                    <span>#</span>
+                    <span>{lang.channels[active].title}</span>
+                    <span>•</span>
+                    <span>{lang.channels[active].description}</span>
+                </div>
+                <div className="channel-content">
                     {
                         lang?.channels?.map((c, i) => {
                             return (
-                                <div key={`c-${i}`} className={"" + (active == i ? "opacity-100 relative max-h-full" : "opacity-0 mt-30 fixed pointer-events-none")}>
+                                <div key={`c-${i}`} className={active == i ? "opacity-100 relative max-h-full" : "opacity-0 mt-30 fixed pointer-events-none"}>
                                     <Channel key={`c-${i}`} {...c} />
                                 </div>
                             )
@@ -52,8 +99,8 @@ export default function Container({ lang }: { lang?: MainPageLangJson["features"
                     }
                 </div>
 
-                <div className=" p-3 py-2 w-full">
-                    <div className="border border-text/30 bg-[#09080b]/10 py-3 px-4 w-full rounded-lg text-text/50">You do not have permission to send messages in this channel.</div>
+                <div className="text-area">
+                    <div>{lang.noperms}</div>
                 </div>
             </div>
         </div>

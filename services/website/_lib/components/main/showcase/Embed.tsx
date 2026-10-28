@@ -80,7 +80,7 @@ export default function Embed({
                         {
                             footer.text ? (<span className=" text-sm text-text/50 leading-0">{footer.text}</span>) : (<></>)
                         }
-                        <span className="text-text/20 text-[8px] leading-0 ">●</span>
+                        <span className="text-text/20 text-[12px] leading-0 ">•</span>
                         <span className='text-xs text-text/50 leading-0'>{new Date().toLocaleDateString("en", { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
 
                     </div>

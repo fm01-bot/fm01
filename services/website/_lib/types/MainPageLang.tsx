@@ -19,7 +19,7 @@ interface ServersLangJson {
     title: string,
     subtext: string[],
     memberstext: string,
-    invitetext: string[],
+    invitetext: string,
 }
 
 interface HeroLangJson {
@@ -35,7 +35,7 @@ interface FeaturesLangJson {
     container: ContainerType
 }
 
-interface PremiumTierLangJson {
+export interface PremiumTierLangJson {
     name: string,
     features: string[],
     price: string,
@@ -59,7 +59,8 @@ interface InviteLangJson {
 }
 
 interface ContainerType {
-    channels?: ChannelType[]
+    channels?: ChannelType[],
+    noperms?: string
 }
 
 export interface ChannelType {

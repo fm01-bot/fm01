@@ -49,7 +49,17 @@ export default async function Layout({
                     initialTheme={initialTheme ?? undefined}
                 >
                     <Header lang={dict.header} code={lang} />
-                    <main>{children}</main>
+                    <main>
+                        <div className="w-full flex items-center justify-center max-w-screen">
+                            <div className="w-280 max-w-screen">
+                                <div className="absolute w-screen h-screen top-0 left-0 grid-bg -z-1">
+                                </div>
+                                <div className='px-2 laptop:px-6'>
+                                    {children}
+                                </div>
+                            </div>
+                        </div>
+                    </main>
                     <Footer lang={dict.footer} />
                 </ThemeProvider>
             </body>

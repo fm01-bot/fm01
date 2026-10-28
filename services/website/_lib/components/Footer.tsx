@@ -1,82 +1,175 @@
+"use client"
+
 import Link from "next/link";
 
 import { FooterLangJson } from "@/_lib/types/PageLang"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faLink } from "@fortawesome/free-solid-svg-icons";
+import { faDesktop, faLink, faMoon, faSun } from "@fortawesome/free-solid-svg-icons";
+import { useTheme } from "@teispace/next-themes";
+import { faDiscord, faGithub, faInstagram, faYoutube } from "@fortawesome/free-brands-svg-icons";
+import Logo from "../svg/Logo";
 
 export default function Footer({ lang }: { lang: FooterLangJson }) {
+
+    const { theme, setTheme } = useTheme()
     const currentYear = new Date().getFullYear();
-    const LINK_LANG = {
-        "https://fm01.bot/tos": lang.links.tos,
-        "https://fm01.bot/privacy": lang.links.privacy,
-        "https://fm01.bot/cookies": lang.links.cookies,
+
+
+
+
+    const LINK_LANG: Record<string, string> = {
         "https://github.fm01.bot": lang.links.github,
-        "https://fm01.bot/providers": lang.links.providers
+        "https://support.fm01.bot": "FAQ",
+        "https://discord.fm01.bot": "Support server",
+        "/pricing": "Pricing",
+        "/features": "Features"
     }
-    const LINKS: (keyof typeof LINK_LANG)[] = [
-        "https://fm01.bot/tos",
-        "https://fm01.bot/privacy",
-        "https://fm01.bot/cookies",
+    const LINKS = [
         "https://github.fm01.bot",
-        "https://fm01.bot/providers"
+        "https://support.fm01.bot",
+        "https://discord.fm01.bot",
+        "/pricing",
+        "/features"
     ]
-    const SPECIAL_LANG = {
-        "https://yoursit.ee/adam": lang.special.dev,
-        "https://playdev.hu": lang.special.host
+    const SPECIAL_LANG: Record<string, string> = {
+        "https://yoursit.ee/adam": `${lang.special.dev} Ace`,
+        "https://playdev.hu": `${lang.special.host} PlayClan`
     }
 
-    const SPECIAL_NAME = {
-        "https://yoursit.ee/adam": "Ace",
-        "https://playdev.hu": "PlayClan"
-    }
-
-    const SPECIAL_KEY: (keyof typeof SPECIAL_LANG)[] = [
+    const SPECIAL_KEY = [
         "https://yoursit.ee/adam",
         "https://playdev.hu"
     ]
 
+    const LEGAL_KEY = [
+        "/legal/providers",
+        "ignore1",
+        "/legal/bot/tos",
+        "/legal/bot/privacy",
+        "ignore2",
+        "/legal/web/tos",
+        "/legal/web/privacy",
+        "/legal/web/cookies",
+    ]
+
+    const LEGAL_LANG: Record<string, string> = {
+        "/legal/providers": "Providers",
+        "ignore1": "Discord bot",
+        "/legal/bot/tos": "Terms of Service",
+        "/legal/bot/privacy": "Privacy Policy",
+        "ignore2": "Website",
+        "/legal/web/tos": "Terms of Service",
+        "/legal/web/privacy": "Privacy Policy",
+        "/legal/web/cookies": "Cookie Policy"
+    }
+
+    const FOOTER_LINKS = [
+        {
+            "title": lang.links.title,
+            "keys": LINKS,
+            "lang": LINK_LANG,
+            "names": null
+        },
+        {
+            "title": "Legal",
+            "keys": LEGAL_KEY,
+            "lang": LEGAL_LANG
+        },
+        {
+            "title": lang.special.title,
+            "keys": SPECIAL_KEY,
+            "lang": SPECIAL_LANG
+        },
+    ]
+
     return (
-        <div className="w-full flex items-center justify-center pb-5 px-5 flex-col py-10 md:pt-20 bg-text/7 laptop:[clip-path:polygon(0_0,100%_10%,100%_100%,0_100%)] pt-15">
-            <div className="w-full max-w-280 flex flex-col laptop:flex-row items-start laptop:flex-wrap laptop:justify-around relative flex-wrap gap-10">
-                <div>
-                    <h1 className="pb-2">{lang.contact.title}</h1>
-                    <p>Erdei Olivér Márton E.V.</p>
-                    <p>Budapest, Perényi Zsigmond u. 25, 1047</p>
-                    <Link href={`mailto:support@fm01.bot`} className="link">support@fm01.bot</Link>
-                    <br />
-                    <Link className="link" href={`https://dc.fm01.bot/`}>{lang.contact.discord}</Link>
+        <div className="footer">
+            <div className="container">
+                <div className="links">
+                    <div>
+                        <div className="brand">
+                            <Logo width={32} height={32} fill="fill-primary" />
+                            <span>fm01</span>
+                        </div>
+                        <p>Erdei Olivér Márton E.V.</p>
+                        <p>Budapest, Perényi Zsigmond u. 25, 1047</p>
+                        <Link href={`mailto:support@fm01.bot`} className="link">support@fm01.bot</Link>
+                    </div>
+                    {
+                        FOOTER_LINKS.map((e, i) => {
+                            return (
+                                <div key={i}>
+                                    <h1>{e.title.toUpperCase()}</h1>
+                                    <ul>
+                                        {
+                                            e.keys.map((f, j) => {
+                                                if (f.match('ignore')) {
+                                                    return (
+                                                        <li key={j} className="ignore">{e.lang[f]}</li>
+                                                    )
+                                                }
+                                                return (
+                                                    <li key={j}>
+                                                        <Link href={f} className="group">
+                                                            <FontAwesomeIcon icon={faLink} />
+                                                            <span>
+                                                                {e.lang[f]}
+                                                            </span>
+                                                        </Link>
+                                                    </li>
+                                                )
+                                            })
+                                        }
+                                    </ul>
+                                </div>
+                            )
+                        })
+                    }
                 </div>
 
-                <div>
-                    <h1 className="pb-2">{lang.links.title}</h1>
-                    <div className="flex flex-col">
-                        {
-                            LINKS.map((e, i) => {
-                                return (
-                                    <Link className="hover:text-primary hover:cursor-pointer" href={e} key={i} >{LINK_LANG[e]}<FontAwesomeIcon className="text-primary ml-1" icon={faLink} /></Link>
-                                )
-                            })
-                        }
+
+                <div className="settings">
+                    <Link className="status" href={`https://status.fm01.bot`}>
+
+                    </Link>
+                    <div className="copyright">
+                        <span>
+                            fm01 © {currentYear}. {lang.copyright}
+                        </span>
+                    </div>
+                    <div className="other">
+                        <div className="theme">
+                            <FontAwesomeIcon onClick={() => setTheme('light')} icon={faSun} className={`${theme === "light" ? "active" : ""}`} />
+                            <FontAwesomeIcon onClick={() => setTheme('system')} icon={faDesktop} className={`${theme === "system" ? "active" : ""}`} />
+                            <FontAwesomeIcon onClick={() => setTheme('dark')} icon={faMoon} className={`${theme === "dark" ? "active" : ""}`} />
+                            <span className="circle"></span>
+                        </div>
+                        <div className="socials">
+                            <svg width="0" height="0">
+                                <linearGradient id="ig-gradient" x1="0%" y1="100%" x2="100%" y2="0%">
+                                    <stop stopColor="#fcb045" offset="0%" />
+                                    <stop stopColor="#fd1d1d" offset="50%" />
+                                    <stop stopColor="#833ab4" offset="100%" />
+                                </linearGradient>
+                            </svg>
+                            <Link href={`https://github.fm01.bot`} target="_blank">
+                                <FontAwesomeIcon icon={faGithub} />
+                            </Link>
+                            <Link href={`https://discord.fm01.bot`} target="_blank">
+                                <FontAwesomeIcon icon={faDiscord} />
+                            </Link>
+                            <Link href={`https://youtube.fm01.bot`} target="_blank">
+                                <FontAwesomeIcon icon={faYoutube} />
+                            </Link>
+                            <Link href={`https://insta.fm01.bot`} target="_blank">
+                                <FontAwesomeIcon icon={faInstagram} />
+                            </Link>
+                            <Link href={`https://yoursitee.fm01.bot`} target="_blank">
+
+                            </Link>
+                        </div>
                     </div>
                 </div>
-                <div>
-                    <h1 className="pb-2">{lang.special.title}</h1>
-                    <div className="flex flex-col">
-                        {
-                            SPECIAL_KEY.map((e, i) => {
-                                return (
-                                    <span key={i}>{SPECIAL_LANG[e]} <Link className="hover:text-primary hover:cursor-pointer hover:font-light" href={e} >{SPECIAL_NAME[e]}<FontAwesomeIcon className="text-primary ml-1" icon={faLink} /></Link></span>
-                                )
-                            })
-                        }
-                    </div>
-                </div>
-            </div>
-            <div className="w-full max-w-275 flex laptop:items-center flex-col justify-around text-sm pt-5 flex-wrap">
-                <span>
-                    fm01 © {currentYear}. {lang.copyright}
-                </span>
-                <span className="text-text/50">{lang.affiliate}</span>
             </div>
         </div>
     )

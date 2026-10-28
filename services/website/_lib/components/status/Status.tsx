@@ -1,10 +1,10 @@
-import { StatusType } from "@/_lib/types/PageLang";
+import { StatusPageLangJson } from "@/_lib/types/StatusPageLang";
 
-export default function Status({ lang }: { lang: StatusType }) {
+export default function Status({ lang }: { lang: StatusPageLangJson }) {
     return (
         <div id="status" className="h-screen">
             <p className="title">
-                {lang.title}
+                {lang.hero.title.join(" ")}
             </p>
         </div>
     );

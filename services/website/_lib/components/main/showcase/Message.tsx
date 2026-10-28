@@ -19,6 +19,8 @@ export default function Message({
         throw new Error("You can't have buttons AND embeds at the same time! Use buttons within the embeds!")
     }
 
+    const today = new Date();
+
     return (
         <>
             <div className='flex flex-row gap-2.5 justify-start'>
@@ -31,7 +33,7 @@ export default function Message({
                                 <FontAwesomeIcon icon={faCheck} className='h-4 w-4' />
                                 <span>APP</span>
                             </div>) : (<></>)}
-                        <span className='text-xs mt-1.5 text-text/50'>{new Date().toLocaleDateString("en", { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                        <span className='text-xs mt-1.5 text-text/50'>{today.toLocaleDateString("en", { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                     <div>
                         <div className='pb-2'>

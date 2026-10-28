@@ -3,7 +3,7 @@
     "premium": "Premium",
     "docs": "Dokumentáció",
     "status": "Státusz",
-    "team": "Csapat",
+    "features": "Modulok",
     "dashboard": "Vezérlőpult"
   },
   "footer": {
@@ -24,8 +24,14 @@
       "dev": "Fejlesztette",
       "host": "Tárhelye"
     },
+    "status": "Rendszerállapot",
     "copyright": "Minden jog fenntartva.",
     "affiliate": "Nem áll kapcsolatban a Discord Inc.-vel."
+  },
+  "notFound": {
+    "title": "Nem található",
+    "description": "A keresett erőforrás nem található.",
+    "home": "Vissza a főoldalra"
   },
   "main": {
     "hero": {
@@ -49,10 +55,7 @@
         "taggal."
       ],
       "memberstext": "tag",
-      "invitetext": [
-        "Szervered",
-        "Hívj meg most"
-      ]
+      "invitetext": "Hívj meg most"
     },
     "features": {
       "title": "Funkciók",
@@ -66,13 +69,13 @@
               {
                 "message": "Hahaha feltöröm a szerver!",
                 "username": "Pearoo",
-                "avatar": "/images/pearoo.png",
+                "avatar": "/images/pearoo.webp",
                 "bot": false
               },
               {
                 "message": "A felhasználót sikeresen figyelmeztettük.",
                 "username": "fm01",
-                "avatar": "/images/logo.png",
+                "avatar": "/images/logo.webp",
                 "bot": true
               }
             ]
@@ -84,7 +87,7 @@
               {
                 "message": "A sorsolás most indul!",
                 "username": "fm01",
-                "avatar": "/images/logo.png",
+                "avatar": "/images/logo.webp",
                 "bot": true,
                 "embeds": [
                   {
@@ -110,12 +113,12 @@
                       }
                     ],
                     "thumbnail": {
-                      "url": "/images/logo.png"
+                      "url": "/images/logo.webp"
                     },
                     "author": {
                       "name": "Sorsolási rendszer",
                       "url": "https://fm01.bot",
-                      "icon_url": "/images/logo.png"
+                      "icon_url": "/images/logo.webp"
                     },
                     "buttons": [
                       [
@@ -133,7 +136,7 @@
               {
                 "message": "Piros buzi!",
                 "username": "fm01",
-                "avatar": "/images/logo.png",
+                "avatar": "/images/logo.webp",
                 "bot": true
               }
             ]
@@ -145,7 +148,7 @@
               {
                 "message": "Most kaptál 500 érmét!",
                 "username": "fm01",
-                "avatar": "/images/logo.png",
+                "avatar": "/images/logo.webp",
                 "bot": true
               }
             ]
@@ -157,7 +160,7 @@
               {
                 "message": "Most kaptál 500 érmét!",
                 "username": "fm01",
-                "avatar": "/images/logo.png",
+                "avatar": "/images/logo.webp",
                 "bot": true
               }
             ]
@@ -169,7 +172,7 @@
               {
                 "message": "Most kaptál 500 érmét!",
                 "username": "fm01",
-                "avatar": "/images/logo.png",
+                "avatar": "/images/logo.webp",
                 "bot": true
               }
             ]
@@ -181,7 +184,7 @@
               {
                 "message": "Most kaptál 500 érmét!",
                 "username": "fm01",
-                "avatar": "/images/logo.png",
+                "avatar": "/images/logo.webp",
                 "bot": true
               }
             ]
@@ -193,7 +196,7 @@
               {
                 "message": "Most kaptál 500 érmét!",
                 "username": "fm01",
-                "avatar": "/images/logo.png",
+                "avatar": "/images/logo.webp",
                 "bot": true
               }
             ]
@@ -205,7 +208,7 @@
               {
                 "message": "Most kaptál 500 érmét!",
                 "username": "fm01",
-                "avatar": "/images/logo.png",
+                "avatar": "/images/logo.webp",
                 "bot": true
               }
             ]
@@ -217,7 +220,7 @@
               {
                 "message": "Most kaptál 500 érmét!",
                 "username": "fm01",
-                "avatar": "/images/logo.png",
+                "avatar": "/images/logo.webp",
                 "bot": true
               }
             ]
@@ -229,7 +232,7 @@
               {
                 "message": "Most kaptál 500 érmét!",
                 "username": "fm01",
-                "avatar": "/images/logo.png",
+                "avatar": "/images/logo.webp",
                 "bot": true
               }
             ]
@@ -241,12 +244,13 @@
               {
                 "message": "Most kaptál 500 érmét!",
                 "username": "fm01",
-                "avatar": "/images/logo.png",
+                "avatar": "/images/logo.webp",
                 "bot": true
               }
             ]
           }
-        ]
+        ],
+        "noperms": "Nincs jogosultságod üzeneteket küldeni ebben a csatornában."
       }
     },
     "premium": {
@@ -333,7 +337,6 @@
   "bot-locale": {
     "warn": {
       "embed": {
-        "title": "Figyelmeztetés",
         "description": "{warn.user.mention} figyelmeztetve.",
         "fields": [
           {
@@ -347,28 +350,29 @@
         ],
         "footer": {
           "text": "{warn.id}"
-        }
+        },
+        "title": "Figyelmeztetés"
       }
     },
     "giveaway": {
       "embed": {
-        "title": "🎉 Giveaway!",
         "description": "{prize}",
         "fields": [
           {
+            "inline": true,
             "name": "Winners",
-            "value": "{winners}",
-            "inline": true
+            "value": "{winners}"
           },
           {
+            "inline": true,
             "name": "Ends",
-            "value": "{ends}",
-            "inline": true
+            "value": "{ends}"
           }
         ],
         "footer": {
           "text": "Click the button below to enter!"
         },
+        "title": "🎉 Giveaway!",
         "buttons": [
           {
             "label": "🎉 {participants}"
@@ -378,9 +382,9 @@
     },
     "work": {
       "embed": {
-        "title": "Munka",
+        "color": 6656243,
         "description": "{random}",
-        "color": 6656243
+        "title": "Munka"
       },
       "random": [
         "Hazaértél, és láttad, hogy **{amount} Ft-al** bővült a számlád egyenlege.",
@@ -396,55 +400,59 @@
     },
     "music": {
       "embed": {
-        "title": "Most szól",
+        "color": 5793266,
         "description": "**[{track.title}]({track.url})**",
         "fields": [
           {
+            "inline": true,
             "name": "Előadó",
-            "value": "{track.author}",
-            "inline": true
+            "value": "{track.author}"
           },
           {
+            "inline": true,
             "name": "Hossz",
-            "value": "{track.duration}",
-            "inline": true
+            "value": "{track.duration}"
           },
           {
+            "inline": true,
             "name": "Pozíció a lejátszási sorban",
-            "value": "Most",
-            "inline": true
+            "value": "Most"
           }
         ],
         "footer": {
-          "text": "Requested by {author.name}",
-          "icon_url": "{author.avatar}"
+          "icon_url": "{author.avatar}",
+          "text": "Requested by {author.name}"
         },
-        "color": 5793266
+        "title": "Most szól"
       }
     },
     "info": {
       "user": {
-        "title": "Felhasználó információk",
+        "author": {
+          "icon_url": "{member.avatar}",
+          "name": "{member}",
+          "url": "https://discord.com/users/{member.id}"
+        },
         "fields": [
           {
+            "inline": true,
             "name": "Felhasználónév",
-            "value": "{member.username}",
-            "inline": true
+            "value": "{member.username}"
           },
           {
+            "inline": true,
             "name": "Megjelenített név",
-            "value": "{member.display_name}",
-            "inline": true
+            "value": "{member.display_name}"
           },
           {
+            "inline": true,
             "name": "Hashtag",
-            "value": "{member.discriminator}",
-            "inline": true
+            "value": "{member.discriminator}"
           },
           {
+            "inline": true,
             "name": "ID",
-            "value": "{member.id}",
-            "inline": true
+            "value": "{member.id}"
           },
           {
             "name": "Bot?",
@@ -455,144 +463,140 @@
             "value": "{member.created_at.long}"
           }
         ],
-        "author": {
-          "name": "{member}",
-          "icon_url": "{member.avatar}",
-          "url": "https://discord.com/users/{member.id}"
-        },
-        "timestamp": "{now}"
+        "timestamp": "{now}",
+        "title": "Felhasználó információk"
       },
       "server": {
-        "title": "Szerver információ",
+        "author": {
+          "icon_url": "{server.icon}",
+          "name": "{server.name}"
+        },
         "fields": [
           {
+            "inline": true,
             "name": "Leírás",
-            "value": "{server.description}",
-            "inline": true
+            "value": "{server.description}"
           },
           {
+            "inline": true,
             "name": "ID",
-            "value": "{server.id}",
-            "inline": true
+            "value": "{server.id}"
           },
           {
+            "inline": true,
             "name": "Tulajdonos",
-            "value": "{server.owner.mention}",
-            "inline": true
+            "value": "{server.owner.mention}"
           },
           {
+            "inline": true,
             "name": "Szerver készült",
-            "value": "{server.created_at.long}",
-            "inline": true
+            "value": "{server.created_at.long}"
           },
           {
+            "inline": true,
             "name": "Nyelvezet",
-            "value": "{server.language}",
-            "inline": true
+            "value": "{server.language}"
           },
           {
+            "inline": true,
             "name": "Örök meghívó",
-            "value": "{server.vanity_url}",
-            "inline": true
+            "value": "{server.vanity_url}"
           },
           {
+            "inline": true,
             "name": "Gyorsítás fokozat",
-            "value": "{server.boost_tier}",
-            "inline": true
+            "value": "{server.boost_tier}"
           },
           {
+            "inline": true,
             "name": "Gyorsítók száma",
-            "value": "{server.boosters}",
-            "inline": true
+            "value": "{server.boosters}"
           },
           {
+            "inline": true,
             "name": "Gyorsító rang",
-            "value": "{server.boost_role}",
-            "inline": true
+            "value": "{server.boost_role}"
           },
           {
+            "inline": true,
             "name": "Rangok",
-            "value": "{server.roles}",
-            "inline": true
+            "value": "{server.roles}"
           },
           {
+            "inline": true,
             "name": "Emojik",
-            "value": "{server.emojis}",
-            "inline": true
+            "value": "{server.emojis}"
           },
           {
+            "inline": true,
             "name": "Bitráta limit",
-            "value": "{server.bitrate_limit} kbps",
-            "inline": true
+            "value": "{server.bitrate_limit} kbps"
           },
           {
             "name": "Feltöltési limit",
             "value": "{server.upload_limit} MB"
           }
         ],
-        "author": {
-          "name": "{server.name}",
-          "icon_url": "{server.icon}"
-        },
         "image": {
           "url": "{server.banner}"
         },
-        "timestamp": "{now}"
+        "timestamp": "{now}",
+        "title": "Szerver információ"
       },
       "role": {
-        "title": "Rang információk",
         "fields": [
           {
+            "inline": true,
             "name": "Név",
-            "value": "{role.name}",
-            "inline": true
+            "value": "{role.name}"
           },
           {
+            "inline": true,
             "name": "ID",
-            "value": "{role.id}",
-            "inline": true
+            "value": "{role.id}"
           },
           {
+            "inline": true,
             "name": "Pozíció",
-            "value": "{role.position}",
-            "inline": true
+            "value": "{role.position}"
           },
           {
+            "inline": true,
             "name": "Külön megjelenített?",
-            "value": "{role.hoist}",
-            "inline": true
+            "value": "{role.hoist}"
           },
           {
+            "inline": true,
             "name": "Integráció kezelt?",
-            "value": "{role.managed}",
-            "inline": true
+            "value": "{role.managed}"
           },
           {
+            "inline": true,
             "name": "Mindenki megemlítheti?",
-            "value": "{role.mentionable}",
-            "inline": true
+            "value": "{role.mentionable}"
           },
           {
+            "inline": true,
             "name": "Bot rang?",
-            "value": "{role.bot}",
-            "inline": true
+            "value": "{role.bot}"
           },
           {
+            "inline": true,
             "name": "Rang készült",
-            "value": "{role.created}",
-            "inline": true
+            "value": "{role.created}"
           },
           {
+            "inline": true,
             "name": "Tagok száma",
-            "value": "{role.members}",
-            "inline": true
+            "value": "{role.members}"
           },
           {
+            "inline": false,
             "name": "Jogok",
-            "value": "```{role.permissions}```",
-            "inline": false
+            "value": "```{role.permissions}```"
           }
-        ]
+        ],
+        "title": "Rang információk"
       }
     }
   }

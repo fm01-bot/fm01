@@ -2,7 +2,14 @@
 @custom-variant dark (&:is(.dark *));
 @font-face {
   font-family: 'Inter-FM01';
-  src:url("/fonts/Inter.ttf");
+  src: url('/fonts/Inter.ttf');
+}
+
+@font-face {
+  font-family: 'Emoji';
+  src: url('/fonts/NotoColorEmoji.ttf');
+  font-weight: normal;
+  font-style: normal;
 }
 
 /* ==================== Global CSS ==================== */
@@ -14,12 +21,22 @@
   font-family: 'Inter-FM01';
 }
 
+.emoji {
+  font-family: 'Emoji', sans-serif;
+}
+
 /* hide page scrollbar */
 html {
   scrollbar-width: none;
+overscroll-behavior: none;
+
 } /* Firefox */
 body {
   -ms-overflow-style: none;
+min-height: 100vh;
+display: flex;
+flex-direction: column;
+
 } /* IE and Edge */
 body::-webkit-scrollbar,
 body::-webkit-scrollbar-button {
@@ -47,13 +64,20 @@ a {
 :root {
 --theme-bg: #e2e3e4;
 
+
   --theme-text: #030507;
 --theme-primary: #4d8bff;
 --theme-secondary: #3865b2;
 --theme-accent: #bf3fd9;
 --theme-contrast: #cdcdd4;
 
-  font-family: 'Inter-FM01';
+--theme-available: #0bdb00;
+--theme-unavailable: #ff5050;
+--theme-interrupted: #ffb650;
+
+font-family: 'Inter-FM01';
+
+
 
 }
 
@@ -65,6 +89,10 @@ a {
 --theme-accent: #da47f8;
 --theme-contrast: #0e0e0f;
 
+--theme-available: #078c00;
+--theme-unavailable: #8c0000;
+--theme-interrupted: #ff9500;
+
 }
 
 @theme {
@@ -74,7 +102,12 @@ a {
   --color-secondary: var(--theme-secondary);
   --color-accent: var(--theme-accent);
   --color-contrast: var(--theme-contrast);
+--color-available: var(--theme-available);
+--color-unavailable: var(--theme-unavailable);
+--color-interrupted: var(--theme-interrupted);
+
 --breakpoint-laptop: 54rem; /* 864px */
+
 
   --breakpoint-zero: 0px;
 }
@@ -91,74 +124,114 @@ a {
   backdrop-filter: blur(10px);
 }
 
-/* ==================== Global CSS ==================== */
+@utility burger-class {
+  & .burger {
+    @apply relative w-10 h-7.5 bg-transparent cursor-pointer block scale-75;
 
+    & span {
+      @apply block z-10 absolute h-1 w-full bg-text rounded-full opacity-100 left-0 rotate-0 transition-all duration-250 ease-in-out;
+
+      &:nth-of-type(1) {
+        @apply top-0 origin-left;
+      }
+      &:nth-of-type(2) {
+        @apply top-1/2 -translate-y-1/2 origin-left;
+      }
+      &:nth-of-type(3) {
+        @apply top-full -translate-y-full origin-left;
+      }
+    }
+  }
+
+  & input:checked + .burger span:nth-of-type(1) {
+    @apply rotate-45 top-0 left-1.25;
+  }
+  & input:checked + .burger span:nth-of-type(2) {
+    @apply w-0 opacity-0;
+  }
+  & input:checked + .burger span:nth-of-type(3) {
+    @apply -rotate-45 top-8! left-1.25;
+  }
+
+  & input {
+        @apply hidden;
+      }
+}
+
+/* ==================== Global CSS ==================== */
 
 /* ==================== Navbar CSS ==================== */
 
 @utility navbar {
-  @apply w-full max-w-screen fixed top-0 left-0 z-10 flex items-center justify-center;
+@apply w-full max-w-screen fixed top-0 left-0 z-10 flex items-center justify-center;
+
 
   & .navbar-inner {
-    @apply w-full max-w-full self-stretch flex flex-row items-center justify-between! relative p-2;
+@apply w-full max-w-full self-stretch flex flex-row items-center justify-between! relative p-2;
+
 
     @variant laptop {
       @apply w-280 p-4;
     }
   }
-
   & .brand {
-    @apply flex flex-row items-center gap-1 self-stretch;
+@apply flex flex-row items-center gap-1 self-stretch;
+
 
     & span {
       @apply text-3xl text-primary font-black;
     }
   }
-
   & .nav-links-container {
-    @apply w-screen fixed;
+@apply w-screen fixed;
+
 
     @variant laptop {
       @apply absolute h-auto w-280 max-w-full flex flex-row items-center justify-center pointer-events-none;
     }
   }
-
   & .nav-links {
-    @apply p-4 gap-8! rounded-2xl border-2 border-text/10 backdrop-blur-[3px] hidden! self-stretch pointer-events-auto;
+@apply p-4 gap-8! rounded-2xl border-2 border-text/20 bg-contrast/30 backdrop-blur-xl hidden! self-stretch pointer-events-auto;
+
 
     @variant laptop {
       @apply flex!;
     }
-
     & a {
       @apply leading-1 drop-shadow-md;
 
       &:hover {
-        @apply text-primary drop-shadow-primary;
+        @apply text-primary drop-shadow-primary drop-shadow-[0px_0px_4px];
       }
       &:last-child {
         @apply text-accent hover:drop-shadow-accent;
       }
     }
   }
-
   & .actions {
-    @apply self-stretch flex flex-row items-center gap-5;
+@apply self-stretch flex flex-row items-center;
+
 
     & .langlight {
-      @apply self-stretch flex flex-row items-center gap-5;
-    }
+@apply self-stretch flex flex-row items-center relative gap-2 border-text/20 border-r-0! pl-4 rounded-2xl;
+@variant laptop {
+  @apply border-2;
+}
 
+
+    }
     /* Base styles applied to BOTH desktop and mobile elements */
     & .lang-select {
       @apply text-text! bg-transparent font-bold text-base leading-normal cursor-pointer focus:outline-none focus:ring-0 [&>option]:text-text;
     }
-    
     & .dashboard-btn {
-      @apply px-3 py-2 rounded-lg bg-primary gap-2 flex flex-row items-center text-white font-extrabold!;
+@apply px-2.5 py-1.5 rounded-lg bg-primary gap-2 flex flex-row items-center text-white font-extrabold! mr-4;
+font-size: clamp(0.875rem, 3vw, 1rem) !important;
+
 
       @variant laptop {
-        @apply rounded-2xl px-4 py-2;
+@apply rounded-2xl px-4 py-1.75 mr-0;
+
       }
       & span {
         @apply leading-normal;
@@ -166,10 +239,10 @@ a {
     }
 
     /* Target ONLY direct children so we don't hide the mobile overlay elements */
-    & > .theme, 
+    & > .theme,
     & > .lang-select {
       @apply hidden;
-      
+
       @variant laptop {
         @apply flex;
       }
@@ -183,32 +256,9 @@ a {
         @apply hidden;
       }
 
-      & input {
-        @apply hidden;
-      }
+/* Burger checked states using adjacent sibling combinator (+) */
 
-      & .burger {
-        @apply relative w-10 h-7.5 bg-transparent cursor-pointer block z-50; /* z-50 keeps it above overlay */
-        
-        & span {
-          @apply block z-10 absolute h-1 w-full bg-text rounded-full opacity-100 left-0 rotate-0 transition-all duration-250 ease-in-out;
-          
-          &:nth-of-type(1) { @apply top-0 origin-left; }
-          &:nth-of-type(2) { @apply top-1/2 -translate-y-1/2 origin-left; }
-          &:nth-of-type(3) { @apply top-full -translate-y-full origin-left; }
-        }
-      }
 
-      /* Burger checked states using adjacent sibling combinator (+) */
-      & input:checked + .burger span:nth-of-type(1) {
-        @apply rotate-45 top-0 left-1.25;
-      }
-      & input:checked + .burger span:nth-of-type(2) {
-        @apply w-0 opacity-0;
-      }
-      & input:checked + .burger span:nth-of-type(3) {
-        @apply -rotate-45 top-8! left-1.25;
-      }
 
       /* Overlay Styles */
       & .overlay {
@@ -225,21 +275,28 @@ a {
         & .overlay-link:last-child {
           @apply text-accent!;
         }
-        
+
         & .overlay-theme {
           @apply text-2xl;
         }
 
         & .lang-select {
-          @apply text-xl block; 
+@apply text-xl block;
+
+
         }
 
         & .dashboard-btn {
-          @apply text-xl px-6 py-3; 
+@apply text-xl px-6 py-3;
+
+
         }
       }
 
-      & input:checked ~ .overlay {
+      & .burger {
+        @apply z-50;
+      }
+      & .burger-class:has(input:checked) + .overlay {
         @apply left-0!;
       }
     }
@@ -248,36 +305,334 @@ a {
 
 /* ==================== Navbar CSS ==================== */
 
-@utility title {
-  @apply text-3xl font-bold! text-center mb-4;
+/* ==================== Footer CSS ==================== */
+@utility footer {
+  @apply w-full flex items-center justify-center pb-5 px-5 flex-col py-10 md:pt-20 pt-15 bottom-0 relative mt-auto;
+
+  & svg {
+    @apply w-4 h-4;
+  }
+
+  & .container {
+    @apply w-full max-w-280 bg-contrast/30 backdrop-blur-2xl shadow-lg rounded-2xl py-4 pt-8 px-2;
+
+    @variant laptop {
+      @apply grid-cols-4 border border-text/5 px-8;
+    }
+
+    & .links {
+      @apply flex flex-row flex-wrap justify-between w-full gap-3 px-5;
+
+      @variant laptop {
+        @apply grid-cols-4 grid-rows-1;
+      }
+
+      & .brand {
+        @apply flex flex-row items-center justify-start gap-1 mb-5;
+
+        & svg {
+          @apply w-8 h-8;
+        }
+
+        & span {
+          @apply font-black text-primary text-3xl;
+        }
+      }
+
+      & h1 {
+        @apply text-sm! font-normal pb-2;
+      }
+
+      & .ignore {
+        @apply text-text/50! text-sm font-[450] mb-0!;
+      }
+
+      & a {
+        @apply gap-0! flex items-center w-fit text-text/50! font-[250]! mb-2! pr-[1.5450rem];
+
+        &:hover {
+          @apply gap-2! text-text! font-[450]! pr-0!;
+        }
+        & svg {
+          @apply w-0! group-hover:w-3! text-primary opacity-75;
+        }
+      }
+    }
+
+    & .settings {
+      @apply w-full grid grid-cols-1 grid-rows-2 items-center text-sm pt-5;
+
+      @variant laptop {
+        @apply grid-cols-3 grid-rows-1;
+      }
+      & .status {
+        @apply justify-start gap-3 items-center hidden;
+
+        grid-column: 1;
+        grid-row: 1;
+
+        @variant laptop {
+          @apply flex;
+        }
+
+        & .indicator {
+          position-anchor: --indicator;
+
+          top: anchor(top);
+          left: anchor(left);
+          width: anchor-size(width);
+          height: anchor-size(height);
+          @apply animate-ping absolute w-2.75! h-2.75!;
+        }
+
+        & .stationary {
+          anchor-name: --indicator;
+
+          @apply relative w-2.75! h-2.75!;
+        }
+      }
+
+      & .copyright {
+        @apply flex justify-center items-end font-light text-xs text-text/50! h-full!;
+
+        grid-row: 2;
+
+        @variant laptop {
+          grid-row: 1;
+          grid-column: 2;
+        }
+      }
+
+      & .other {
+        grid-row: 1;
+        @apply flex justify-between gap-3 w-full;
+
+        @variant laptop {
+          @apply w-auto justify-end;
+        }
+
+        & .theme {
+          @apply relative text-base flex flex-row items-center rounded-full border-2 border-accent/50 transition-none! duration-[0]!;
+
+          & svg {
+            @apply p-2 px-1.5 w-8 h-8;
+
+            &.active {
+              anchor-name: --active-anchor;
+              
+              @apply z-10;
+            }
+          }
+
+          & .circle {
+            position-anchor: --active-anchor;
+            left: anchor(center);
+            top: anchor(center);
+            transform: translate(-50%, -50%);
+            transition: left 300ms ease-in-out, top 300ms ease-in-out !important;
+            will-change: left, top;
+
+            @apply border-2 border-accent rounded-full absolute p-1 block w-8.5! h-8.5! z-0 bg-accent/40 pointer-events-none;
+          }
+        }
+
+        & .socials {
+          @apply text-xl flex flex-row gap-2 items-center justify-center;
+          & a {
+            @apply opacity-50;
+
+            &:hover {
+              @apply opacity-100 cursor-pointer scale-110;
+
+              &:nth-child(3) {
+                @apply text-[#5865F2];
+              }
+
+              &:nth-child(4) {
+                @apply text-red-500;
+              }
+
+              &:nth-child(5) svg path {
+                fill: url(#ig-gradient) !important;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+/* ==================== Footer CSS ==================== */
+
+@utility showcase-container {
+
+  --channels-width: min(16.75rem, 85%);
+  @apply relative flex flex-row rounded-lg w-full h-160 overflow-hidden select-none feat-container;
 
   @variant laptop {
-    @apply text-6xl;
+    @apply h-125;
   }
+  & .channels {
+    width: var(--channels-width);
+    @apply absolute top-0 bottom-0 left-0 z-20 bg-text/10 dark:bg-[#09080b]/50 p-4 rounded-bl-lg -translate-x-full transition-transform duration-300;
+
+    @variant laptop {
+      width: 16.75rem;
+      @apply static z-auto translate-x-0;
+    }
+
+    & .server-title {
+      @apply items-center gap-2 text-text/50 text-xl hidden;
+
+      @variant laptop {
+        @apply flex;
+      }
+    }
+
+
+    & .channel-list {
+      @apply flex flex-col items-start gap-0.5 mt-2 w-full ;
+
+      & .channel-name {
+        @apply text-text/50 h-8 flex text-nowrap items-center justify-start gap-2 py-1 px-2 hover:bg-text/20 hover:text-text rounded-lg w-full hover:cursor-pointer;
+
+        & span {
+          &:nth-child(1) {
+            @apply font-semibold text-xl leading-0;
+          }
+
+          &:nth-child(2) {
+            @apply leading-0;
+          }
+        }
+      }
+    }
+  }
+
+  &.channels-open {
+    & .channels {
+      @apply translate-x-0;
+    }
+
+    & .channel-container {
+      transform: translateX(var(--channels-width));
+
+      @variant laptop {
+        width: 100%;
+        transform: none;
+      }
+    }
+  }
+
+  & .channels-backdrop {
+    @apply absolute inset-0 z-10 border-0 bg-black/40;
+
+    @variant laptop {
+      @apply hidden;
+    }
+  }
+
+  & .channel-container {
+    @apply relative z-0 flex flex-col bg-text/3 w-full min-w-full h-full transition-transform duration-300;
+
+    @variant laptop {
+      width: 100%;
+      transform: none;
+      width: calc(100% - var(--channels-width));
+
+      @apply transition-[width,transform] min-w-0;
+    }
+
+    & .channel-title {
+      @apply flex flex-wrap justify-start text-nowrap items-center gap-1 px-3 py-2 border-b border-b-text/30 w-full shrink-0;
+
+      @variant laptop {
+        @apply flex-nowrap;
+      }
+
+      & .channel-back {
+        @apply flex items-center justify-center p-1 text-text/60 cursor-pointer;
+
+        @variant laptop {
+          @apply hidden;
+        }
+      }
+
+      & span {
+        &:nth-child(2) {
+          @apply text-text/50;
+          font-size: clamp(0.7rem, 3vw, 1.2rem) !important;
+
+        }
+
+        &:nth-child(3) {
+          font-size: clamp(0.5rem, 3vw, 1rem) !important;
+        }
+
+        &:nth-child(4) {
+          @apply px-1 text-contrast font-extrabold shadow-[10010000px];
+        }
+
+        &:nth-child(5) {
+          @apply text-text/50;
+
+          font-size: clamp(0.5rem, 3vw, 1rem) !important;
+        }
+      }
+    }
+
+    & .channel-content {
+      @apply flex flex-1 items-end p-2 overflow-y-scroll;
+
+      @variant laptop {
+        @apply w-full;
+      }
+    }
+
+
+
+    & .text-area {
+      @apply p-3 py-2 w-full;
+
+      & div {
+        @apply bg-[#09080b]/10 px-4 py-3 border border-text/30 rounded-lg w-full text-text/50;
+
+        font-size: clamp(0.55rem, 2vw, 1rem) !important;
+
+      }
+    }
+  }
+}
+
+@utility title {
+  @apply font-bold! text-center mb-4;
+  font-size: clamp(1.875rem, 5vw, 3.75rem) !important;
 }
 
 @utility subtext {
-  @apply text-base font-normal opacity-50 text-center mb-8;
-
-  @variant laptop {
-@apply text-3xl;
-
-  }
+  @apply font-normal opacity-50 text-center mb-8;
+  font-size: clamp(1rem, 3vw, 1.875rem) !important;
 }
 
 @utility secondary-text {
-  @apply text-text/55 text-lg laptop:text-2xl font-medium! laptop:font-normal!;
+@apply text-text/55 font-medium!;
+
+font-size: clamp(1.125rem, 3vw, 1.5rem) !important;
+
 }
 
 @utility primary-button {
-  @apply bg-primary text-base text-white py-2 px-4 rounded-lg transition-all;
+@apply bg-primary text-white py-2 px-4 rounded-lg transition-all;
+font-size: clamp(1rem, 5vw, 1.125rem) !important;
+
 
   &:hover {
     @apply scale-110;
   }
 
   @variant laptop {
-@apply text-lg py-4 px-8 rounded-2xl;
+@apply py-4 px-8 rounded-2xl;
+
 
   }
 }
@@ -306,17 +661,103 @@ a {
   }
 }
 
+@utility hero-main {
+  @apply flex flex-col gap-8;
+  & .title {
+    @apply flex flex-col gap-5 items-center justify-center w-full;
+    h1 {
+      @apply font-extrabold! leading-[85%];
+
+      font-size: clamp(3rem, 10vw, 6rem) !important;
+
+      &:nth-child(2) {
+        @apply text-primary;
+      }
+    }
+  }
+
+  & .subtext {
+    @apply flex flex-col items-center w-full;
+
+    p {
+      @apply secondary-text;
+    }
+  }
+
+  & .buttons {
+    @apply flex flex-row justify-center items-center gap-2.5 w-full;
+
+    @variant laptop {
+      @apply gap-5;
+    }
+
+    & a:nth-child(1) {
+      @apply accent-button flex flex-row gap-1 laptop:gap-2 items-center text-white;
+
+      @variant laptop {
+        @apply gap-2;
+
+        & svg {
+          @apply w-7.25! h-7.25!;
+        }
+      }
+
+      & svg {
+        @apply w-5! h-5! p-0.5;
+      }
+
+      & span {
+        @apply font-extrabold leading-[normal];
+        font-size: clamp(1rem, 2.25vw, 1.5rem) !important;
+      }
+    }
+
+    & a:nth-child(2) {
+      @apply btn-sec;
+
+      & span {
+        @apply text-base font-normal laptop:text-2xl leading-[normal];
+      }
+    }
+  }
+}
+
+@utility legal {
+  & .hero {
+    @apply flex items-center justify-center mt-30 mb-20;
+
+    & h1 {
+      font-size: clamp(2rem, 10vw, 4.5rem) !important;
+    }
+  }
+
+  & .legal-links {
+    @apply flex flex-col text-nowrap;
+  }
+
+  & .legal-container {
+    @apply flex flex-row flex-wrap w-full!;
+
+    @variant laptop {
+      @apply flex-nowrap gap-4;
+    }
+
+    & .doc {
+      @apply w-full!;
+    }
+  }
+}
+
 @utility trust-subtext {
-  @apply text-base font-normal text-center justify-center flex mb-8 text-nowrap flex-wrap flex-row max-w-screen;
+@apply font-normal text-center justify-center flex mb-8 text-nowrap flex-wrap flex-row max-w-screen;
+
+font-size: clamp(1rem, 3vw, 2rem) !important;
+
   & > span:nth-child(even) {
     @apply text-primary font-bold px-1.5;
   }
   & > span:nth-child(odd) {
     @apply opacity-50;
-  }
-
-  @variant laptop {
-    @apply text-[2rem];
   }
 }
 
@@ -328,10 +769,14 @@ a {
 }
 
 @utility premium-disclamer {
-  @apply text-text/50 text-base mt-8 text-left;
+@apply text-text/50 mt-8 text-center;
+
+font-size: clamp(1rem, 2vw, 1.25rem) !important;
+
 
   @variant laptop {
-    @apply text-xl text-center;
+@apply text-center;
+
   }
 }
 
@@ -349,37 +794,61 @@ a {
   & .features {
     @apply flex flex-col w-full mb-8!;
 
-    @variant laptop {
+  span {
+    @apply flex items-start;
+  }
+
+  @variant laptop {
       @apply w-fit;
     }
   }
 
   & .inner-container {
-    @apply w-full flex items-center justify-between flex-row gap-2.5 flex-wrap;
+    @apply flex flex-1 w-full items-center justify-start flex-row gap-2.5 flex-wrap;
 
     @variant laptop {
       @apply flex-col flex-nowrap;
     }
+
+    & .top {
+      @apply flex flex-row justify-between w-full items-center;
+
+      @variant laptop {
+        @apply flex-col;
+      }
+    }
   }
 
   & .tier-title {
-    @apply text-3xl font-black text-center w-fit pl-0.5;
+@apply font-black text-center w-fit pl-0.5;
+font-size: clamp(1.5rem, 4vw, 2rem) !important;
+
 
     @variant laptop {
-      @apply w-full text-5xl pl-0;
+@apply w-full pl-0;
+
     }
   }
 
   & .tier-price {
-    @apply text-2xl font-bold text-center w-fit;
+@apply font-bold text-center w-fit;
+
+font-size: clamp(1.2rem, -3vw, 3rem) !important;
+
 
     @variant laptop {
-      @apply w-full text-xl;
+@apply w-full;
+
     }
   }
 
   & .button {
-    @apply rounded-lg py-2 px-4 w-full text-center text-xl! font-extrabold! text-white;
+@apply mt-auto rounded-lg py-2 px-4 w-full text-center text-xl! font-extrabold! text-white flex items-center justify-center gap-2;
+
+svg {
+  @apply w-6 h-6;
+}
+
 
     @variant laptop {
       @apply py-3 px-3.5;
@@ -393,7 +862,11 @@ a {
   }
 
   &#PREMIUM {
-    @apply border-primary!;
+    @apply border-primary! border-3;
+
+    @variant laptop {
+      @apply border-4;
+    }
     & .tier-title {
       @apply text-primary;
     }
@@ -419,6 +892,9 @@ a {
 @utility promoted-servers {
   @apply relative w-full overflow-hidden py-2;
 
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+
   & .promoted-servers-row:nth-child(even) .promoted-servers-track {
     animation-direction: reverse;
   }
@@ -430,12 +906,16 @@ a {
 
 @utility promoted-servers-track {
   @apply flex w-max flex-row;
-  animation: promoted-servers-scroll 20s linear infinite;
+  animation: promoted-servers-scroll 15s linear infinite;
   will-change: transform;
 }
 
 @utility promoted-servers-group {
-  @apply flex shrink-0 flex-row gap-2 pr-2;
+  @apply flex w-max shrink-0 flex-row gap-2 pr-2;
+
+  & > a {
+    width: max-content;
+  }
 }
 
 @keyframes promoted-servers-scroll {
@@ -479,17 +959,4 @@ html {
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
-}
-
-.active {
-  anchor-name: --active-anchor;
-}
-
-.indicator {
-  position: absolute;
-  position-anchor: --active-anchor;
-  top: anchor(bottom);
-  left: anchor(left);
-  width: anchor-size(width);
-  transition: all 0.25s ease-in-out;
 }

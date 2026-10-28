@@ -1,5 +1,5 @@
 import { createServer } from 'http'
-import { parse } from 'url'
+import type { ParsedUrlQuery } from 'querystring'
 import next from 'next'
 import schedule from 'node-schedule'
 import translationFetcher from './translationFetcher'
@@ -12,7 +12,33 @@ const handle = app.getRequestHandler()
 
 app.prepare().then(async () => {
     const server = createServer((req, res) => {
-        const parsedUrl = parse(req.url || '', true)
+        const requestUrl = new URL(
+            req.url || '/',
+            `http://${req.headers.host || 'localhost'}`
+        )
+        const query: ParsedUrlQuery = {}
+
+        requestUrl.searchParams.forEach((value, key) => {
+            const currentValue = query[key]
+            query[key] = currentValue
+                ? Array.isArray(currentValue)
+                    ? [...currentValue, value]
+                    : [currentValue, value]
+                : value
+        })
+
+        const parsedUrl = {
+            auth: null,
+            hash: null,
+            hostname: null,
+            href: `${requestUrl.pathname}${requestUrl.search}`,
+            pathname: requestUrl.pathname,
+            protocol: null,
+            search: requestUrl.search || null,
+            slashes: null,
+            port: null,
+            query,
+        }
         handle(req, res, parsedUrl)
     })
 

@@ -1,7 +1,7 @@
 
 "use client"
 import { useState, useRef, useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 // Define the shape of our language object
 interface Language {
@@ -29,11 +29,7 @@ export default function LangSelector({ currentLangCode = "en" }: LanguageSelecto
     // Strongly type the ref to an HTMLDivElement
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    const router = useRouter();
     const pathname = usePathname();
-
-    const page = pathname.substring(3);
-
     const currentLang = LANGUAGES.find((l) => l.code === currentLangCode) || LANGUAGES[0];
 
     useEffect(() => {
@@ -44,24 +40,47 @@ export default function LangSelector({ currentLangCode = "en" }: LanguageSelecto
                 setIsOpen(false);
             }
         }
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
+        document.addEventListener("pointerdown", handleClickOutside);
+        return () => document.removeEventListener("pointerdown", handleClickOutside);
     }, []);
 
     const handleLanguageSelect = (langCode: string) => {
         setIsOpen(false);
-        router.replace(`/${langCode}${page}`);
+        void (async () => {
+            try {
+                const response = await fetch("/api/locale", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ locale: langCode }),
+                });
+
+                if (!response.ok) {
+                    setIsOpen(true);
+                    return;
+                }
+
+                const cleanPath = pathname.replace(/^\/(en|hu)(?=\/|$)/, "") || "/";
+                window.location.assign(cleanPath);
+            } catch {
+                setIsOpen(true);
+            }
+        })();
     };
 
     return (
         <div
             ref={dropdownRef}
-            className="relative w-fit inline-flex items-center justify-between select-none transition-all duration-400 font-sans cursor-pointer"
-            onClick={() => setIsOpen(!isOpen)}
+            className="relative z-50 w-fit inline-flex items-center justify-between select-none transition-all duration-400 font-sans"
         >
             {/* Dropdown Trigger Button (Left side) */}
-            <div className="flex items-center justify-center h-full rounded-l-[9px] transition-colors duration-200">
-                <span className="text-[20px] leading-1">{currentLang.flag}</span>
+            <button
+                type="button"
+                aria-expanded={isOpen}
+                aria-haspopup="listbox"
+                className="flex items-center justify-center h-full rounded-l-[9px] transition-colors duration-200 cursor-pointer"
+                onClick={() => setIsOpen((open) => !open)}
+            >
+                <span className="text-[20px] emoji">{currentLang.flag}</span>
                 <svg
                     className={`w-2.5 h-2.5 text-text ml-2.5 transition-transform duration-200 ${isOpen ? "rotate-180 -translate-y-" : ""
                         }`}
@@ -70,11 +89,12 @@ export default function LangSelector({ currentLangCode = "en" }: LanguageSelecto
                 >
                     <path d="m380.39 484.79 307.04-305.99c16.766-17.812 16.766-45.059 0-61.828-16.766-16.766-45.059-16.766-61.828 0l-275.6 275.6-275.6-275.6c-17.812-16.766-45.059-16.766-61.828 0-16.766 16.766-16.766 44.012 0 61.828l305.99 305.99c17.812 16.766 45.059 16.766 61.828 0z" />
                 </svg>
-            </div>
+            </button>
 
             {/* Dropdown Menu */}
             <div
-                className={`absolute -left-3.5 transition-all duration-200 z-10 bg-text/10 rounded-lg backdrop-blur-sm border-background border ${isOpen
+                onPointerDown={(event) => event.stopPropagation()}
+                className={`absolute -left-3.5 top-full transition-all duration-200 z-50 pointer-events-auto bg-text/10 rounded-lg backdrop-blur-sm border-background border ${isOpen
                     ? "top-[calc(100%+20px)] opacity-100 visible"
                     : "top-[calc(100%+30px)] opacity-0 invisible"
                     }`}
@@ -89,7 +109,7 @@ export default function LangSelector({ currentLangCode = "en" }: LanguageSelecto
                             }}
                             className={`flex items-center p-2 rounded-[5px] cursor-pointer transition-colors hover:bg-background/80`}
                         >
-                            <span className="inline-block mr-3.75 text-[18px]">
+                            <span className="inline-block mr-3.75 text-[18px] emoji">
                                 {lang.flag}
                             </span>
                             <span className="font-bold text-sm">

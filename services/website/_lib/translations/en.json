@@ -3,7 +3,7 @@
     "premium": "Premium",
     "docs": "Docs",
     "status": "Status",
-    "team": "Team",
+    "features": "Features",
     "dashboard": "Dashboard"
   },
   "footer": {
@@ -24,8 +24,14 @@
       "dev": "Developed by",
       "host": "Hosted by"
     },
+    "status": "System status",
     "copyright": "All rights reserved.",
     "affiliate": "Not affiliated with Discord Inc."
+  },
+  "notFound": {
+    "title": "Not Found",
+    "description": "Could not find requested resource.",
+    "home": "Return Home"
   },
   "main": {
     "hero": {
@@ -49,10 +55,7 @@
         "members combined."
       ],
       "memberstext": "members",
-      "invitetext": [
-        "Your Server",
-        "Invite now"
-      ]
+      "invitetext": "Invite now"
     },
     "features": {
       "title": "Features",
@@ -66,18 +69,18 @@
               {
                 "message": "Hahaha I'll hack your server!",
                 "username": "rnxm",
-                "avatar": "/images/rnxm.png",
+                "avatar": "/images/rnxm.webp",
                 "bot": false
               },
               {
                 "message": "?!warn @rnxm 1w Hacking threats",
                 "username": "Pearoo",
-                "avatar": "/images/pearoo.png",
+                "avatar": "/images/pearoo.webp",
                 "bot": false
               },
               {
                 "username": "fm01",
-                "avatar": "/images/logo.png",
+                "avatar": "/images/logo.webp",
                 "bot": true,
                 "embeds": [
                   "bot-locale.warn.embed"
@@ -92,13 +95,13 @@
               {
                 "message": "?!giveaway 2d 2 nitro ($10)",
                 "username": "Pearoo",
-                "avatar": "/images/pearoo.png",
+                "avatar": "/images/pearoo.webp",
                 "bot": false
               },
               {
                 "message": "",
                 "username": "fm01",
-                "avatar": "/images/logo.png",
+                "avatar": "/images/logo.webp",
                 "bot": true,
                 "embeds": [
                   "bot-locale.giveaway.embed"
@@ -113,13 +116,13 @@
               {
                 "message": "?!work",
                 "username": "Pearoo",
-                "avatar": "/images/pearoo.png",
+                "avatar": "/images/pearoo.webp",
                 "bot": false
               },
               {
                 "message": "",
                 "username": "fm01",
-                "avatar": "/images/logo.png",
+                "avatar": "/images/logo.webp",
                 "bot": true,
                 "embeds": [
                   "bot-locale.work.embed"
@@ -134,7 +137,7 @@
               {
                 "message": "You just earned 500 coins!",
                 "username": "fm01",
-                "avatar": "/images/logo.png",
+                "avatar": "/images/logo.webp",
                 "bot": true
               }
             ]
@@ -146,7 +149,7 @@
               {
                 "message": "You just earned 500 coins!",
                 "username": "fm01",
-                "avatar": "/images/logo.png",
+                "avatar": "/images/logo.webp",
                 "bot": true
               }
             ]
@@ -156,9 +159,31 @@
             "description": "Engage members with a global economy!",
             "messages": [
               {
-                "message": "You just earned 500 coins!",
+                "message": "You can change languages however you want to",
                 "username": "fm01",
-                "avatar": "/images/logo.png",
+                "avatar": "/images/logo.webp",
+                "bot": true
+              },
+              {
+                "message": "?!config lang hu",
+                "username": "Pearoo",
+                "avatar": "/images/pearoo.webp"
+              },
+              {
+                "message": "Nyelv beállítva **Magyarra** 🇭🇺",
+                "username": "fm01",
+                "avatar": "/images/logo.webp",
+                "bot": true
+              },
+              {
+                "message": "?!config lang en",
+                "username": "Pearoo",
+                "avatar": "/images/pearoo.webp"
+              },
+              {
+                "message": "Language changed to **English** 🇬🇧",
+                "username": "fm01",
+                "avatar": "/images/logo.webp",
                 "bot": true
               }
             ]
@@ -170,7 +195,7 @@
               {
                 "message": "You just earned 500 coins!",
                 "username": "fm01",
-                "avatar": "/images/logo.png",
+                "avatar": "/images/logo.webp",
                 "bot": true
               }
             ]
@@ -182,13 +207,13 @@
               {
                 "message": "?!play rick ashley",
                 "username": "Pearoo",
-                "avatar": "/images/pearoo.png",
+                "avatar": "/images/pearoo.webp",
                 "bot": false
               },
               {
                 "message": "",
                 "username": "fm01",
-                "avatar": "/images/logo.png",
+                "avatar": "/images/logo.webp",
                 "bot": true,
                 "embeds": [
                   "bot-locale.music.embed"
@@ -203,7 +228,7 @@
               {
                 "message": "You just earned 500 coins!",
                 "username": "fm01",
-                "avatar": "/images/logo.png",
+                "avatar": "/images/logo.webp",
                 "bot": true
               }
             ]
@@ -215,7 +240,7 @@
               {
                 "message": "You just earned 500 coins!",
                 "username": "fm01",
-                "avatar": "/images/logo.png",
+                "avatar": "/images/logo.webp",
                 "bot": true
               }
             ]
@@ -227,12 +252,13 @@
               {
                 "message": "You just earned 500 coins!",
                 "username": "fm01",
-                "avatar": "/images/logo.png",
+                "avatar": "/images/logo.webp",
                 "bot": true
               }
             ]
           }
-        ]
+        ],
+        "noperms": "You do not have permission to send messages in this channel."
       }
     },
     "premium": {
@@ -249,7 +275,7 @@
             "Server & User install"
           ],
           "price": "Free",
-          "button": "Add to server"
+          "button": "Add to Server"
         },
         "premium": {
           "name": "Premium",
@@ -319,7 +345,6 @@
   "bot-locale": {
     "warn": {
       "embed": {
-        "title": "Warn",
         "description": "Warned {warn.user.mention}.",
         "fields": [
           {
@@ -333,28 +358,29 @@
         ],
         "footer": {
           "text": "{warn.id}"
-        }
+        },
+        "title": "Warn"
       }
     },
     "giveaway": {
       "embed": {
-        "title": "🎉 Giveaway!",
         "description": "{prize}",
         "fields": [
           {
+            "inline": true,
             "name": "Winners",
-            "value": "{winners}",
-            "inline": true
+            "value": "{winners}"
           },
           {
+            "inline": true,
             "name": "Ends",
-            "value": "{ends}",
-            "inline": true
+            "value": "{ends}"
           }
         ],
         "footer": {
           "text": "Click the button below to enter!"
         },
+        "title": "🎉 Giveaway!",
         "buttons": [
           {
             "label": "🎉 {participants}"
@@ -364,9 +390,9 @@
     },
     "work": {
       "embed": {
-        "title": "Work",
+        "color": 6656243,
         "description": "{random}",
-        "color": 6656243
+        "title": "Work"
       },
       "random": [
         "You arrived home from work and saw that **${amount}** was added to your account.",
@@ -382,55 +408,59 @@
     },
     "music": {
       "embed": {
-        "title": "Now playing",
+        "color": 5793266,
         "description": "**[{track.title}]({track.url})**",
         "fields": [
           {
+            "inline": true,
             "name": "Artist",
-            "value": "{track.author}",
-            "inline": true
+            "value": "{track.author}"
           },
           {
+            "inline": true,
             "name": "Duration",
-            "value": "{track.duration}",
-            "inline": true
+            "value": "{track.duration}"
           },
           {
+            "inline": true,
             "name": "Position in queue",
-            "value": "Now",
-            "inline": true
+            "value": "Now"
           }
         ],
         "footer": {
-          "text": "{author.name}",
-          "icon_url": "{author.avatar}"
+          "icon_url": "{author.avatar}",
+          "text": "{author.name}"
         },
-        "color": 5793266
+        "title": "Now playing"
       }
     },
     "info": {
       "user": {
-        "title": "User information",
+        "author": {
+          "icon_url": "{member.avatar}",
+          "name": "{member}",
+          "url": "https://discord.com/users/{member.id}"
+        },
         "fields": [
           {
+            "inline": true,
             "name": "Username",
-            "value": "{member.username}",
-            "inline": true
+            "value": "{member.username}"
           },
           {
+            "inline": true,
             "name": "Displayed name",
-            "value": "{member.display_name}",
-            "inline": true
+            "value": "{member.display_name}"
           },
           {
+            "inline": true,
             "name": "Discriminator",
-            "value": "{member.discriminator}",
-            "inline": true
+            "value": "{member.discriminator}"
           },
           {
+            "inline": true,
             "name": "ID",
-            "value": "{member.id}",
-            "inline": true
+            "value": "{member.id}"
           },
           {
             "name": "Bot?",
@@ -441,144 +471,140 @@
             "value": "{member.created_at.long}"
           }
         ],
-        "author": {
-          "name": "{member}",
-          "icon_url": "{member.avatar}",
-          "url": "https://discord.com/users/{member.id}"
-        },
-        "timestamp": "{now}"
+        "timestamp": "{now}",
+        "title": "User information"
       },
       "server": {
-        "title": "Server information",
+        "author": {
+          "icon_url": "{server.icon}",
+          "name": "{server.name}"
+        },
         "fields": [
           {
+            "inline": true,
             "name": "Description",
-            "value": "{server.description}",
-            "inline": true
+            "value": "{server.description}"
           },
           {
+            "inline": true,
             "name": "ID",
-            "value": "{server.id}",
-            "inline": true
+            "value": "{server.id}"
           },
           {
+            "inline": true,
             "name": "Owner",
-            "value": "{server.owner.mention}",
-            "inline": true
+            "value": "{server.owner.mention}"
           },
           {
+            "inline": true,
             "name": "Server created at",
-            "value": "{server.created_at.long}",
-            "inline": true
+            "value": "{server.created_at.long}"
           },
           {
+            "inline": true,
             "name": "Language",
-            "value": "{server.language}",
-            "inline": true
+            "value": "{server.language}"
           },
           {
+            "inline": true,
             "name": "Vanity URL",
-            "value": "{server.vanity_url}",
-            "inline": true
+            "value": "{server.vanity_url}"
           },
           {
+            "inline": true,
             "name": "Boost tier",
-            "value": "{server.boost_tier}",
-            "inline": true
+            "value": "{server.boost_tier}"
           },
           {
+            "inline": true,
             "name": "Number of boosters",
-            "value": "{server.boosters}",
-            "inline": true
+            "value": "{server.boosters}"
           },
           {
+            "inline": true,
             "name": "Boost role",
-            "value": "{server.boost_role}",
-            "inline": true
+            "value": "{server.boost_role}"
           },
           {
+            "inline": true,
             "name": "Roles",
-            "value": "{server.roles}",
-            "inline": true
+            "value": "{server.roles}"
           },
           {
+            "inline": true,
             "name": "Emojis",
-            "value": "{server.emojis}",
-            "inline": true
+            "value": "{server.emojis}"
           },
           {
+            "inline": true,
             "name": "Bitrate limit",
-            "value": "{server.bitrate_limit} kbps",
-            "inline": true
+            "value": "{server.bitrate_limit} kbps"
           },
           {
             "name": "Upload limit",
             "value": "{server.upload_limit} MB"
           }
         ],
-        "author": {
-          "name": "{server.name}",
-          "icon_url": "{server.icon}"
-        },
         "image": {
           "url": "{server.banner}"
         },
-        "timestamp": "{now}"
+        "timestamp": "{now}",
+        "title": "Server information"
       },
       "role": {
-        "title": "Role information",
         "fields": [
           {
+            "inline": true,
             "name": "Name",
-            "value": "{role.name}",
-            "inline": true
+            "value": "{role.name}"
           },
           {
+            "inline": true,
             "name": "ID",
-            "value": "{role.id}",
-            "inline": true
+            "value": "{role.id}"
           },
           {
+            "inline": true,
             "name": "Position",
-            "value": "{role.position}",
-            "inline": true
+            "value": "{role.position}"
           },
           {
+            "inline": true,
             "name": "Hoisted?",
-            "value": "{role.hoist}",
-            "inline": true
+            "value": "{role.hoist}"
           },
           {
+            "inline": true,
             "name": "Managed by integration?",
-            "value": "{role.managed}",
-            "inline": true
+            "value": "{role.managed}"
           },
           {
+            "inline": true,
             "name": "Mentionable by everyone?",
-            "value": "{role.mentionable}",
-            "inline": true
+            "value": "{role.mentionable}"
           },
           {
+            "inline": true,
             "name": "Bot role?",
-            "value": "{role.bot}",
-            "inline": true
+            "value": "{role.bot}"
           },
           {
+            "inline": true,
             "name": "Role created",
-            "value": "{role.created}",
-            "inline": true
+            "value": "{role.created}"
           },
           {
+            "inline": true,
             "name": "Members",
-            "value": "{role.members}",
-            "inline": true
+            "value": "{role.members}"
           },
           {
+            "inline": false,
             "name": "Permissions",
-            "value": "```{role.permissions}```",
-            "inline": false
+            "value": "```{role.permissions}```"
           }
-        ]
+        ],
+        "title": "Role information"
       }
     }
   }

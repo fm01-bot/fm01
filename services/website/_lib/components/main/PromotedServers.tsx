@@ -27,7 +27,7 @@ export default async function PromotedServers({ lang }: { lang: MainPageLangJson
     }
 
     return (
-        <div id="features" className="h-fit">
+        <div className="h-fit flex flex-col items-center">
             <p className="title">
                 {lang.title}
             </p>
@@ -36,19 +36,19 @@ export default async function PromotedServers({ lang }: { lang: MainPageLangJson
                     {`${lang.subtext[0]} `}
                 </span>
                 <span>
-                    {`${COUNTS[0]}+`}
+                    {`${COUNTS[0].toLocaleString()}+`}
                 </span>
                 <span>
                     {` ${lang.subtext[1]} `}
                 </span>
                 <span>
-                    {`${COUNTS[1]}+`}
+                    {`${COUNTS[1].toLocaleString()}+`}
                 </span>
                 <span>
                     {` ${lang.subtext[2]}`}
                 </span>
             </span>
-            <div className="flex flex-row flex-wrap gap-2 w-full max-w-full justify-center promoted-servers">
+            <div className="flex flex-row flex-wrap gap-2 laptop:w-[85%] max-w-full justify-center promoted-servers">
                 {
                     ROWS.map((row: PromotedServersJson[], i: number) => {
                         return (
@@ -59,13 +59,13 @@ export default async function PromotedServers({ lang }: { lang: MainPageLangJson
                                             {
                                                 trackRow.map((s: PromotedServersJson, j: number) => {
                                                     return (
-                                                        <Link href={s.invite} key={j} tabIndex={trackIndex === 1 ? -1 : undefined} className="flex flex-row h-fit w-full p-4 pr-8 gap-2.5 bg-contrast rounded-2xl">
-                                                            <Image src={s.icon} alt={s.name} width={60} height={60} className="rounded-lg" />
+                                                        <Link href={s.invite} key={j} tabIndex={trackIndex === 1 ? -1 : undefined} className="flex flex-row h-fit w-fit p-4 pr-8 gap-2.5 bg-contrast rounded-2xl">
+                                                            <Image src={s.icon} alt={s.name} width={60} height={60} className="rounded-lg laptop:w-[60px] laptop:h-[60px] w-[40px] h-[40px]" />
                                                             <div className="flex flex-col">
-                                                                <span className="text-2xl font-semibold">{s.name}</span>
+                                                                <span className="laptop:text-2xl text-base font-semibold">{s.name}</span>
                                                                 <span className="flex flex-row items-center gap-1">
-                                                                    <Members width={20} height={15} className="opacity-100 dark:opacity-40 mt-1" />
-                                                                    <span className=" leading-[normal]! text-xl! font-light! opacity-50">{new Intl.NumberFormat().format(s.count)} {lang.memberstext}</span>
+                                                                    <Members width={20} height={15} className="opacity-100 dark:opacity-40 mt-1 laptop:text-xl! text-sm!" />
+                                                                    <span className=" leading-[normal]! font-light! opacity-50 laptop:text-xl! text-sm!">{new Intl.NumberFormat().format(s.count)} {lang.memberstext}</span>
                                                                 </span>
                                                             </div>
                                                         </Link>
@@ -82,9 +82,9 @@ export default async function PromotedServers({ lang }: { lang: MainPageLangJson
             </div>
 
             <div className=" w-full items-center flex justify-center mt-20 -mb-20 text-white">
-                <Link href={`add.fm01.bot`} className=" flex items-center justify-center gap-2 py-3 px-6 bg-primary w-fit rounded-2xl text-2xl font-extrabold hover:shadow-primary shadow-transparent shadow-[0px_0px_20px_0px]">
+                <Link href={`https://add.fm01.bot`} className=" flex items-center justify-center gap-2 py-3 px-6 bg-primary w-fit rounded-2xl text-2xl font-extrabold hover:shadow-primary shadow-transparent shadow-[0px_0px_20px_0px]">
                     <FontAwesomeIcon icon={faDiscord} className="laptop:w-8! laptop:h-8! w-5! h-5! p-0.5" />
-                    <span className=" font-extrabold">Join Them!</span>
+                    <span className=" font-extrabold">{lang.invitetext}</span>
                 </Link>
             </div>
         </div>
