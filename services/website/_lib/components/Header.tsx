@@ -53,7 +53,7 @@ export default function Header({ lang, code }: { lang: WebLangJson["header"], co
                     <div className="langlight">
 
                         {/* FIX: Replaced 'inset-0' with explicit negative offsets to bleed under the border */}
-                        <div className={`absolute hidden laptop:block -top-0.5 -bottom-0.5 -left-0.5 right-0 -z-10 rounded-2xl bg-contrast/30 backdrop-blur-xl pointer-events-none`}></div>
+                        <div className={`absolute hidden laptop:block -top-px -bottom-px -left-0.5 right-0 -z-10 rounded-2xl bg-primary/50 backdrop-blur-xl pointer-events-none`}></div>
 
                         {/* 2. Desktop Theme Toggle */}
                         {/* <div className="theme" onClick={() => {

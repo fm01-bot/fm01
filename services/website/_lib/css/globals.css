@@ -213,10 +213,7 @@ font-family: 'Inter-FM01';
 
 
     & .langlight {
-@apply self-stretch flex flex-row items-center relative gap-2 border-text/20 border-r-0! pl-4 rounded-2xl;
-@variant laptop {
-  @apply border-2;
-}
+      @apply self-stretch flex flex-row items-center relative gap-2 pl-4 rounded-2xl;
 
 
     }
