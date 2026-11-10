@@ -48,3 +48,6 @@ cloudflare.deb
 
 # github
 /.github/
+
+#vscode
+/.vscode/
