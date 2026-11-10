@@ -4,7 +4,7 @@
 export async function getStatsCount() {
 
     const COUNTS: number[] = [
-        1000,
+        30000,
         1000000
     ]
 

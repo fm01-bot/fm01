@@ -6,17 +6,19 @@ import { PremiumPageLangJson } from "./PremiumPageLang"
 export interface WebLangJson {
     header: HeaderLangJson,
     footer: FooterLangJson,
+    notFound: NotFoundLangJson,
     main: MainPageLangJson,
     team: TeamPageLangJson,
     status: StatusPageLangJson,
-    premium: PremiumPageLangJson
+    premium: PremiumPageLangJson,
+    "bot-locale": Record<string, unknown>
 }
 
 export interface HeaderLangJson {
     premium: string,
     docs: string,
     status: string,
-    team: string,
+    features: string,
     dashboard: string
 }
 
@@ -38,6 +40,13 @@ export interface FooterLangJson {
         dev: string,
         host: string
     },
+    status?: string,
     copyright: string,
     affiliate: string,
+}
+
+export interface NotFoundLangJson {
+    title: string,
+    description: string,
+    home: string
 }

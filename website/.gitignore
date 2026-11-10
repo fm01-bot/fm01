@@ -42,5 +42,9 @@ next-env.d.ts
 
 # nextjs
 .next
+/dist/
 
 cloudflare.deb
+
+# github
+/.github/
