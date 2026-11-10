@@ -1,0 +1,109 @@
+<!-- DROP-IN CONTENT ONLY
+     Keep the existing site's <header>, <footer>, body background and global CSS.
+     Replace only the current /features page content with this block.
+-->
+<section class="fm01-features">
+  <div class="fm01-features-hero">
+    <div class="fm01-kicker">FEATURES</div>
+    <h1>Everything your<br><span>Discord server needs.</span></h1>
+    <p>Moderation, security, music, logging, economy and more — all working together in one bot.</p>
+  </div>
+
+  <div class="fm01-feature-tabs" role="tablist">
+    <button class="is-active" data-section="moderation">Moderation</button>
+    <button data-section="security">Security</button>
+    <button data-section="music">Music</button>
+    <button data-section="logging">Logging</button>
+    <button data-section="more">Everything else</button>
+    <button data-section="branding">Branding</button>
+  </div>
+
+  <section class="fm01-feature-row" id="moderation">
+    <div class="fm01-copy">
+      <small>01 / MODERATION</small>
+      <h2>Keep your server<br>under control.</h2>
+      <p>Handle rule breakers quickly without turning moderation into a chore. Cases, warnings, mutes, kicks, bans and other everyday controls stay right where your staff already work: Discord.</p>
+      <div class="fm01-chips"><span>Warn</span><span>Mute</span><span>Kick</span><span>Ban</span><span>Unban</span><span>Cases</span><span>Slowmode</span></div>
+    </div>
+    <div class="fm01-demo discord-demo">
+      <div class="demo-channel"># mod-log</div>
+      <div class="demo-date">TODAY AT 14:32</div>
+      <div class="demo-msg"><b>Pearoo</b><i>Today at 14:32</i><p>?!warn @rnxm 1w Hacking threats</p></div>
+      <div class="demo-result"><strong>✓</strong><div><b>Case #184 created</b><small>Warning issued successfully</small></div><em>ACTIVE</em></div>
+      <div class="demo-msg bot"><b>fm01 <label>APP</label></b><i>Today at 14:32</i><p>Warning recorded for <strong>@rnxm</strong></p></div>
+    </div>
+  </section>
+
+  <section class="fm01-feature-row reverse" id="security">
+    <div class="fm01-copy">
+      <small>02 / SECURITY</small>
+      <h2>Protection that<br>works quietly.</h2>
+      <p>AutoMod filters forbidden phrases, links and Discord invites while anti-spam, mention and message-line limits help keep abuse under control.</p>
+      <div class="fm01-chips"><span>AutoMod</span><span>Phrase filter</span><span>Link filter</span><span>Invite filter</span><span>Anti-spam</span><span>Bypasses</span></div>
+    </div>
+    <div class="fm01-demo security-demo">
+      <div class="security-title"><span>●</span><b>AutoMod</b><em>ACTIVE</em></div>
+      <div class="security-rule"><b>Forbidden phrases</b><span>ON</span><small>Filtering enabled</small></div>
+      <div class="security-rule"><b>Link filter</b><span>ON</span><small>Allowlist configured</small></div>
+      <div class="security-rule"><b>Invite filter</b><span>ON</span><small>Blocked by default</small></div>
+      <div class="security-rule"><b>Anti-spam</b><span>ON</span><small>5 messages / 5 seconds</small></div>
+      <div class="security-safe">✓ <div><b>Server protection active</b><small>No violations requiring action</small></div></div>
+    </div>
+  </section>
+
+  <section class="fm01-feature-row" id="music">
+    <div class="fm01-copy">
+      <small>03 / MUSIC</small>
+      <h2>Your server's<br>soundtrack.</h2>
+      <p>Play and control music directly from Discord with queues, seeking, volume, shuffle, looping and playback controls.</p>
+      <div class="fm01-chips"><span>Play</span><span>Pause</span><span>Queue</span><span>Seek</span><span>Shuffle</span><span>Loop</span><span>Volume</span></div>
+    </div>
+    <div class="fm01-demo music-demo">
+      <div class="album">♫</div>
+      <small>NOW PLAYING</small>
+      <h3>Never Gonna Give You Up</h3><p>Rick Astley</p>
+      <div class="progress"><span></span></div>
+      <div class="times"><span>1:42</span><span>3:32</span></div>
+      <div class="player-controls"><b>↶</b><strong>Ⅱ</strong><b>↷</b></div>
+      <div class="queue"><span>QUEUE</span><b>7 tracks</b></div>
+    </div>
+  </section>
+
+  <section class="fm01-feature-row reverse" id="logging">
+    <div class="fm01-copy">
+      <small>04 / LOGGING</small>
+      <h2>Know what<br>happened.</h2>
+      <p>Keep an audit trail of the changes that matter: messages, members, roles, channels, voice states, moderation actions, AutoMod and more.</p>
+      <div class="fm01-chips"><span>Messages</span><span>Members</span><span>Roles</span><span>Channels</span><span>Voice</span><span>AutoMod</span></div>
+    </div>
+    <div class="fm01-demo log-demo">
+      <div class="log-head"><b>SERVER ACTIVITY</b><span>LIVE</span></div>
+      <div><time>14:41:08</time><b>Message deleted</b><small>#general · @Alex</small></div>
+      <div><time>14:40:52</time><b>Role updated</b><small>@Moderator</small></div>
+      <div><time>14:39:17</time><b>Member joined</b><small>@Nova</small></div>
+      <div><time>14:38:04</time><b>Channel created</b><small>#events</small></div>
+      <div><time>14:36:49</time><b>AutoMod action</b><small>Invite filter</small></div>
+    </div>
+  </section>
+
+  <section class="fm01-more" id="more">
+    <small>THE REST</small>
+    <h2>And everything<br>in between.</h2>
+    <p>The core systems get the spotlight. Everything else makes fm01 feel complete.</p>
+    <div class="fm01-grid">
+      <article><b>Economy</b><p>Balance, work, crime, daily rewards, transfers, slots, deposits and a server shop.</p></article>
+      <article><b>Giveaways</b><p>Create giveaways with durations, winners, prizes and interactive participation.</p></article>
+      <article><b>Levels</b><p>XP, leaderboards, rewards, channel multipliers and role multipliers.</p></article>
+      <article><b>Information</b><p>Inspect users, servers, roles, channels, emojis and other Discord resources.</p></article>
+      <article><b>Localization</b><p>Change the bot language from Discord and give your community the experience it wants.</p></article>
+      <article><b>Custom Messages</b><p>Transform and generate messages with utilities ranging from ASCII to QR codes.</p></article>
+      <article><b>Join & Leave</b><p>Configure custom messages for members joining and leaving your server.</p></article>
+      <article><b>Snapshots</b><p>Save and load server configuration when you need to restore your setup.</p></article>
+    </div>
+  </section>
+
+  <section class="fm01-branding" id="branding">
+    <div><small>CUSTOM BRANDING</small><h2>Your server.<br>Your identity.</h2><p>Make fm01 fit your community instead of making your community fit the bot.</p></div>
+    <div class="brand-preview"><div class="brand-icon">f</div><div><b>fm01</b><small>Built for your community</small></div><button>Customize →</button></div>
+  </section>
+</section>

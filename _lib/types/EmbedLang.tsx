@@ -21,7 +21,7 @@ export interface EmbedType {
         url?: string,
         icon_url?: string
     },
-    buttons?: ButtonType[][]
+    buttons?: ButtonType[]
 }
 
 export interface FieldType {

@@ -28,8 +28,6 @@ export default async function translationFetcher() {
             url: entry.download_url,
         }));
 
-    console.log(locales)
-
     await Promise.all(
         locales.map(async ({ lang, url }: { lang: string, url: string }) => {
             const data = await (await fetch(url)).json();
@@ -52,7 +50,7 @@ export default async function translationFetcher() {
                     }
                 },
                 "work": {
-                    "embeds": data.work.embeds,
+                    "embed": data.work.embeds[0],
                     "random": data.work.random
                 },
                 "music": {
@@ -64,12 +62,9 @@ export default async function translationFetcher() {
                     "role": data.info.role.embeds[0]
                 }
             }
-            localData['bot-locale']['warn'] = data.mod.warn.response.embeds
 
             await fs.writeFile(file, JSON.stringify(localData, null, 2), 'utf-8');
 
         })
     )
-
-    console.log(response.data)
 }

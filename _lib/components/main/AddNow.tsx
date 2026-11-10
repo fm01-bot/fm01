@@ -10,8 +10,8 @@ export default function AddNow({ lang }: { lang: MainPageLangJson["invite"] }) {
                 {lang.title}
             </p>
             <div className="flex items-center justify-center gap-0">
-                <Link href={`add.fm01.bot`} className="mt-8 primary-button w-fit text-xl laptop:text-3xl font-bold">
-                    <FontAwesomeIcon icon={faDiscord} /> <span className="font-bold">{lang.subtext}</span>
+                <Link href={`https://add.fm01.bot`} className="mt-8 primary-button flex items-center justify-center gap-2 w-fit text-xl laptop:text-3xl font-bold">
+                    <FontAwesomeIcon icon={faDiscord} className="w-8 h-8" /> <span className="font-bold">{lang.subtext}</span>
                 </Link>
             </div>
         </div>

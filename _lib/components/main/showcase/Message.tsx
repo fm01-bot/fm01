@@ -5,6 +5,7 @@ import Embed from './Embed';
 import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
+import StringParser from './StringParser';
 
 export default function Message({
     message,
@@ -18,19 +19,28 @@ export default function Message({
         throw new Error("You can't have buttons AND embeds at the same time! Use buttons within the embeds!")
     }
 
+    const today = new Date();
+
     return (
         <>
             <div className='flex flex-row gap-2.5 justify-start'>
                 <Image src={avatar} alt={`Avatar for ${username}`} width={38} height={38} className='rounded-full bg-text/20 h-fit w-fit' />
                 <div className='flex flex-col'>
                     <div className={`flex flex-row ${bot ? "" : "gap-1"}`}>
-                        <span className='text-primary/70'>{username}</span>
-                        {bot ? (<div className='bg-[#5865F2] px-1.5 rounded-sm text-sm leading-6 font-bold scale-70 mt-px'><FontAwesomeIcon icon={faCheck} />APP</div>) : (<></>)}
-                        <span className='text-xs mt-1.5 text-text/50'>{new Date().toLocaleDateString("en", { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                        <span className='text-text'>{username}</span>
+                        {bot ? (
+                            <div className='bg-[#5865F2] px-1.5 rounded-sm text-sm leading-6 font-bold scale-70 mt-px flex flex-row items-center justify-center gap-1'>
+                                <FontAwesomeIcon icon={faCheck} className='h-4 w-4' />
+                                <span>APP</span>
+                            </div>) : (<></>)}
+                        <span className='text-xs mt-1.5 text-text/50'>{today.toLocaleDateString("en", { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                     <div>
-                        <span className='pb-2'>{message}</span>
-                        {embeds?.map((e: EmbedType, i: number) => {
+                        <div className='pb-2'>
+                            <StringParser message={message} />
+                        </div>
+                        {embeds?.map((e, i) => {
+                            if (typeof e === "string") return
                             return <Embed key={i} {...e} />
                         })}
                         {
