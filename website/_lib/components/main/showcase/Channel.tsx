@@ -1,5 +1,6 @@
 import { ChannelType } from '@/_lib/types/MainPageLang';
 import Message from './Message';
+import '@lib/css/main/showcase.css';
 
 export default function Channel({
     title,
@@ -7,7 +8,7 @@ export default function Channel({
     messages
 }: ChannelType) {
     return (
-        <div className='flex flex-col gap-3 w-full'>
+        <div className='message-container'>
             {
                 messages?.map((m, i) => {
                     return <Message key={`m-${i}`} {...m} />

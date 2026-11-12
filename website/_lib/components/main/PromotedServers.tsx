@@ -1,4 +1,5 @@
 import { getPromotedServers } from "@/_lib/functions/getPromotedServers";
+import '@lib/css/main/promoted-servers.css';
 import { getStatsCount } from "@/_lib/functions/getStatsCount";
 import Members from "@/_lib/svg/Members";
 import { PromotedServersJson } from "@/_lib/types/MainPageLang";

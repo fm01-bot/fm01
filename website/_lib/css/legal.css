@@ -1,0 +1,146 @@
+@reference './globals.css';
+
+/* ==================== Legal pages ==================== */
+/* The /legal index and each document page. The document body itself
+   is styled by the legal-doc utility in globals.css. */
+
+.legal-page {
+  @apply w-full pb-8;
+
+  /* ---------- Header ---------- */
+  & .legal-hero {
+    @apply relative mt-20 py-10;
+  }
+
+  & .legal-hero-backdrop {
+    @apply absolute inset-x-0 -top-20 bottom-0 pointer-events-none;
+
+    &.is-grid {
+      @apply grid-bg;
+    }
+  }
+
+  & .legal-hero-inner {
+    @apply relative max-w-280 mx-auto px-6 flex flex-col gap-3.5;
+
+    &.is-centered {
+      @apply items-center gap-0;
+    }
+  }
+
+  & .legal-breadcrumb {
+    @apply flex gap-2 text-sm text-text/60;
+
+    & a:hover {
+      @apply text-primary;
+    }
+
+    & > span:last-child {
+      @apply text-text;
+    }
+  }
+
+  & .legal-title {
+    @apply font-extrabold! leading-[.95] tracking-tight text-[clamp(2.25rem,6vw,4.5rem)]!;
+
+    & span {
+      @apply text-primary;
+    }
+  }
+
+  /* ---------- Document: sidebar + body ---------- */
+  & .legal-layout {
+    @apply max-w-280 sticky mx-auto px-6 flex flex-row flex-wrap gap-6 items-start;
+  }
+
+  & .legal-nav {
+    @apply grow basis-60 max-w-70 p-3 rounded-2xl bg-contrast/30 backdrop-blur-xl border-2 border-text/20 min-w-fit;
+  }
+
+  & .legal-nav-label {
+    @apply mt-5 mb-1.5 mx-3 text-[13px] font-bold uppercase tracking-wide text-text/45;
+  }
+
+  & .legal-nav-group:first-child .legal-nav-label {
+    @apply mt-1;
+  }
+
+  & .legal-nav-link {
+    @apply block px-3 py-2.25 rounded-[10px] text-[15px] text-text/60;
+
+    &:hover {
+      @apply bg-text/10 text-text;
+    }
+
+    /* After :hover so the active link keeps its colours. */
+    &[aria-current="page"] {
+      @apply bg-primary/15 text-primary font-semibold!;
+    }
+  }
+
+  & .legal-article {
+    @apply flex-[999_1_560px] min-w-0 bg-contrast rounded-2xl px-6 py-8;
+
+    @variant laptop {
+      @apply px-9;
+    }
+  }
+
+  /* ---------- Index: document cards ---------- */
+  & .legal-index-title {
+    @apply title;
+
+    & span {
+      @apply text-primary;
+    }
+  }
+
+  & .legal-index-subtext {
+    @apply subtext mb-0!;
+  }
+
+  & .legal-groups {
+    @apply max-w-280 mx-auto px-6 flex flex-col gap-10;
+  }
+
+  & .legal-group-title {
+    @apply mb-3 text-sm font-normal! uppercase tracking-wide text-text/50 text-center;
+  }
+
+  & .legal-cards {
+    @apply flex flex-wrap justify-center gap-4;
+
+    & > li {
+      @apply w-full;
+
+      @variant laptop {
+        @apply w-[20.5rem];
+      }
+    }
+  }
+
+  & .legal-card {
+    @apply flex h-full flex-col gap-2 p-6 rounded-2xl bg-contrast border-2 border-transparent outline-none;
+
+    &:hover,
+    &:focus-visible {
+      @apply border-primary;
+
+      & .legal-card-arrow {
+        @apply translate-x-0 opacity-100;
+      }
+    }
+  }
+
+  & .legal-card-title {
+    @apply flex items-center justify-between gap-3 text-xl font-bold!;
+  }
+
+  & .legal-card-arrow {
+    @apply text-primary text-base -translate-x-1 opacity-0;
+  }
+
+  & .legal-card-description {
+    @apply text-text/50;
+  }
+}
