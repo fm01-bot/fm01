@@ -54,9 +54,15 @@ app.prepare().then(async () => {
         )
     })
 
-    await translationFetcher()
+    const refreshTranslations = async () => {
+        try {
+            await translationFetcher()
+        } catch (error) {
+            console.error('[translations] Failed to fetch bot translations:', error)
+        }
+    }
 
-    schedule.scheduleJob('0 0 * * *', async () => {
-        await translationFetcher()
-    })
+    await refreshTranslations()
+
+    schedule.scheduleJob('0 0 * * *', refreshTranslations)
 })

@@ -18,7 +18,7 @@ export default async function NotFound() {
         <div>
             <h2>{translation.title}</h2>
             <p>{translation.description}</p>
-            <Link href={hasLocale(lang) ? `/${lang}` : '/'}>
+            <Link href="/">
                 {translation.home}
             </Link>
         </div>

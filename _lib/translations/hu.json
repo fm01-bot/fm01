@@ -334,6 +334,416 @@
   "premium": {
     "title": "Kezeld a Premium előfizetésed"
   },
+  "legal": {
+    "breadcrumb": "Jogi",
+    "breadcrumb_label": "Morzsamenü",
+    "nav_label": "Jogi dokumentumok",
+    "groups": {
+      "bot": "Discord bot",
+      "web": "Weboldal"
+    },
+    "index": {
+      "title": [
+        "Jogi",
+        "dokumentumok"
+      ],
+      "subtext": "Minden, ami az fm01 használatára vonatkozik, egy helyen.",
+      "meta_title": "Jogi információk",
+      "meta_description": "Az fm01 összes jogi dokumentuma: szolgáltatási feltételek, adatvédelmi és sütikezelési szabályzatok, valamint szolgáltatók."
+    },
+    "meta_description": "Olvasd el: fm01 – {title}.",
+    "documents": {
+      "providers": {
+        "title": "Szolgáltatók",
+        "nav": "Szolgáltatók",
+        "description": "Azok a szolgáltatások, amelyekre a bot és a weboldal működéséhez támaszkodunk."
+      },
+      "bot-tos": {
+        "title": "A bot szolgáltatási feltételei",
+        "nav": "Szolgáltatási feltételek",
+        "description": "Az fm01 meghívásának és a szervereden való használatának szabályai."
+      },
+      "bot-privacy": {
+        "title": "A bot adatvédelmi irányelvei",
+        "nav": "Adatvédelmi irányelvek",
+        "description": "Milyen adatokat kezel a bot a szervereddel kapcsolatban, és miért."
+      },
+      "web-tos": {
+        "title": "A weboldal szolgáltatási feltételei",
+        "nav": "Szolgáltatási feltételek",
+        "description": "A weboldal használatának szabályai."
+      },
+      "web-privacy": {
+        "title": "A weboldal adatvédelmi irányelvei",
+        "nav": "Adatvédelmi irányelvek",
+        "description": "Milyen adatokat gyűjtünk, amikor meglátogatod az oldalt vagy kapcsolatba lépsz velünk."
+      },
+      "web-cookies": {
+        "title": "A weboldal sütikezelési szabályzata",
+        "nav": "Sütik használati szabályzata",
+        "description": "Milyen sütiket használunk, és hogyan kezelheted őket."
+      }
+    }
+  },
+  "features": {
+    "meta": {
+      "title": "Funkciók - Minden, amire a Discord szerverednek szüksége van",
+      "description": "Moderáció, biztonság, zene, naplózás, gazdaság és még sok más — mind egyetlen botban, összehangoltan.",
+      "image_title": "Minden, amire a Discord szerverednek szüksége van"
+    },
+    "hero": {
+      "aria": "Funkciók áttekintése",
+      "title": [
+        "Minden, amire a",
+        "Discord szerverednek",
+        "szüksége van."
+      ],
+      "subtext": "Moderáció, biztonság, zene, naplózás, gazdaság és még sok más — mind egyetlen botban, összehangoltan.",
+      "pricing": "Árak megtekintése"
+    },
+    "moderation": {
+      "kicker": "Moderáció",
+      "title": "Tartsd kézben",
+      "highlight": "a szervered.",
+      "text": "Kezeld gyorsan a szabálysértőket anélkül, hogy a moderáció nyűggé válna. Az ügyek, figyelmeztetések, némítások, kirúgások, kitiltások és a többi napi eszköz ott van, ahol a csapatod amúgy is dolgozik: a Discordon.",
+      "chips": [
+        "Figyelmeztetés",
+        "Némítás",
+        "Kirúgás",
+        "Kitiltás",
+        "Feloldás",
+        "Ügyek",
+        "Lassú mód"
+      ],
+      "channel": "mod-napló",
+      "channel_description": "Ma 14:32-kor",
+      "messages": [
+        {
+          "username": "rnxm",
+          "avatar": "/images/rnxm.webp",
+          "message": "Haha feltöröm a szervered!"
+        },
+        {
+          "username": "Pearoo",
+          "avatar": "/images/pearoo.webp",
+          "message": "?!warn @rnxm 1w Feltöréssel fenyegetőzés"
+        },
+        {
+          "username": "fm01",
+          "avatar": "/images/logo.webp",
+          "bot": true,
+          "message": "",
+          "embeds": [
+            "bot-locale.warn.embed"
+          ]
+        }
+      ]
+    },
+    "security": {
+      "kicker": "Biztonság",
+      "title": "Védelem, ami",
+      "highlight": "csendben dolgozik.",
+      "text": "Az AutoMod kiszűri a tiltott kifejezéseket, linkeket és Discord-meghívókat, a spamvédelem, valamint az említés- és sorkorlátok pedig segítenek kordában tartani a visszaéléseket.",
+      "chips": [
+        "AutoMod",
+        "Kifejezésszűrő",
+        "Linkszűrő",
+        "Meghívószűrő",
+        "Spamvédelem",
+        "Kivételek"
+      ],
+      "channel": "automod",
+      "channel_description": "4 szabály bekapcsolva",
+      "messages": [
+        {
+          "username": "fm01",
+          "avatar": "/images/logo.webp",
+          "bot": true,
+          "message": "",
+          "embeds": [
+            {
+              "author": {
+                "name": "AutoMod · Aktív"
+              },
+              "title": "A szerver védelme aktív",
+              "description": "Nincs beavatkozást igénylő szabálysértés",
+              "color": "var(--theme-available)",
+              "fields": [
+                {
+                  "name": "Tiltott kifejezések",
+                  "value": "`BE` Szűrés bekapcsolva"
+                },
+                {
+                  "name": "Linkszűrő",
+                  "value": "`BE` Engedélyezési lista beállítva"
+                },
+                {
+                  "name": "Meghívószűrő",
+                  "value": "`BE` Alapértelmezetten tiltva"
+                },
+                {
+                  "name": "Spamvédelem",
+                  "value": "`BE` 5 üzenet / 5 másodperc"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "music": {
+      "kicker": "Zene",
+      "title": "A szervered",
+      "highlight": "zenéje.",
+      "text": "Játssz le és irányíts zenét közvetlenül a Discordból: lejátszási sor, tekerés, hangerő, keverés, ismétlés és lejátszásvezérlés.",
+      "chips": [
+        "Lejátszás",
+        "Szünet",
+        "Sor",
+        "Tekerés",
+        "Keverés",
+        "Ismétlés",
+        "Hangerő"
+      ],
+      "channel": "zene",
+      "channel_description": "Most szól",
+      "messages": [
+        {
+          "username": "Pearoo",
+          "avatar": "/images/pearoo.webp",
+          "bot": false,
+          "message": "?!play rick astley"
+        },
+        {
+          "username": "fm01",
+          "avatar": "/images/logo.webp",
+          "bot": true,
+          "message": "",
+          "embeds": [
+            "bot-locale.music.embed"
+          ]
+        }
+      ]
+    },
+    "logging": {
+      "kicker": "Naplózás",
+      "title": "Tudd, mi",
+      "highlight": "történt.",
+      "text": "Kövesd nyomon a fontos változásokat: üzenetek, tagok, rangok, csatornák, hangállapotok, moderációs műveletek, AutoMod és még sok más.",
+      "chips": [
+        "Üzenetek",
+        "Tagok",
+        "Rangok",
+        "Csatornák",
+        "Hang",
+        "AutoMod"
+      ],
+      "channel": "szerver-napló",
+      "channel_description": "Szerveresemények élőben",
+      "messages": [
+        {
+          "username": "fm01",
+          "avatar": "/images/logo.webp",
+          "bot": true,
+          "message": "",
+          "embeds": [
+            {
+              "title": "Üzenet törölve",
+              "description": "@Alex üzenete törölve itt: #general",
+              "color": "var(--theme-unavailable)",
+              "fields": [
+                {
+                  "name": "Tartalom",
+                  "value": "lol check out this server discord.gg/…"
+                }
+              ],
+              "footer": {
+                "text": "14:41:08"
+              }
+            }
+          ]
+        },
+        {
+          "username": "fm01",
+          "avatar": "/images/logo.webp",
+          "bot": true,
+          "message": "",
+          "embeds": [
+            {
+              "title": "Rang módosítva",
+              "color": "var(--theme-primary)",
+              "fields": [
+                {
+                  "name": "Rang",
+                  "value": "@Moderator",
+                  "inline": true
+                },
+                {
+                  "name": "Változás",
+                  "value": "Jogosultságok",
+                  "inline": true
+                },
+                {
+                  "name": "Módosította",
+                  "value": "@Pearoo",
+                  "inline": true
+                }
+              ],
+              "footer": {
+                "text": "14:40:52"
+              }
+            }
+          ]
+        },
+        {
+          "username": "fm01",
+          "avatar": "/images/logo.webp",
+          "bot": true,
+          "message": "",
+          "embeds": [
+            {
+              "title": "Új tag",
+              "description": "@*.✮Aleksz✮.° csatlakozott a szerverhez",
+              "color": "var(--theme-available)",
+              "footer": {
+                "text": "14:39:17"
+              }
+            }
+          ]
+        },
+        {
+          "username": "fm01",
+          "avatar": "/images/logo.webp",
+          "bot": true,
+          "message": "",
+          "embeds": [
+            {
+              "title": "Csatorna létrehozva",
+              "color": "var(--theme-secondary)",
+              "fields": [
+                {
+                  "name": "Csatorna",
+                  "value": "#events",
+                  "inline": true
+                },
+                {
+                  "name": "Típus",
+                  "value": "Szöveges",
+                  "inline": true
+                },
+                {
+                  "name": "Módosította",
+                  "value": "@Pearoo",
+                  "inline": true
+                }
+              ],
+              "footer": {
+                "text": "14:38:04"
+              }
+            }
+          ]
+        },
+        {
+          "username": "fm01",
+          "avatar": "/images/logo.webp",
+          "bot": true,
+          "message": "",
+          "embeds": [
+            {
+              "title": "AutoMod művelet",
+              "description": "Üzenet blokkolva itt: #general",
+              "color": "var(--theme-interrupted)",
+              "fields": [
+                {
+                  "name": "Szabály",
+                  "value": "Meghívószűrő",
+                  "inline": true
+                },
+                {
+                  "name": "Művelet",
+                  "value": "Blokkolva",
+                  "inline": true
+                },
+                {
+                  "name": "Csatorna",
+                  "value": "#general",
+                  "inline": true
+                }
+              ],
+              "footer": {
+                "text": "14:36:49"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "more": {
+      "kicker": "A többi",
+      "title": "És minden, ami közte van.",
+      "text": "A fő rendszerek kapják a reflektorfényt. Minden más teszi az fm01-et teljessé.",
+      "items": {
+        "economy": {
+          "title": "Gazdaság",
+          "text": "Egyenleg, munka, bűnözés, napi jutalmak, utalások, nyerőgép, betétek és szerverbolt."
+        },
+        "giveaways": {
+          "title": "Sorsolások",
+          "text": "Indíts sorsolásokat időtartammal, nyertesekkel, nyereményekkel és interaktív részvétellel."
+        },
+        "levels": {
+          "title": "Szintek",
+          "text": "XP, ranglisták, jutalmak, csatorna- és rangszorzók."
+        },
+        "information": {
+          "title": "Információ",
+          "text": "Nézz utána felhasználóknak, szervereknek, rangoknak, csatornáknak, emojiknak és más Discord-elemeknek."
+        },
+        "localization": {
+          "title": "Lokalizáció",
+          "text": "Állítsd át a bot nyelvét a Discordból, és add meg a közösségednek a kívánt élményt."
+        },
+        "custom_messages": {
+          "title": "Egyéni üzenetek",
+          "text": "Alakíts át és hozz létre üzeneteket az ASCII-tól a QR-kódokig terjedő eszközökkel."
+        },
+        "join_leave": {
+          "title": "Belépés és kilépés",
+          "text": "Állíts be egyéni üzeneteket a szerverre érkező és onnan távozó tagoknak."
+        },
+        "snapshots": {
+          "title": "Mentések",
+          "text": "Félsz hogy elveszted a szervered? Mentsd le, a többiről mi gondoskodunk."
+        }
+      }
+    },
+    "branding": {
+      "kicker": "Egyéni arculat",
+      "title": "A te szervered.",
+      "highlight": "A te arculatod.",
+      "text": "Igazítsd az fm01-et a közösségedhez, ne a közösségedet a bothoz.",
+      "cta": "Testreszabás →",
+      "channel": "üdvözlés",
+      "messages": [
+        {
+          "username": "Notredam Utility",
+          "avatar": "/images/notredam.webp",
+          "bot": true,
+          "message": "Üdv a szerveren, @rnxm!",
+          "embeds": [
+            {
+              "title": "A te neved, avatarod és bemutatkozásod",
+              "description": "Minden válasz a saját botod nevében érkezik - az fm01 erejével.",
+              "color": "var(--theme-accent)",
+              "footer": {
+                "text": "fm01 · A közösségedért"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
   "bot-locale": {
     "warn": {
       "embed": {
@@ -360,19 +770,19 @@
         "fields": [
           {
             "inline": true,
-            "name": "Winners",
+            "name": "Nyertesek száma",
             "value": "{winners}"
           },
           {
             "inline": true,
-            "name": "Ends",
+            "name": "Vége",
             "value": "{ends}"
           }
         ],
         "footer": {
-          "text": "Click the button below to enter!"
+          "text": "Nyomj a gombra hogy belépj a nyereményjátékra!"
         },
-        "title": "🎉 Giveaway!",
+        "title": "🎉 Nyereményjáték!",
         "buttons": [
           {
             "label": "🎉 {participants}"
@@ -382,7 +792,6 @@
     },
     "work": {
       "embed": {
-        "color": 6656243,
         "description": "{random}",
         "title": "Munka"
       },
@@ -400,7 +809,6 @@
     },
     "music": {
       "embed": {
-        "color": 5793266,
         "description": "**[{track.title}]({track.url})**",
         "fields": [
           {
@@ -421,7 +829,7 @@
         ],
         "footer": {
           "icon_url": "{author.avatar}",
-          "text": "Requested by {author.name}"
+          "text": "{author.name}"
         },
         "title": "Most szól"
       }

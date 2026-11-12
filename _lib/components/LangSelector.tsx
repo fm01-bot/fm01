@@ -1,7 +1,7 @@
 
 "use client"
-import { useState, useRef, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { useState, useRef, useEffect, SetStateAction, Dispatch } from "react";
+import { useRouter } from "next/navigation";
 
 // Define the shape of our language object
 interface Language {
@@ -13,6 +13,7 @@ interface Language {
 // Define the component's expected props
 interface LanguageSelectorProps {
     currentLangCode?: string;
+    mobileMenu?: [boolean, Dispatch<SetStateAction<boolean>>]
 }
 
 const LANGUAGES: Language[] = [
@@ -24,12 +25,13 @@ const LANGUAGES: Language[] = [
     { code: "hu", flag: "🇭🇺", name: "Magyar" },
 ];
 
-export default function LangSelector({ currentLangCode = "en" }: LanguageSelectorProps) {
+export default function LangSelector({ currentLangCode = "en", mobileMenu }: LanguageSelectorProps) {
     const [isOpen, setIsOpen] = useState<boolean>(false);
     // Strongly type the ref to an HTMLDivElement
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    const pathname = usePathname();
+    const router = useRouter();
+    const [isSwitching, setIsSwitching] = useState<boolean>(false);
     const currentLang = LANGUAGES.find((l) => l.code === currentLangCode) || LANGUAGES[0];
 
     useEffect(() => {
@@ -44,8 +46,14 @@ export default function LangSelector({ currentLangCode = "en" }: LanguageSelecto
         return () => document.removeEventListener("pointerdown", handleClickOutside);
     }, []);
 
-    const handleLanguageSelect = (langCode: string) => {
+    // The URL does not carry the locale, so switching means: persist the choice
+    // in the cookie, then re-render the current route (proxy.tsx rewrites it to
+    // the new locale). The refresh runs in a transition tagged "lang-switch",
+    // which selects the circular reveal in app/layout.tsx.
+    const handleLanguageSelect = (e: React.MouseEvent<HTMLButtonElement>, langCode: string) => {
         setIsOpen(false);
+        if (langCode === currentLang.code || isSwitching) return;
+        setIsSwitching(true);
         void (async () => {
             try {
                 const response = await fetch("/api/locale", {
@@ -53,16 +61,12 @@ export default function LangSelector({ currentLangCode = "en" }: LanguageSelecto
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ locale: langCode }),
                 });
-
-                if (!response.ok) {
-                    setIsOpen(true);
-                    return;
-                }
-
-                const cleanPath = pathname.replace(/^\/(en|hu)(?=\/|$)/, "") || "/";
-                window.location.assign(cleanPath);
+                if (!response.ok) throw new Error(`locale API ${response.status}`);
+                router.refresh();
             } catch {
                 setIsOpen(true);
+            } finally {
+                setIsSwitching(false);
             }
         })();
     };
@@ -101,20 +105,25 @@ export default function LangSelector({ currentLangCode = "en" }: LanguageSelecto
             >
                 <ul className="flex flex-col w-full max-h-75 p-1.5 overflow-y-auto list-none whitespace-nowrap">
                     {LANGUAGES.map((lang) => (
-                        <li
-                            key={lang.code}
-                            onClick={(e: React.MouseEvent<HTMLLIElement>) => {
-                                e.stopPropagation();
-                                handleLanguageSelect(lang.code);
-                            }}
-                            className={`flex items-center p-2 rounded-[5px] cursor-pointer transition-colors hover:bg-background/80`}
-                        >
-                            <span className="inline-block mr-3.75 text-[18px] emoji">
-                                {lang.flag}
-                            </span>
-                            <span className="font-bold text-sm">
-                                {lang.code.toUpperCase()}
-                            </span>
+                        <li key={lang.code}>
+                            <button
+                                type="button"
+                                lang={lang.code}
+                                aria-current={lang.code === currentLang.code ? "true" : undefined}
+                                disabled={isSwitching}
+                                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                                    e.stopPropagation();
+                                    handleLanguageSelect(e, lang.code);
+                                }}
+                                className={`flex items-center w-full p-2 rounded-[5px] cursor-pointer transition-colors hover:bg-background/80 disabled:cursor-wait`}
+                            >
+                                <span className="inline-block mr-3.75 text-[18px] emoji">
+                                    {lang.flag}
+                                </span>
+                                <span className="font-bold text-sm">
+                                    {lang.code.toUpperCase()}
+                                </span>
+                            </button>
                         </li>
                     ))}
                 </ul>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import '@lib/css/main/premium.css';
 import { MainPageLangJson, PremiumTierLangJson } from "@/_lib/types/MainPageLang";
 import { faAdd, faCircleCheck, faCoins, faMailBulk } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
