@@ -342,6 +342,416 @@
   "premium": {
     "title": "Manage your Premium Subscription"
   },
+  "legal": {
+    "breadcrumb": "Legal",
+    "breadcrumb_label": "Breadcrumb",
+    "nav_label": "Legal documents",
+    "groups": {
+      "bot": "Discord bot",
+      "web": "Website"
+    },
+    "index": {
+      "title": [
+        "Legal",
+        "documents"
+      ],
+      "subtext": "Everything that applies when you use fm01, in one place.",
+      "meta_title": "Legal",
+      "meta_description": "Every fm01 legal document: terms, privacy and cookie policies, and service providers."
+    },
+    "meta_description": "Read the fm01 {title}.",
+    "documents": {
+      "providers": {
+        "title": "Service Providers",
+        "nav": "Providers",
+        "description": "The services we rely on to run the bot and the website."
+      },
+      "bot-tos": {
+        "title": "Bot Terms of Service",
+        "nav": "Terms of Service",
+        "description": "The rules for inviting and using fm01 in your server."
+      },
+      "bot-privacy": {
+        "title": "Bot Privacy Policy",
+        "nav": "Privacy Policy",
+        "description": "What the bot processes about your server, and why."
+      },
+      "web-tos": {
+        "title": "Website Terms of Service",
+        "nav": "Terms of Service",
+        "description": "The rules for using this website."
+      },
+      "web-privacy": {
+        "title": "Website Privacy Policy",
+        "nav": "Privacy Policy",
+        "description": "What we collect when you visit the site or contact us."
+      },
+      "web-cookies": {
+        "title": "Website Cookie Policy",
+        "nav": "Cookie Policy",
+        "description": "Which cookies we use and how you can manage them."
+      }
+    }
+  },
+  "features": {
+    "meta": {
+      "title": "Features - Everything your Discord server needs",
+      "description": "Moderation, security, music, logging, economy and more — all working together in one bot.",
+      "image_title": "Everything your Discord server needs"
+    },
+    "hero": {
+      "aria": "Feature overview",
+      "title": [
+        "Everything your",
+        "Discord server",
+        "needs."
+      ],
+      "subtext": "Moderation, security, music, logging, economy and more — all working together in one bot.",
+      "pricing": "See pricing"
+    },
+    "moderation": {
+      "kicker": "Moderation",
+      "title": "Keep your server",
+      "highlight": "under control.",
+      "text": "Handle rule breakers quickly without turning moderation into a chore. Cases, warnings, mutes, kicks, bans and other everyday controls stay right where your staff already work: Discord.",
+      "chips": [
+        "Warn",
+        "Mute",
+        "Kick",
+        "Ban",
+        "Unban",
+        "Cases",
+        "Slowmode"
+      ],
+      "channel": "mod-log",
+      "channel_description": "Today at 14:32",
+      "messages": [
+        {
+          "username": "rnxm",
+          "avatar": "/images/rnxm.webp",
+          "message": "Haha I'll hack your server!"
+        },
+        {
+          "username": "Pearoo",
+          "avatar": "/images/pearoo.webp",
+          "message": "?!warn @rnxm 1w Hacking threats"
+        },
+        {
+          "username": "fm01",
+          "avatar": "/images/logo.webp",
+          "bot": true,
+          "message": "",
+          "embeds": [
+            "bot-locale.warn.embed"
+          ]
+        }
+      ]
+    },
+    "security": {
+      "kicker": "Security",
+      "title": "Protection that",
+      "highlight": "works quietly.",
+      "text": "AutoMod filters forbidden phrases, links and Discord invites while anti-spam, mention and message-line limits help keep abuse under control.",
+      "chips": [
+        "AutoMod",
+        "Phrase filter",
+        "Link filter",
+        "Invite filter",
+        "Anti-spam",
+        "Bypasses"
+      ],
+      "channel": "automod",
+      "channel_description": "4 rules enabled",
+      "messages": [
+        {
+          "username": "fm01",
+          "avatar": "/images/logo.webp",
+          "bot": true,
+          "message": "",
+          "embeds": [
+            {
+              "author": {
+                "name": "AutoMod · Active"
+              },
+              "title": "Server protection active",
+              "description": "No violations requiring action",
+              "color": "var(--theme-available)",
+              "fields": [
+                {
+                  "name": "Forbidden phrases",
+                  "value": "`ON` Filtering enabled"
+                },
+                {
+                  "name": "Link filter",
+                  "value": "`ON` Allowlist configured"
+                },
+                {
+                  "name": "Invite filter",
+                  "value": "`ON` Blocked by default"
+                },
+                {
+                  "name": "Anti-spam",
+                  "value": "`ON` 5 messages / 5 seconds"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "music": {
+      "kicker": "Music",
+      "title": "Your server's",
+      "highlight": "soundtrack.",
+      "text": "Play and control music directly from Discord with queues, seeking, volume, shuffle, looping and playback controls.",
+      "chips": [
+        "Play",
+        "Pause",
+        "Queue",
+        "Seek",
+        "Shuffle",
+        "Loop",
+        "Volume"
+      ],
+      "channel": "music",
+      "channel_description": "Now playing",
+      "messages": [
+        {
+          "username": "Pearoo",
+          "avatar": "/images/pearoo.webp",
+          "bot": false,
+          "message": "?!play rick astley"
+        },
+        {
+          "username": "fm01",
+          "avatar": "/images/logo.webp",
+          "bot": true,
+          "message": "",
+          "embeds": [
+            "bot-locale.music.embed"
+          ]
+        }
+      ]
+    },
+    "logging": {
+      "kicker": "Logging",
+      "title": "Know what",
+      "highlight": "happened.",
+      "text": "Keep an audit trail of the changes that matter: messages, members, roles, channels, voice states, moderation actions, AutoMod and more.",
+      "chips": [
+        "Messages",
+        "Members",
+        "Roles",
+        "Channels",
+        "Voice",
+        "AutoMod"
+      ],
+      "channel": "server-logs",
+      "channel_description": "Server activity, live",
+      "messages": [
+        {
+          "username": "fm01",
+          "avatar": "/images/logo.webp",
+          "bot": true,
+          "message": "",
+          "embeds": [
+            {
+              "title": "Message deleted",
+              "description": "Message by @Alex deleted in #general",
+              "color": "var(--theme-unavailable)",
+              "fields": [
+                {
+                  "name": "Content",
+                  "value": "lol check out this server discord.gg/…"
+                }
+              ],
+              "footer": {
+                "text": "14:41:08"
+              }
+            }
+          ]
+        },
+        {
+          "username": "fm01",
+          "avatar": "/images/logo.webp",
+          "bot": true,
+          "message": "",
+          "embeds": [
+            {
+              "title": "Role updated",
+              "color": "var(--theme-primary)",
+              "fields": [
+                {
+                  "name": "Role",
+                  "value": "@Moderator",
+                  "inline": true
+                },
+                {
+                  "name": "Change",
+                  "value": "Permissions",
+                  "inline": true
+                },
+                {
+                  "name": "By",
+                  "value": "@Pearoo",
+                  "inline": true
+                }
+              ],
+              "footer": {
+                "text": "14:40:52"
+              }
+            }
+          ]
+        },
+        {
+          "username": "fm01",
+          "avatar": "/images/logo.webp",
+          "bot": true,
+          "message": "",
+          "embeds": [
+            {
+              "title": "Member joined",
+              "description": "@Aleksz joined the server",
+              "color": "var(--theme-available)",
+              "footer": {
+                "text": "14:39:17"
+              }
+            }
+          ]
+        },
+        {
+          "username": "fm01",
+          "avatar": "/images/logo.webp",
+          "bot": true,
+          "message": "",
+          "embeds": [
+            {
+              "title": "Channel created",
+              "color": "var(--theme-secondary)",
+              "fields": [
+                {
+                  "name": "Channel",
+                  "value": "#events",
+                  "inline": true
+                },
+                {
+                  "name": "Type",
+                  "value": "Text",
+                  "inline": true
+                },
+                {
+                  "name": "By",
+                  "value": "@Pearoo",
+                  "inline": true
+                }
+              ],
+              "footer": {
+                "text": "14:38:04"
+              }
+            }
+          ]
+        },
+        {
+          "username": "fm01",
+          "avatar": "/images/logo.webp",
+          "bot": true,
+          "message": "",
+          "embeds": [
+            {
+              "title": "AutoMod action",
+              "description": "Message blocked in #general",
+              "color": "var(--theme-interrupted)",
+              "fields": [
+                {
+                  "name": "Rule",
+                  "value": "Invite filter",
+                  "inline": true
+                },
+                {
+                  "name": "Action",
+                  "value": "Blocked",
+                  "inline": true
+                },
+                {
+                  "name": "Channel",
+                  "value": "#general",
+                  "inline": true
+                }
+              ],
+              "footer": {
+                "text": "14:36:49"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "more": {
+      "kicker": "The rest",
+      "title": "And everything in between.",
+      "text": "The core systems get the spotlight. Everything else makes fm01 feel complete.",
+      "items": {
+        "economy": {
+          "title": "Economy",
+          "text": "Balance, work, crime, daily rewards, transfers, slots, deposits and a server shop."
+        },
+        "giveaways": {
+          "title": "Giveaways",
+          "text": "Create giveaways with durations, winners, prizes and interactive participation."
+        },
+        "levels": {
+          "title": "Levels",
+          "text": "XP, leaderboards, rewards, channel multipliers and role multipliers."
+        },
+        "information": {
+          "title": "Information",
+          "text": "Inspect users, servers, roles, channels, emojis and other Discord resources."
+        },
+        "localization": {
+          "title": "Localization",
+          "text": "Change the bot language from Discord and give your community the experience it wants."
+        },
+        "custom_messages": {
+          "title": "Custom Messages",
+          "text": "Transform and generate messages with utilities ranging from ASCII to QR codes."
+        },
+        "join_leave": {
+          "title": "Join & Leave",
+          "text": "Configure custom messages for members joining and leaving your server."
+        },
+        "snapshots": {
+          "title": "Snapshots",
+          "text": "Save and load server configuration when you need to restore your setup."
+        }
+      }
+    },
+    "branding": {
+      "kicker": "Custom branding",
+      "title": "Your server.",
+      "highlight": "Your identity.",
+      "text": "Make fm01 fit your community instead of making your community fit the bot.",
+      "cta": "Customize →",
+      "channel": "welcome",
+      "messages": [
+        {
+          "username": "Notredam Utility",
+          "avatar": "/images/notredam.webp",
+          "bot": true,
+          "message": "Welcome to the server, @rnxm!",
+          "embeds": [
+            {
+              "title": "Your name, avatar and bio",
+              "description": "Every reply comes from your own bot identity - powered by fm01.",
+              "color": "var(--theme-accent)",
+              "footer": {
+                "text": "fm01 · Built for your community"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
   "bot-locale": {
     "warn": {
       "embed": {
@@ -364,33 +774,19 @@
     },
     "giveaway": {
       "embed": {
-        "description": "{prize}",
-        "fields": [
-          {
-            "inline": true,
-            "name": "Winners",
-            "value": "{winners}"
-          },
-          {
-            "inline": true,
-            "name": "Ends",
-            "value": "{ends}"
-          }
-        ],
-        "footer": {
-          "text": "Click the button below to enter!"
-        },
-        "title": "🎉 Giveaway!",
+        "color": "#f1c40f",
+        "title": "🎉 {giveaway.prize}",
+        "description": "Hosted by {author.mention}\nEnds {giveaway.ends.relative} ({giveaway.ends})\nWinners: **{giveaway.winners}**\n{requirements}",
         "buttons": [
           {
-            "label": "🎉 {participants}"
+            "label": "🎉 {giveaway.entries}",
+            "color": 0
           }
         ]
       }
     },
     "work": {
       "embed": {
-        "color": 6656243,
         "description": "{random}",
         "title": "Work"
       },
@@ -408,7 +804,6 @@
     },
     "music": {
       "embed": {
-        "color": 5793266,
         "description": "**[{track.title}]({track.url})**",
         "fields": [
           {

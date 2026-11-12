@@ -2,10 +2,12 @@ import type { ReactNode } from "react";
 
 export default function StringParser({ message }: { message: string }) {
     if (!message) return
-    const mentionPattern = /(?<!\w)@[^\s]+/;
+    // @user / @role mentions, and #channel mentions (must start with a letter, so "Case #184" stays plain).
+    const MENTION = String.raw`(?<!\w)(?:@[^\s]+|#[A-Za-z][\w-]*)`;
+    const mentionPattern = new RegExp(`^${MENTION}$`);
 
     function renderMentions(text: string, keyPrefix: string): ReactNode[] {
-        return text.split(/((?<!\w)@[^\s]+)/g).map((part, index) =>
+        return text.split(new RegExp(`(${MENTION})`, "g")).map((part, index) =>
             mentionPattern.test(part) ? (
                 <span className="mention" key={`${keyPrefix}-mention-${index}`}>{part}</span>
             ) : (
@@ -19,6 +21,10 @@ export default function StringParser({ message }: { message: string }) {
             ?? token.match(/^\(([^()]+)\)\[[^\]]+\]$/)?.[1]
         if (linkLabel !== undefined) {
             return <span className="link" key={key}>{renderContent(linkLabel, `${key}-link`)}</span>
+        }
+
+        if (token.length > 1 && token.startsWith("`") && token.endsWith("`")) {
+            return <code key={key}>{token.slice(1, -1)}</code>
         }
 
         if (token.startsWith("***") && token.endsWith("***")) {
@@ -37,7 +43,7 @@ export default function StringParser({ message }: { message: string }) {
     }
 
     function renderContent(text: string, keyPrefix: string): ReactNode[] {
-        const tokenPattern = /(\*\*\*[^\n]+?\*\*\*|\*\*[^\n]+?\*\*|\*[^\n]+?\*|\[[^\]\n]+\]\([^)]*\)|\([^()\n]+\)\[[^\]]+\]|(?<!\w)@[^\s]+)/g;
+        const tokenPattern = new RegExp(String.raw`(\`[^\`\n]+\`|\*\*\*[^\n]+?\*\*\*|\*\*[^\n]+?\*\*|\*[^\n]+?\*|\[[^\]\n]+\]\([^)]*\)|\([^()\n]+\)\[[^\]]+\]|${MENTION})`, "g");
         const parts: ReactNode[] = []
         let lastIndex = 0
         let match: RegExpExecArray | null

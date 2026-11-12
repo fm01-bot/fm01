@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import StringParser from './StringParser';
+import '@lib/css/main/showcase.css';
 
 export default function Message({
     message,
@@ -23,20 +24,20 @@ export default function Message({
 
     return (
         <>
-            <div className='flex flex-row gap-2.5 justify-start'>
-                <Image src={avatar} alt={`Avatar for ${username}`} width={38} height={38} className='rounded-full bg-text/20 h-fit w-fit' />
-                <div className='flex flex-col'>
-                    <div className={`flex flex-row ${bot ? "" : "gap-1"}`}>
-                        <span className='text-text'>{username}</span>
+            <div className='message'>
+                <Image src={avatar} alt={`Avatar for ${username}`} width={38} height={38} className='message-avatar w-[38px]! h-[38px]!' />
+                <div className='message-body'>
+                    <div className={`message-header ${bot ? "is-bot" : ""}`}>
+                        <span className='message-username'>{username}</span>
                         {bot ? (
-                            <div className='bg-[#5865F2] px-1.5 rounded-sm text-sm leading-6 font-bold scale-70 mt-px flex flex-row items-center justify-center gap-1'>
-                                <FontAwesomeIcon icon={faCheck} className='h-4 w-4' />
+                            <div className='app-badge'>
+                                <FontAwesomeIcon icon={faCheck} />
                                 <span>APP</span>
                             </div>) : (<></>)}
-                        <span className='text-xs mt-1.5 text-text/50'>{today.toLocaleDateString("en", { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                        <span className='message-time'>{today.toLocaleDateString("en", { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                     <div>
-                        <div className='pb-2'>
+                        <div className='message-text'>
                             <StringParser message={message} />
                         </div>
                         {embeds?.map((e, i) => {
@@ -45,7 +46,7 @@ export default function Message({
                         })}
                         {
                             buttons?.map((r: [ButtonType?, ButtonType?, ButtonType?], i: number) => (
-                                <div key={`row-${i}`} className="flex gap-2">
+                                <div key={`row-${i}`} className="button-row">
                                     {r.map((b: ButtonType | undefined, j: number) => {
                                         if (!b) return null;
                                         return <Button key={`btn-${i}-${j}`} {...b} />

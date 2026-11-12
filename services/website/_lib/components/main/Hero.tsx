@@ -1,4 +1,5 @@
 import { MainPageLangJson } from "@/_lib/types/MainPageLang";
+import '@lib/css/main/hero.css';
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faDiscord } from "@fortawesome/free-brands-svg-icons";

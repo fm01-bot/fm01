@@ -47,7 +47,7 @@ export default function Container({ lang }: { lang?: MainPageLangJson["features"
             onTouchEnd={handleTouchEnd}
         >
             <div className="channels">
-                <span className="server-title">fm01 <FontAwesomeIcon icon={faChevronDown} className="w-3.75! h-3.75!" /></span>
+                <span className="server-title">fm01 <FontAwesomeIcon icon={faChevronDown} /></span>
                 <div className="channel-list">
                     {
                         lang?.channels?.map((c, i) => {
@@ -55,7 +55,7 @@ export default function Container({ lang }: { lang?: MainPageLangJson["features"
                                 <span
                                     onClick={() => { setActive(i); console.log(i) }}
                                     key={`cl-${i}`}
-                                    className={`channel-name ${active == i ? "bg-text/20! text-text!" : ""}`}>
+                                    className={`channel-name ${active == i ? "is-active" : ""}`}>
                                     <span>#</span>
                                     <span>{c.title}</span>
                                 </span>
@@ -91,7 +91,7 @@ export default function Container({ lang }: { lang?: MainPageLangJson["features"
                     {
                         lang?.channels?.map((c, i) => {
                             return (
-                                <div key={`c-${i}`} className={active == i ? "opacity-100 relative max-h-full" : "opacity-0 mt-30 fixed pointer-events-none"}>
+                                <div key={`c-${i}`} className={`channel-pane ${active == i ? "is-active" : ""}`}>
                                     <Channel key={`c-${i}`} {...c} />
                                 </div>
                             )

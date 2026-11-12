@@ -18,6 +18,7 @@ export default function Header({ lang, code }: { lang: WebLangJson["header"], co
     )
 
     const [isScrolled, setIsScrolled] = useState(false);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     useEffect(() => {
         const scrollCheck = () => setIsScrolled(window.scrollY > 10);
@@ -32,7 +33,7 @@ export default function Header({ lang, code }: { lang: WebLangJson["header"], co
     }, [NAV_LINKS]);
 
     return (
-        <header className={`navbar ${isScrolled ? " bg-text/5 backdrop-blur-xs laptop:bg-transparent laptop:backdrop-blur-none" : ""}`}>
+        <header className={`navbar ${isScrolled && !isMenuOpen ? " bg-text/5 backdrop-blur-xs laptop:bg-transparent laptop:backdrop-blur-none" : ""}`}>
             <div className="navbar-inner">
                 <Link href="/" className="brand">
                     <Logo width={30} height={30} fill={'fill-primary'} />
@@ -85,7 +86,12 @@ export default function Header({ lang, code }: { lang: WebLangJson["header"], co
                     {/* Mobile Menu Wrapper */}
                     <div className="mobile-menu">
                         <div className="burger-class">
-                            <input type="checkbox" id="overlay" />
+                            <input
+                                type="checkbox"
+                                id="overlay"
+                                checked={isMenuOpen}
+                                onChange={(event) => { setIsMenuOpen(event.target.checked) }}
+                            />
                             <label className="burger" htmlFor="overlay">
                                 <span></span>
                                 <span></span>
@@ -96,13 +102,13 @@ export default function Header({ lang, code }: { lang: WebLangJson["header"], co
                         <div className="overlay">
                             <div className="overlay-links">
                                 {NAV_LINKS.map((l, i) => (
-                                    <Link key={i} href={l.href} className="overlay-link">
+                                    <Link key={i} href={l.href} className="overlay-link" onClick={() => setIsMenuOpen(false)}>
                                         <span>{l.label}</span>
                                     </Link>
                                 ))}
                             </div>
                             <div className="flex flex-row gap-4">
-                                <LangSelector currentLangCode={code} />
+                                <LangSelector currentLangCode={code} mobileMenu={[isMenuOpen, setIsMenuOpen]} />
                             </div>
                         </div>
                     </div>
