@@ -495,7 +495,7 @@ class CustomResponse:
 		elif isinstance(data_or_path, str):
 			self.load_localizations(data_or_path)
 
-	def load_localizations(self, path: str = "./localization"):
+	def load_localizations(self, path: str = "../../shared/localization/responses"):
 		localization_path = pathlib.Path(path)
 		for file_path in localization_path.glob("*.l10n.json"):
 			lang = file_path.stem.removesuffix(".l10n")

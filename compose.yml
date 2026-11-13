@@ -2,16 +2,17 @@ services:
   db:
     image: postgres:16
     environment:
-      POSTGRES_USER: fm01
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USER:-fm01}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Please set a database password in .env}
       POSTGRES_DB: ${DB_NAME:-fm01}
+      DB_PORT: ${DB_PORT:-5432}
     ports:
-      - "${DB_PORT:-5432}:5432"
+      - "127.0.0.1:${DB_PORT:-5432}:${DB_PORT:-5432}"
     volumes:
-      - ./bot/first_time.sql:/docker-entrypoint-initdb.d/first_time.sql:ro
       - postgres_data:/var/lib/postgresql/data
+    command: -p ${DB_PORT:-5432}
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fm01} -d ${DB_NAME:-fm01}" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-fm01} -p ${DB_PORT:-5432}" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -22,12 +23,12 @@ services:
     restart: unless-stopped
     environment:
       _JAVA_OPTIONS: -Xmx512M -Duser.language=en -Duser.country=US
-      LAVALINK_PASSWORD: ${LAVALINK_PASSWORD}
+      LAVALINK_PASSWORD: ${LAVALINK_PASSWORD:?Please set a Lavalink password in .env}
       LAVALINK_URI: ${LAVALINK_URI:-http://lavalink:2333}
     volumes:
-      - ./bot/application.yml:/opt/Lavalink/application.yml:ro
+      - ./services/lavalink/application.yml:/opt/Lavalink/application.yml:ro
     ports:
-      - "2333:2333"
+      - "127.0.0.1:2333:2333"
     healthcheck:
       test: [ "CMD-SHELL", "wget -qO- --header=\"Authorization: ${LAVALINK_PASSWORD}\" http://localhost:2333/version || exit 1" ]
       interval: 10s
@@ -35,49 +36,74 @@ services:
       retries: 5
       start_period: 15s
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --save "" --appendonly no
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  twilight-proxy:
+    image: ghcr.io/twilight-rs/http-proxy:latest
+    restart: unless-stopped
+    environment:
+      DISCORD_TOKEN: ${TOKEN:?Please set a bot token in .env}
+    ports:
+      - "127.0.0.1:3000:3000"
+    profiles:
+      - clustered
+
+  # Holds the Discord gateway connections so the bot can restart without reconnecting its shards.
+  # Pinned by digest; `just deploy-proxy` is the only routine that recreates it.
+  gateway-proxy:
+    image: ghcr.io/gelbpunkt/gateway-proxy:znver3@sha256:f130920b108fbc3a27ad0c75eee4174acf627802920daf75bc4b6a3f1d77995c
+    restart: unless-stopped
+    environment:
+      TOKEN: ${TOKEN:?Please set a bot token in .env}
+    volumes:
+      - ./services/gateway-proxy/config.json:/config.json:ro
+    ports:
+      - "127.0.0.1:7878:7878"
+    profiles:
+      - gateway-proxy
+
   bot:
-    build:
-      context: ./bot
-      dockerfile: Dockerfile
+    build: .
     depends_on:
       db:
         condition: service_healthy
       lavalink:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
     environment:
-      TOKEN: ${TOKEN}
-      DB_PASSWORD: ${DB_PASSWORD}
+      TOKEN: ${TOKEN:?Please set a bot token in .env}
+      DEBUG_TOKEN: ${DEBUG_TOKEN}
+      DB_PASSWORD: ${DB_PASSWORD:?Please set a database password in .env}
       DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER:-fm01}
       DB_HOST: ${DB_HOST:-db}
-      DB_NAME: ${DB_NAME:-lumin_beta}
+      DB_NAME: ${DB_NAME:-fm01}
       LAVALINK_URI: ${LAVALINK_URI:-http://lavalink:2333}
       LAVALINK_PASSWORD: ${LAVALINK_PASSWORD}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      BOT_MODE: ${BOT_MODE:-standalone}
+      SHARD_COUNT: ${SHARD_COUNT:-}
+      SHARDS_PER_CLUSTER: ${SHARDS_PER_CLUSTER:-16}
+      CLUSTER_ID: ${CLUSTER_ID:-}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      REDIS_MSG_URL: ${REDIS_MSG_URL:-redis://redis:6379/1}
+      DISCORD_PROXY_URL: ${DISCORD_PROXY_URL:-}
+      DISCORD_GATEWAY_URL: ${DISCORD_GATEWAY_URL:-}
     volumes:
-      - ./bot:/bot
-
-  website:
-    build:
-      context: ./website
-      dockerfile: Dockerfile
-      target: prod
-    restart: unless-stopped
-    ports:
-      - "3007:3007"
-
-  caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
-    volumes:
-      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data # to preserve SSL certs
-      - caddy_config:/config
+      - ./services/bot:/bot
+    command: sh -c "if [ '${MIGRATE_ON_START:-true}' = true ]; then uv run alembic upgrade head; fi && uv run --no-dev main.py"
 
 volumes:
   postgres_data:
-  caddy_data:
-  caddy_config:

@@ -4,10 +4,8 @@ on:
   pull_request:
     branches:
       - main
-      - dev
-  push:
-    branches:
-      - dev
+    paths:
+      - services/bot/**
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -26,6 +24,7 @@ jobs:
         uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
+          working-directory: services/bot
 
       - name: Set up Python
         uses: actions/setup-python@v5

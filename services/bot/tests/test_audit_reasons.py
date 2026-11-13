@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-EN = json.loads((Path(__file__).resolve().parent.parent / "localization" / "en.l10n.json").read_text(encoding="utf-8"))
+EN = json.loads((Path(__file__).resolve().parent.parent.parent.parent / "shared" / "localization" / "responses" / "en.l10n.json").read_text(encoding="utf-8"))
 
 
 @pytest.mark.parametrize(

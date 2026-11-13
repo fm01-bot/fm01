@@ -4,10 +4,8 @@ on:
   pull_request:
     branches:
       - main
-      - dev
-  push:
-    branches:
-      - dev
+    paths:
+      - services/bot/**
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
