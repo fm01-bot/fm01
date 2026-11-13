@@ -1,0 +1,57 @@
+@reference '../globals.css';
+
+/* ==================== Promoted Servers CSS ==================== */
+
+.trust-subtext {
+@apply font-normal text-center justify-center flex mb-8 text-nowrap flex-wrap flex-row max-w-screen;
+
+font-size: clamp(1rem, 3vw, 2rem) !important;
+
+  & > span:nth-child(even) {
+    @apply text-primary font-bold px-1.5;
+  }
+  & > span:nth-child(odd) {
+    @apply opacity-50;
+  }
+}
+
+.promoted-servers {
+  @apply relative w-full overflow-hidden py-2;
+
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+
+  & .promoted-servers-row:nth-child(even) .promoted-servers-track {
+    animation-direction: reverse;
+  }
+}
+
+.promoted-servers-row {
+  @apply relative w-full overflow-hidden;
+}
+
+.promoted-servers-track {
+  @apply flex w-max flex-row;
+  animation: promoted-servers-scroll 15s linear infinite;
+  will-change: transform;
+}
+
+.promoted-servers-group {
+  @apply flex w-max shrink-0 flex-row gap-2 pr-2;
+
+  & > a {
+    width: max-content;
+  }
+}
+
+@keyframes promoted-servers-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ==================== Promoted Servers CSS ==================== */

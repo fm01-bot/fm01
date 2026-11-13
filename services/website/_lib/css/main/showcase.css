@@ -1,0 +1,379 @@
+@reference '../globals.css';
+
+/* ==================== Showcase CSS ==================== */
+
+.showcase-container {
+
+  --channels-width: min(16.75rem, 85%);
+  @apply relative flex flex-row rounded-lg w-full h-160 overflow-hidden select-none;
+
+  @variant laptop {
+    @apply h-125;
+  }
+
+
+  & .channels {
+    width: var(--channels-width);
+    /* Mobile drawer: the same tints mixed onto the page background, so it is
+       opaque and the backdrop below can't darken it. */
+    @apply absolute top-0 z-9 bottom-0 left-0 p-4 rounded-bl-lg -translate-x-full transition-transform duration-300;
+    @apply bg-[color-mix(in_oklab,var(--color-text)_10%,var(--color-background))];
+    @apply dark:bg-[color-mix(in_oklab,#09080b_50%,var(--color-background))];
+
+    @variant laptop {
+      width: 16.75rem;
+      @apply static z-auto translate-x-0 bg-text/10 dark:bg-[#09080b]/50;
+    }
+
+    & .server-title {
+      @apply items-center gap-2 text-text/50 text-xl hidden;
+
+      @variant laptop {
+        @apply flex;
+      }
+
+      & svg {
+        @apply w-3.75! h-3.75!;
+      }
+    }
+
+
+    & .channel-list {
+      @apply flex flex-col items-start gap-0.5 mt-2 w-full ;
+
+      & .channel-name {
+        @apply text-text/50 h-8 flex text-nowrap items-center justify-start gap-2 py-1 px-2 hover:bg-text/20 hover:text-text rounded-lg w-full hover:cursor-pointer;
+
+        &.is-active {
+          @apply bg-text/20! text-text!;
+        }
+
+        & span {
+          &:nth-child(1) {
+            @apply font-semibold text-xl leading-0;
+          }
+
+          &:nth-child(2) {
+            @apply leading-0;
+          }
+        }
+      }
+    }
+  }
+
+  &.channels-open {
+    & .channels {
+      @apply translate-x-0;
+    }
+
+    & .channel-container {
+      transform: translateX(var(--channels-width));
+
+      @variant laptop {
+        width: 100%;
+        transform: none;
+      }
+    }
+  }
+
+  & .channels-backdrop {
+    @apply absolute inset-0 z-9 border-0 bg-black/20 dark:bg-black/40;
+
+    @variant laptop {
+      @apply hidden;
+    }
+  }
+
+  & .channel-container {
+    @apply relative z-0 flex flex-col bg-text/3 w-full min-w-full h-full transition-transform duration-300;
+
+    @variant laptop {
+      width: 100%;
+      transform: none;
+      width: calc(100% - var(--channels-width));
+
+      @apply transition-[width,transform] min-w-0;
+    }
+
+    & .channel-title {
+      @apply flex flex-wrap justify-start text-nowrap items-center gap-1 px-3 py-2 border-b border-b-text/30 w-full shrink-0;
+
+      @variant laptop {
+        @apply flex-nowrap;
+      }
+
+      & .channel-back {
+        @apply flex items-center justify-center p-1 text-text/60 cursor-pointer;
+
+        @variant laptop {
+          @apply hidden;
+        }
+      }
+
+      & span {
+        &:nth-child(2) {
+          @apply text-text/50;
+          font-size: clamp(0.7rem, 3vw, 1.2rem) !important;
+
+        }
+
+        &:nth-child(3) {
+          font-size: clamp(0.5rem, 3vw, 1rem) !important;
+        }
+
+        &:nth-child(4) {
+          @apply px-1 text-contrast font-extrabold shadow-[10010000px];
+        }
+
+        &:nth-child(5) {
+          @apply text-text/50;
+
+          font-size: clamp(0.5rem, 3vw, 1rem) !important;
+        }
+      }
+    }
+
+    & .channel-content {
+      @apply flex flex-1 items-end p-2 overflow-y-scroll;
+
+      @variant laptop {
+        @apply w-full;
+      }
+
+      & .channel-pane {
+        @apply opacity-0 mt-30 fixed pointer-events-none;
+
+        &.is-active {
+          @apply opacity-100 relative max-h-full mt-0 pointer-events-auto;
+        }
+      }
+    }
+
+
+
+    & .text-area {
+      @apply p-3 py-2 w-full;
+
+      & div {
+        @apply bg-[#09080b]/10 px-4 py-3 border border-text/30 rounded-lg w-full text-text/50;
+
+        font-size: clamp(0.55rem, 2vw, 1rem) !important;
+
+      }
+    }
+  }
+}
+
+/* ==================== Discord chat (shared) ==================== */
+/* Message, Embed, Field and Button styles. Used by the showcase on the
+   main page and by any .discord-chat panel (e.g. the features page). */
+
+.showcase-container,
+.discord-chat {
+  @apply feat-container;
+
+  /* ---------- Buttons (Button.tsx) ---------- */
+  & .url-button {
+    @apply rounded-lg bg-text/10 border border-text/30 px-2 py-1 flex items-center gap-1 grid-cols-subgrid col-span-1;
+
+    &:hover {
+      @apply cursor-pointer;
+    }
+
+    & span {
+      @apply text-base;
+    }
+  }
+
+  & .action-button {
+    @apply inline-flex items-center justify-center gap-1.5 h-8 min-w-11 px-3.5 rounded-sm text-white hover:cursor-pointer;
+
+    &.is-primary {
+      @apply bg-primary hover:bg-primary/80;
+    }
+
+    &.is-secondary {
+      @apply bg-text/10 text-text hover:bg-text/20;
+    }
+
+    &.is-danger {
+      @apply bg-unavailable hover:bg-unavailable/80;
+    }
+
+    &.is-success {
+      @apply bg-available hover:bg-available/80;
+    }
+
+    & span:nth-child(1) {
+      @apply text-lg;
+    }
+
+    & span:nth-child(2) {
+      @apply text-base;
+    }
+  }
+
+  & .url-button.is-disabled,
+  & .action-button.is-disabled {
+    @apply opacity-50;
+
+    &:hover {
+      cursor: not-allowed !important;
+    }
+  }
+
+  /* ---------- Messages (Channel.tsx, Message.tsx) ---------- */
+  & .message-container {
+    @apply flex flex-col gap-3 w-full;
+  }
+
+  & .message {
+    @apply flex flex-row gap-2.5 justify-start select-none;
+
+    & .message-avatar {
+      @apply rounded-full bg-text/20 h-fit w-fit;
+    }
+
+    & .message-body {
+      @apply flex flex-col flex-1 min-w-0;
+    }
+
+    & .message-header {
+      @apply flex flex-row flex-wrap gap-1;
+
+      &.is-bot {
+        @apply gap-0;
+      }
+    }
+
+    & .message-username {
+      @apply text-text;
+    }
+
+    & .app-badge {
+      @apply bg-[#5865F2] text-white px-1.5 rounded-sm text-sm leading-6 font-bold scale-70 mt-px flex flex-row items-center justify-center gap-1;
+
+      & svg {
+        @apply h-4 w-4;
+      }
+    }
+
+    & .message-time {
+      @apply text-xs mt-1.5 text-text/50;
+    }
+
+    & .message-text {
+      @apply pb-2;
+    }
+
+    & code {
+      @apply font-mono text-[0.85em] px-1 py-0.5 rounded-sm bg-text/10 whitespace-pre;
+    }
+
+    & .button-row {
+      @apply flex gap-2;
+    }
+  }
+
+  /* ---------- Embeds (Embed.tsx, Field.tsx) ---------- */
+  & .embed {
+    @apply bg-white/45 dark:bg-black/20 p-3 rounded-md gap-2 flex flex-col w-fit max-w-full;
+    border-width: 0 0 0 6px;
+    border-color: var(--embed-color, gray);
+
+    & .embed-main {
+      @apply flex flex-row gap-5 w-fit max-w-full;
+    }
+
+    & .embed-content {
+      @apply gap-1 flex flex-col min-w-0;
+    }
+
+    & .embed-author {
+      @apply flex items-center justify-center w-fit gap-2;
+
+      & span {
+        @apply text-xs;
+      }
+    }
+
+    & .embed-title {
+      @apply font-bold! text-base!;
+    }
+
+    & .embed-description {
+      @apply text-sm font-light! wrap-break-word;
+    }
+
+    /* Mobile: fields flow and wrap; a field that doesn't fit moves to the next line.
+       Laptop: Discord's three-column grid. */
+    & .embed-fields {
+      @apply flex flex-wrap gap-x-4 gap-y-2 max-w-full;
+
+      @variant laptop {
+        @apply grid w-fit grid-cols-[repeat(3,minmax(0,max-content))] gap-4;
+      }
+    }
+
+    & .embed-field {
+      @apply basis-full col-span-3 grid-cols-subgrid flex flex-col w-fit min-w-0 wrap-break-word;
+
+      &.is-inline {
+        @apply basis-auto col-span-1;
+      }
+
+      & > span:nth-child(1) {
+        @apply font-bold!;
+      }
+    }
+
+    & .embed-thumbnail {
+      @apply rounded-md h-fit w-fit;
+    }
+
+    & .embed-image {
+      @apply w-full h-auto;
+    }
+
+    & .embed-buttons {
+      @apply flex gap-2 flex-wrap;
+    }
+
+    /* Wraps on narrow screens; real line heights keep wrapped lines from overlapping. */
+    & .embed-footer {
+      @apply flex flex-row flex-wrap items-center gap-x-2 gap-y-0.5;
+
+      & .embed-footer-icon {
+        @apply rounded-full;
+      }
+
+      & .embed-footer-text {
+        @apply text-sm text-text/50 leading-snug min-w-0 wrap-break-word;
+      }
+
+      & .embed-footer-dot {
+        @apply text-text/20 text-[12px] leading-snug;
+      }
+
+      & .embed-footer-time {
+        @apply text-xs text-text/50 leading-snug;
+      }
+    }
+  }
+}
+
+@utility feat-container {
+  .mention {
+    @apply bg-primary/10 text-primary/75 rounded-lg p-0.5 px-1;
+    color: color-mix(in oklab, var(--color-primary) 97%, #ffffff 3%);
+    &:hover {
+      @apply bg-primary/60 text-text;
+    }
+  }
+
+  .button {
+    @apply rounded-sm hover:cursor-pointer py-1 px-4;
+  }
+}
+
+/* ==================== Showcase CSS ==================== */
