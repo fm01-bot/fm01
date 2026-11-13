@@ -2,6 +2,8 @@ name: Ruff formatting
 
 on:
   workflow_dispatch:
+    paths:
+      - services/bot/**
 
 jobs:
   format:
