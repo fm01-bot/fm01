@@ -72,6 +72,20 @@ services:
     profiles:
       - gateway-proxy
 
+  # One-shot: applies pending Alembic migrations, then exits. The bot waits for a successful exit.
+  migrations:
+    build: ./services/migrations/
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_PASSWORD: ${DB_PASSWORD:?Please set a database password in .env}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER:-fm01}
+      DB_HOST: ${DB_HOST:-db}
+      DB_NAME: ${DB_NAME:-fm01}
+
   bot:
     build: ./services/bot/
     depends_on:
@@ -81,6 +95,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
     restart: unless-stopped
     environment:
       TOKEN: ${TOKEN:?Please set a bot token in .env}
@@ -103,7 +119,6 @@ services:
       DISCORD_GATEWAY_URL: ${DISCORD_GATEWAY_URL:-}
     volumes:
       - ./services/bot:/bot
-    command: sh -c "if [ '${MIGRATE_ON_START:-true}' = true ]; then uv run alembic upgrade head; fi && uv run --no-dev main.py"
 
 volumes:
   postgres_data:

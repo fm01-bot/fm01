@@ -12,6 +12,8 @@ import asyncpg
 import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
+# Schema is owned by the migrations service; the bot's test database is built from it.
+MIGRATIONS_DIR = ROOT.parent / "migrations"
 
 
 @pytest.fixture(scope="session")
@@ -35,7 +37,7 @@ def postgres_dsn() -> Iterator[str]:
 		subprocess.run(
 			[sys.executable, "-m", "alembic", "-x", f"url={dsn.replace('postgresql://', 'postgresql+asyncpg://', 1)}"]
 			+ ["upgrade", "head"],
-			cwd=ROOT,
+			cwd=MIGRATIONS_DIR,
 			check=True,
 			capture_output=True,
 		)

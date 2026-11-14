@@ -9,7 +9,7 @@ This document defines architectural standards, technical conventions, and operat
 - **Runtime**: Python `>=3.12,<3.14`
 - **Package & Environment Manager**: `uv`
 - **Core Framework**: `discord.py >=2.3.2`, `discord-localization >=1.1.5`
-- **Data & Storage**: PostgreSQL 16 (`asyncpg`), Alembic (`migrations/`), Redis 7 (`redis-py`)
+- **Data & Storage**: PostgreSQL 16 (`asyncpg`), schema managed by `services/migrations/` (Alembic), Redis 7 (`redis-py`)
 - **Media & Voice**: Lavalink v4 (`wavelink >=3.5.2`), Pillow (`pillow >=11.3.0`)
 - **Code Quality**:
   - Linter & Formatter: `ruff` (indent: tabs `\t`, line-length: 120, quotes: double `"`)
@@ -31,7 +31,6 @@ This document defines architectural standards, technical conventions, and operat
 │   └── clustering/       # Distributed shard coordination, Redis event bus, state stores
 ├── helpers/              # Cross-module utility functions and algorithmic helpers
 ├── localization/         # User-facing message templates (JSON format)
-├── migrations/           # Database schema versioning via Alembic
 ├── slash_localization/   # Slash command metadata (command names, param descriptions)
 ├── tests/                # Automated pytest test suites and mocking fixtures
 ├── justfile              # Automation recipes for development, linting, and testing
@@ -128,8 +127,8 @@ Dataclasses decorated with `@dataclass(slots=True)` that wrap Discord objects (e
 ### 5. Database Schema & Migrations
 
 - All database operations use `self.bot.db` (`asyncpg.Pool`).
-- Any table or column addition, modification, or removal requires an Alembic migration under `migrations/versions/`.
-- Ensure migrations include both `upgrade()` and `downgrade()` steps.
+- The bot never runs migrations. Schema changes go in `services/migrations/` (see its `AGENTS.md`); the `migrations` Compose service applies them before the bot starts.
+- Never assume a schema change exists in the bot itself. Reference only tables and columns that the migrations service has already shipped.
 
 ### 6. Code Style & Typing
 
