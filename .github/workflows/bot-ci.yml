@@ -15,13 +15,16 @@ jobs:
   lint-and-compile:
     name: Lint, format & compile checks
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/bot
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e
         with:
           enable-cache: true
           working-directory: services/bot

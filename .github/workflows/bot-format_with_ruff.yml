@@ -2,12 +2,13 @@ name: Ruff formatting
 
 on:
   workflow_dispatch:
-    paths:
-      - services/bot/**
 
 jobs:
   format:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/bot
 
     permissions:
       contents: write
@@ -19,9 +20,10 @@ jobs:
           persist-credentials: false
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e
         with:
           enable-cache: true
+          working-directory: services/bot
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -41,7 +43,7 @@ jobs:
             git config user.email "github-actions[bot]@users.noreply.github.com"
             git add .
             git commit -m "🤖 chore: auto-format code using ruff"
-            git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:dev
+            git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:${{ github.ref_name }}
           else
             echo "Code was formatted successfully"
           fi
