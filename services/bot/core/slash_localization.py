@@ -44,7 +44,9 @@ def update_slash_localizations():
 	slash_localizations = {}
 
 	# load the slash localization files and combine them into one dictionary
-	for file_path in (Path(__file__).resolve().parent.parent.parent.parent / "shared" / "localization" / "slash_commands").glob("*.l10n.json"):
+	for file_path in (
+		Path(__file__).resolve().parent.parent.parent.parent / "shared" / "localization" / "slash_commands"
+	).glob("*.l10n.json"):
 		lang = file_path.stem.removesuffix(".l10n")
 		try:
 			data = json.loads(Path(file_path).read_text(encoding="utf-8"))
