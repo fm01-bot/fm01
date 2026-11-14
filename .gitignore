@@ -1,7 +1,5 @@
 # Configuration file
 config.yml
-transcript/
-
 
 assets/*
 !assets/fonts/

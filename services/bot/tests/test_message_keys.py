@@ -48,7 +48,9 @@ def _exists(tree: object, key: str) -> bool:
 
 
 def test_every_literal_message_key_exists_in_english():
-	en = json.loads((ROOT.parent.parent / "shared" / "localization" / "responses" / "en.l10n.json").read_text(encoding="utf-8"))
+	en = json.loads(
+		(ROOT.parent.parent / "shared" / "localization" / "responses" / "en.l10n.json").read_text(encoding="utf-8")
+	)
 	found = list(_literal_keys())
 	assert len(found) > 100, "the scan stopped finding message keys; update _is_message_call"
 
