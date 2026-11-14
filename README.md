@@ -62,7 +62,7 @@ Then edit it:
 docker compose up -d --build
 ```
 
-Database migrations are applied automatically on every bot start (unless `MIGRATE_ON_START=false`).
+Database migrations run automatically before the bot starts: the `migrations` service applies them, and the bot waits for it to finish successfully.
 
 Check that it's running:
 
@@ -96,14 +96,13 @@ To enable it, set in `.env`:
 COMPOSE_PROFILES=gateway-proxy
 DISCORD_GATEWAY_URL=ws://gateway-proxy:7878
 SHARD_COUNT=32          # must match the proxy; the bot refuses to start otherwise
-MIGRATE_ON_START=false  # `just deploy` runs migrations itself
 ```
 
 The proxy's shard count comes from Discord's recommendation; `curl localhost:7878/shard-count` prints it. Its intents
 in `gateway-proxy.json` must match the bot's (`discord.Intents.all()`), since the bot's own IDENTIFY never reaches
 Discord.
 
-- `just deploy` checks out the latest release, then rebuilds and restarts only the bot; the proxy keeps the shards
+- `just deploy` checks out the latest release, rebuilds the bot and the migrations service, runs migrations, then restarts only the bot; the proxy keeps the shards
   connected. `just deploy v0.9.0` deploys (or rolls back to) a given release, and `just deploy main` the testing branch.
 - `just deploy-proxy` recreates the proxy, which reconnects every shard. Use it for proxy upgrades and shard count
   changes only, and update `SHARD_COUNT` first when the count changes.

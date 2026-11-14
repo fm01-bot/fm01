@@ -5,8 +5,9 @@ set dotenv-load := true
 default:
   just --list
 
+# Applies pending migrations (services/migrations). Rebuild the migrations image first if its code changed.
 migrate:
-  docker compose run --rm bot uv run alembic upgrade head
+  docker compose run --rm migrations
 
 format:
   uv run ruff format .
@@ -46,8 +47,8 @@ deploy ref="":
   git checkout --force --detach "$ref"
   uv sync
   just up db
+  docker compose build bot migrations
   just migrate
-  docker compose build bot
   just up --remove-orphans db lavalink redis bot
 
 # Restarts the entire stack, disconnecting from Discord
@@ -59,10 +60,13 @@ deploy-proxy:
 [windows]
 debug:
   if (docker compose ps bot --status running -q 2>$null) { \
+    docker compose build migrations; \
+    just migrate; \
     just restart bot; \
   } else { \
     uv sync; \
     just up db; \
+    docker compose build migrations; \
     just migrate; \
     just up; \
   }
@@ -71,10 +75,13 @@ debug:
 [unix]
 debug:
   if [ -n "$(docker compose ps bot --status running -q 2>/dev/null)" ]; then \
+    docker compose build migrations; \
+    just migrate; \
     just restart bot; \
   else \
     uv sync; \
     just up db; \
+    docker compose build migrations; \
     just migrate; \
     just up; \
   fi

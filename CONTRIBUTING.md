@@ -17,7 +17,7 @@ All contributors are expected to uphold the [Code of Conduct](CODE_OF_CONDUCT.md
   - [2. Localization System](#2-localization-system)
   - [3. Argument Dataclasses (`args/`)](#3-argument-dataclasses-args)
   - [4. Helpers & Utilities (`helpers/`)](#4-helpers--utilities-helpers)
-  - [5. Database & Migrations (`migrations/`)](#5-database--migrations-migrations)
+  - [5. Database & Migrations (`services/migrations/`)](#5-database--migrations-servicesmigrations)
   - [6. Clustering & Distributed Services](#6-clustering--distributed-services)
 - [Code Quality & Standards](#code-quality--standards)
   - [Formatting & Linting](#formatting--linting)
@@ -74,14 +74,13 @@ All contributors are expected to uphold the [Code of Conduct](CODE_OF_CONDUCT.md
    just debug
    ```
 
-   This synchronizes dependencies via `uv`, starts PostgreSQL (`db`), applies database migrations with Alembic, and starts the bot.
+   This synchronizes dependencies via `uv`, starts PostgreSQL (`db`), applies database migrations (the `migrations` service), and starts the bot.
 
    Alternatively, start services and run manually:
 
    ```bash
    docker compose up -d db redis lavalink
-   uv sync
-   uv run alembic upgrade head
+   docker compose run --rm migrations
    docker compose up -d bot
    ```
 
@@ -161,16 +160,18 @@ When variables are passed into `ctx.send("key", ...)`, they are formatted agains
 - Cog-specific utilities should stay private to that cog (e.g. `EconomyHelper` and `ShopItem` in `cogs/economy.py`).
 - Favor standalone functions over unnecessary single-instance classes.
 
-### 5. Database & Migrations (`migrations/`)
+### 5. Database & Migrations (`services/migrations/`)
 
 - The project uses PostgreSQL with asynchronous access via `asyncpg` (`bot.db`).
+- Schema changes live in the `services/migrations/` service, not in the bot. Its [AGENTS.md](services/migrations/AGENTS.md) has the full rules.
 - Any database schema changes (tables, columns, indexes, constraints) must include an Alembic migration:
   ```bash
-  uv run alembic revision -m "add_feature_table"
+  cd services/migrations && uv run alembic revision -m "add_feature_table"
   ```
-  Implement both `upgrade()` and `downgrade()` in the generated migration file under `migrations/versions/`.
+  Implement both `upgrade()` and `downgrade()` in the generated migration file under `services/migrations/migrations/versions/`.
 - Test migrations locally before submitting:
   ```bash
+  cd services/migrations
   uv run alembic upgrade head
   uv run alembic downgrade -1
   uv run alembic upgrade head
