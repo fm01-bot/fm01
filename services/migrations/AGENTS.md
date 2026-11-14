@@ -31,7 +31,8 @@ Guidelines for AI agents and tools working on the fm01 database migrations servi
 - Every revision must be backward-compatible with the bot release currently running. Add columns and tables first; drop or rename them in a later release, after the old bot code is gone.
 - Test locally before submitting: `uv run alembic upgrade head`, `uv run alembic downgrade -1`, `uv run alembic upgrade head`.
 - Generate revisions with `uv run alembic revision -m "short_description"`.
-- Keep the pipeline green: `uv run ruff format --check .` and `uv run ruff check .`.
+- Keep the pipeline green: `uv run ruff format --check .`, `uv run ruff check .` and `uv run pytest`.
+- Tests in `tests/` cover the migration chain only (single head, complete revisions, upgrade and downgrade round trip). They run against a throwaway PostgreSQL 16 container, need Docker, and must not import bot code. Integration tests for the whole stack belong elsewhere.
 
 ## 4. Operational Directives
 

@@ -12,6 +12,13 @@ dependencies = [
     "sqlalchemy[asyncio]>=2.0",
 ]
 
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.14.8",
+    "testcontainers[postgres]>=4.8",
+]
+
 [tool.uv]
 package = false
 
@@ -20,3 +27,7 @@ line-length = 120
 
 [tool.ruff.format]
 indent-style = "tab"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["db: needs a throwaway PostgreSQL database (Docker)"]
