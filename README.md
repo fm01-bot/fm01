@@ -1,6 +1,5 @@
 # fm01
 
-[![Crowdin](https://badges.crowdin.net/project-lumin/localized.svg)](https://crowdin.com/project/project-lumin)
 [![GitHub Release](https://img.shields.io/github/v/release/fm01-bot/fm01)](https://github.com/fm01-bot/fm01/releases/latest)
 ![GitHub Stars](https://img.shields.io/github/stars/fm01-bot/fm01?style=flat)
 [![Discord](https://img.shields.io/discord/572077459189792769?label=discord)](https://discord.gg/s8zBYQk)
