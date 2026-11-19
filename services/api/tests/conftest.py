@@ -86,6 +86,8 @@ class FakeDiscord:
 	bot_guilds: set[int] = field(default_factory=set)
 	channels: dict[int, dict[str, Any]] = field(default_factory=dict)
 	"""Channel ID -> channel object the bot can see."""
+	emojis: dict[int, set[int]] = field(default_factory=dict)
+	"""Guild ID -> IDs of its custom emojis."""
 	scope: str = "identify guilds"
 	calls: list[str] = field(default_factory=list)
 	revoked: list[str] = field(default_factory=list)
@@ -123,6 +125,11 @@ class FakeDiscord:
 		if path.startswith("/channels/") and auth.startswith("Bot "):
 			channel = self.channels.get(int(path.removeprefix("/channels/")))
 			return httpx.Response(200, json=channel) if channel else httpx.Response(404, json={})
+		if path.startswith("/guilds/") and "/emojis/" in path and auth.startswith("Bot "):
+			guild, emoji = path.removeprefix("/guilds/").split("/emojis/")
+			if int(emoji) in self.emojis.get(int(guild), set()):
+				return httpx.Response(200, json={"id": emoji})
+			return httpx.Response(404, json={})
 		if path.startswith("/guilds/") and auth.startswith("Bot "):
 			guild_id = int(path.removeprefix("/guilds/"))
 			if guild_id in self.bot_guilds:

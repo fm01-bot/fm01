@@ -154,6 +154,26 @@ class DiscordClient:
 			raise
 		return channel if str(channel.get("guild_id")) == str(guild_id) else None
 
+	async def guild_emoji(self, guild_id: int, emoji_id: int) -> dict[str, Any] | None:
+		"""Look up a custom emoji of a guild as the bot.
+
+		Args:
+			guild_id: The guild.
+			emoji_id: The emoji.
+
+		Returns:
+			Discord's emoji object, or ``None`` if the guild has no such emoji.
+
+		Raises:
+			ApiError: ``discord_unavailable`` if Discord fails.
+		"""
+		try:
+			return await self._get(f"/guilds/{guild_id}/emojis/{emoji_id}", f"Bot {self._bot_token}", user_call=False)
+		except ApiError as exc:
+			if exc.code in (ErrorCode.FORBIDDEN, ErrorCode.NOT_FOUND):
+				return None
+			raise
+
 	async def _token(self, form: dict[str, str]) -> OAuthTokenSet:
 		"""Call the OAuth2 token endpoint.
 

@@ -22,6 +22,7 @@ from app.economy.store import Ledger
 from app.events import Announcer
 from app.ratelimit import RateLimiter
 from app.settings.store import GuildSettingsStore
+from app.starboard.store import StarboardStore
 from app.status.store import StatusStore
 
 __all__ = ("AppState", "build_state", "get_state")
@@ -36,6 +37,7 @@ class AppState:
 		ledger: The Ledger.
 		guild_settings: The guild settings store.
 		bear_traps: The bear trap store.
+		starboards: The starboard store.
 		discord: The Discord client.
 		sessions: The dashboard session store.
 		access: The guild manager checks.
@@ -47,6 +49,7 @@ class AppState:
 	ledger: Ledger
 	guild_settings: GuildSettingsStore
 	bear_traps: BearTrapStore
+	starboards: StarboardStore
 	discord: DiscordClient
 	sessions: SessionStore
 	access: GuildAccess
@@ -102,6 +105,7 @@ def assemble(config: Settings, pool: asyncpg.Pool, redis: aioredis.Redis, http: 
 		ledger=Ledger(pool),
 		guild_settings=GuildSettingsStore(pool, announcer),
 		bear_traps=BearTrapStore(pool, announcer),
+		starboards=StarboardStore(pool, announcer),
 		discord=discord,
 		sessions=sessions,
 		access=GuildAccess(discord, sessions, redis, config.permission_ttl),
