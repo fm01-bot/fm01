@@ -209,6 +209,126 @@
         "title": "BearTrapState",
         "type": "object"
       },
+      "ClusterDay": {
+        "description": "One UTC day of a status block's (or the whole bot's) history. Fractions sum to 1.",
+        "properties": {
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "no_data": {
+            "title": "No Data",
+            "type": "number"
+          },
+          "operational": {
+            "title": "Operational",
+            "type": "number"
+          },
+          "partially_operational": {
+            "title": "Partially Operational",
+            "type": "number"
+          },
+          "partially_unresponsive": {
+            "title": "Partially Unresponsive",
+            "type": "number"
+          },
+          "unresponsive": {
+            "title": "Unresponsive",
+            "type": "number"
+          },
+          "worst": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClusterStatus"
+              },
+              {
+                "const": "no_data",
+                "type": "string"
+              }
+            ],
+            "title": "Worst"
+          }
+        },
+        "required": [
+          "date",
+          "worst",
+          "operational",
+          "partially_operational",
+          "partially_unresponsive",
+          "unresponsive",
+          "no_data"
+        ],
+        "title": "ClusterDay",
+        "type": "object"
+      },
+      "ClusterHistory": {
+        "description": "A status block's daily history, oldest day first.",
+        "properties": {
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/ClusterDay"
+            },
+            "title": "Days",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "shards": {
+            "items": {
+              "$ref": "#/components/schemas/ShardHistory"
+            },
+            "title": "Shards",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "days",
+          "shards"
+        ],
+        "title": "ClusterHistory",
+        "type": "object"
+      },
+      "ClusterState": {
+        "description": "A status block on the status page.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "shards": {
+            "items": {
+              "$ref": "#/components/schemas/ShardState"
+            },
+            "title": "Shards",
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ClusterStatus"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "shards"
+        ],
+        "title": "ClusterState",
+        "type": "object"
+      },
+      "ClusterStatus": {
+        "description": "How a status block of shards, or the whole bot, is doing.",
+        "enum": [
+          "operational",
+          "partially_operational",
+          "partially_unresponsive",
+          "unresponsive"
+        ],
+        "title": "ClusterStatus",
+        "type": "string"
+      },
       "DashboardUser": {
         "description": "A signed-in user's Discord profile.",
         "properties": {
@@ -282,6 +402,7 @@
           "insufficient_funds",
           "same_account",
           "invalid_channel",
+          "rate_limited",
           "discord_unavailable"
         ],
         "title": "ErrorCode",
@@ -633,6 +754,180 @@
           "user"
         ],
         "title": "SessionGrant",
+        "type": "object"
+      },
+      "ShardDay": {
+        "description": "One UTC day of a shard's history. Fractions cover the day, or its elapsed part for today, and sum to 1.",
+        "properties": {
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "lagging": {
+            "title": "Lagging",
+            "type": "number"
+          },
+          "no_data": {
+            "title": "No Data",
+            "type": "number"
+          },
+          "operational": {
+            "title": "Operational",
+            "type": "number"
+          },
+          "unresponsive": {
+            "title": "Unresponsive",
+            "type": "number"
+          },
+          "worst": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ShardStatus"
+              },
+              {
+                "const": "no_data",
+                "type": "string"
+              }
+            ],
+            "title": "Worst"
+          }
+        },
+        "required": [
+          "date",
+          "worst",
+          "operational",
+          "lagging",
+          "unresponsive",
+          "no_data"
+        ],
+        "title": "ShardDay",
+        "type": "object"
+      },
+      "ShardHistory": {
+        "description": "A shard's daily history, oldest day first.",
+        "properties": {
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/ShardDay"
+            },
+            "title": "Days",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "days"
+        ],
+        "title": "ShardHistory",
+        "type": "object"
+      },
+      "ShardState": {
+        "description": "A shard on the status page.",
+        "properties": {
+          "guild_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guild Count"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "latency_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency Ms"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ShardStatus"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "latency_ms",
+          "guild_count"
+        ],
+        "title": "ShardState",
+        "type": "object"
+      },
+      "ShardStatus": {
+        "description": "How a shard is doing.",
+        "enum": [
+          "operational",
+          "lagging",
+          "unresponsive"
+        ],
+        "title": "ShardStatus",
+        "type": "string"
+      },
+      "Status": {
+        "description": "The bot's current status.",
+        "properties": {
+          "checked_at": {
+            "format": "date-time",
+            "title": "Checked At",
+            "type": "string"
+          },
+          "clusters": {
+            "items": {
+              "$ref": "#/components/schemas/ClusterState"
+            },
+            "title": "Clusters",
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ClusterStatus"
+          }
+        },
+        "required": [
+          "status",
+          "checked_at",
+          "clusters"
+        ],
+        "title": "Status",
+        "type": "object"
+      },
+      "StatusHistory": {
+        "description": "The bot's daily history, oldest day first. Blocks are today's layout.",
+        "properties": {
+          "clusters": {
+            "items": {
+              "$ref": "#/components/schemas/ClusterHistory"
+            },
+            "title": "Clusters",
+            "type": "array"
+          },
+          "overall": {
+            "items": {
+              "$ref": "#/components/schemas/ClusterDay"
+            },
+            "title": "Overall",
+            "type": "array"
+          }
+        },
+        "required": [
+          "overall",
+          "clusters"
+        ],
+        "title": "StatusHistory",
         "type": "object"
       },
       "TransferRequest": {
@@ -2546,6 +2841,106 @@
         "tags": [
           "internal",
           "settings"
+        ]
+      }
+    },
+    "/public/status": {
+      "get": {
+        "description": "Get the bot's current status: overall, per status block, and per shard.\n\nUpdated at most every 10 seconds. Limited to 60 requests per minute per IP.",
+        "operationId": "status",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Status"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The request failed. `code` says why."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The API or Discord failed."
+          }
+        },
+        "summary": "Status",
+        "tags": [
+          "public",
+          "status"
+        ]
+      }
+    },
+    "/public/status/history": {
+      "get": {
+        "description": "Get the bot's daily status history, overall, per status block and per shard. Days are UTC; today is partial.\n\nUpdated at most every 5 minutes. Limited to 10 requests per minute per IP.",
+        "operationId": "status_history",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 90,
+              "maximum": 90,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusHistory"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The request failed. `code` says why."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The API or Discord failed."
+          }
+        },
+        "summary": "Status History",
+        "tags": [
+          "public",
+          "status"
         ]
       }
     }

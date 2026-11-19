@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import logging
 import tomllib
 from collections.abc import AsyncGenerator, Callable
@@ -19,6 +21,7 @@ from app.economy import routes as economy_routes
 from app.errors import ERROR_RESPONSES, install_error_handlers
 from app.settings import routes as settings_routes
 from app.state import AppState, build_state
+from app.status import routes as status_routes
 
 __all__ = ("app", "create_app")
 
@@ -54,11 +57,18 @@ def create_app(config: Settings | None = None, state_factory: StateFactory = bui
 			app: The app.
 
 		Yields:
-			Nothing. The state is on ``app.state.fm01``.
+			Nothing. The state is on ``app.state.fm01``. The status sampler runs meanwhile, if enabled.
 		"""
 		async with state_factory(config or Settings.from_env()) as state:
 			app.state.fm01 = state
-			yield
+			sampler = asyncio.create_task(state.status.run_sampler()) if state.config.status_sampler else None
+			try:
+				yield
+			finally:
+				if sampler is not None:
+					sampler.cancel()
+					with contextlib.suppress(asyncio.CancelledError):
+						await sampler
 
 	app = FastAPI(
 		title="fm01 API",
@@ -79,8 +89,12 @@ def create_app(config: Settings | None = None, state_factory: StateFactory = bui
 	dashboard.include_router(settings_routes.dashboard)
 	dashboard.include_router(bear_trap_routes.dashboard)
 
+	public = APIRouter(prefix="/public")
+	public.include_router(status_routes.public)
+
 	app.include_router(internal, tags=["internal"])
 	app.include_router(dashboard, tags=["dashboard"])
+	app.include_router(public, tags=["public"])
 
 	@app.get("/health", tags=["health"])
 	async def health() -> dict[str, str]:

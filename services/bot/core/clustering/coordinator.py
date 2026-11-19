@@ -2,10 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
-import datetime
 from logging import getLogger
 
-import orjson
 import redis.asyncio as aioredis
 
 from core.clustering.interfaces import ShardCoordinator
@@ -19,6 +17,20 @@ else
     return 0
 end
 """
+
+CLAIM_BLOCK_LUA = """
+for _, key in ipairs(KEYS) do
+    local owner = redis.call('get', key)
+    if owner and owner ~= ARGV[1] then
+        return 0
+    end
+end
+for _, key in ipairs(KEYS) do
+    redis.call('set', key, ARGV[1], 'EX', ARGV[2])
+end
+return 1
+"""
+"""Leases every shard in KEYS for ARGV[1] if none is held by another cluster. Returns 1 if it did."""
 
 RENEW_LEASE_LUA = """
 if redis.call('get', KEYS[1]) == ARGV[1] then
@@ -39,9 +51,6 @@ class StandaloneCoordinator(ShardCoordinator):
 		pass
 
 	async def release_shards(self) -> None:
-		pass
-
-	async def update_health(self, shard_id: int, latency: float, guild_count: int, status: str) -> None:
 		pass
 
 	async def close(self) -> None:
@@ -90,17 +99,36 @@ class RedisShardCoordinator(ShardCoordinator):
 		)
 
 	async def acquire_shards(self, total_shards: int, shards_per_cluster: int) -> list[int]:
-		await self.redis.set(f"{self.prefix}:shards:total", str(total_shards))
 		self.total_shards = total_shards
+		if self.explicit_shard_ids is not None:
+			claimed = await self._claim_explicit(self.explicit_shard_ids, shards_per_cluster)
+		else:
+			claimed = await self._claim_block(total_shards, shards_per_cluster)
 
-		# If explicit shard IDs are provided in environment, attempt to claim those
-		target_pool = self.explicit_shard_ids if self.explicit_shard_ids is not None else list(range(total_shards))
+		if not claimed:
+			raise RuntimeError(
+				f"Cluster {self.cluster_id} found no free shards of {total_shards}: every block of "
+				f"{shards_per_cluster} shards (or every SHARD_IDS shard) is leased by another cluster"
+			)
+
+		self.claimed_shards = claimed
+		logger.info(f"Cluster {self.cluster_id} assigned shards: {self.claimed_shards}")
+		return claimed
+
+	async def _claim_explicit(self, shard_ids: list[int], limit: int) -> list[int]:
+		"""Claim up to ``limit`` of the given shards, one by one.
+
+		Args:
+			shard_ids: The shards to claim (``SHARD_IDS``).
+			limit: The most shards to claim.
+
+		Returns:
+			The shards claimed, or already held by this cluster.
+		"""
 		claimed: list[int] = []
-
-		for shard_id in target_pool:
-			if len(claimed) >= shards_per_cluster:
+		for shard_id in shard_ids:
+			if len(claimed) >= limit:
 				break
-
 			key = f"{self.prefix}:shard:lease:{shard_id}"
 			acquired = await self.redis.set(key, self.cluster_id.encode("utf-8"), nx=True, ex=self.lease_ttl)
 			if acquired:
@@ -113,15 +141,31 @@ class RedisShardCoordinator(ShardCoordinator):
 					await self.redis.expire(key, self.lease_ttl)
 					claimed.append(shard_id)
 					logger.info(f"Cluster {self.cluster_id} reclaimed existing lease on shard {shard_id}")
-
-		if not claimed:
-			raise RuntimeError(
-				f"Cluster {self.cluster_id} was unable to acquire any shard leases from total {total_shards}"
-			)
-
-		self.claimed_shards = claimed
-		logger.info(f"Cluster {self.cluster_id} assigned shards: {self.claimed_shards}")
 		return claimed
+
+	async def _claim_block(self, total_shards: int, block_size: int) -> list[int]:
+		"""Claim the lowest status block whose shards no other cluster holds, all at once.
+
+		A block is ``n * block_size`` up to ``(n + 1) * block_size - 1``, so the status page's blocks match the
+		clusters running them. Partial blocks are never claimed.
+
+		Args:
+			total_shards: The shard count.
+			block_size: Shards per block (``SHARDS_PER_CLUSTER``).
+
+		Returns:
+			The block's shards, or nothing if every block is taken.
+		"""
+		block_size = max(block_size, 1)
+		for start in range(0, total_shards, block_size):
+			block = list(range(start, min(start + block_size, total_shards)))
+			keys = [f"{self.prefix}:shard:lease:{shard_id}" for shard_id in block]
+			if await self.redis.eval(
+				CLAIM_BLOCK_LUA, len(keys), *keys, self.cluster_id.encode("utf-8"), self.lease_ttl
+			):
+				logger.info(f"Cluster {self.cluster_id} acquired leases on block {start // block_size}: {block}")
+				return block
+		return []
 
 	async def start_heartbeat(self) -> None:
 		if self._running or not self.claimed_shards:
@@ -176,21 +220,6 @@ class RedisShardCoordinator(ShardCoordinator):
 		else:
 			logger.info(f"All {self.total_shards} shards are claimed")
 		self._unclaimed_shards = unclaimed
-
-	async def update_health(self, shard_id: int, latency: float, guild_count: int, status: str) -> None:
-		try:
-			data = {
-				"cluster_id": self.cluster_id,
-				"shard_id": shard_id,
-				"latency_ms": round(latency * 1000, 2) if latency >= 0 else None,
-				"guild_count": guild_count,
-				"status": status,
-				"updated_at": datetime.datetime.now(datetime.UTC).isoformat(),
-			}
-			payload = orjson.dumps(data)
-			await self.redis.hset(f"{self.prefix}:shards:health", str(shard_id), payload)
-		except (aioredis.RedisError, OSError) as e:
-			logger.debug(f"Failed to update health metrics in Redis for shard {shard_id}: {e}")
 
 	async def release_shards(self) -> None:
 		logger.info(f"Releasing shard leases for cluster {self.cluster_id}: {self.claimed_shards}")

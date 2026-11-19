@@ -20,4 +20,6 @@ RUN uv sync --frozen --no-dev --no-install-project
 COPY services/api/app ./app
 
 EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Trust X-Forwarded-For so the Public API's rate limits see the caller's IP. Caddy replaces the header, and only
+# containers on the Compose network (and the host) reach the API directly.
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--forwarded-allow-ips", "*"]

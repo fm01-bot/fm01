@@ -155,6 +155,7 @@ async def api(db: asyncpg.Pool) -> AsyncIterator[Api]:
 		discord_client_secret="client-secret",
 		discord_bot_token="bot-token",
 		session_key=Fernet.generate_key().decode(),
+		status_sampler=False,  # tests sample by hand
 	)
 
 	@asynccontextmanager

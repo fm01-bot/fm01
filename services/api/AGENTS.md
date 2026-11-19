@@ -7,10 +7,11 @@ Guidelines for AI agents and tools working on the fm01 backend API. Terms (Inter
 ## 1. Scope
 
 - The only service that is meant to talk to PostgreSQL. Tables move here from the bot one domain at a time; until a domain moves, the bot still queries its tables directly. Owns the schema: `services/migrations/` belongs to the API.
-- Two parts, separated by path prefix and by authentication:
+- Three parts, separated by path prefix and by authentication:
   - **Internal API** (`/internal/...`): called only by the bot, with `Authorization: Bearer $API_INTERNAL_TOKEN`. The bot sends `X-Fm01-Origin` so it can skip the change events it caused.
   - **Dashboard API** (`/dashboard/...`): called only by the dashboard's server (Next.js), with a dashboard session token. Never called from the browser.
-- Not routed by Caddy. Reachable on the Compose network (and on `127.0.0.1:8000` for local development).
+  - **Public API** (`/public/...`): anyone, no credentials. Read-only, cached in memory, and rate limited per IP with `Depends(rate_limit(scope, per_minute))`. Never put guild data, internal identifiers or hostnames here.
+- Caddy routes only `/public/*`, at `api.fm01.bot`. Everything else is reachable on the Compose network (and on `127.0.0.1:8000` for local development). Uvicorn trusts `X-Forwarded-For` (`--forwarded-allow-ips`) so rate limits see the caller's IP.
 
 ## 2. Stack
 

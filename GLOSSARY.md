@@ -46,6 +46,16 @@ The words this repository (bot, API, website and dashboard) uses for its own con
 
 **Guild manager**: a user who may change a guild's configuration from the dashboard: its owner, or a member with Administrator or Manage Server, in a guild the bot is in.
 
+**Public API**: the part of the API anyone may call, without credentials, under `/public` (served by Caddy at `api.fm01.bot`, which forwards nothing else). Read-only, cached, and rate limited per IP (`app/ratelimit.py`). Today it serves the status page: `GET /public/status` and `GET /public/status/history`.
+
+**Shard health**: the raw facts a bot process reports about each of its shards every 10 seconds (`ShardHealth`: heartbeat latency, ready, socket closed, gateway rate limited, guild count), in the Redis hash `fm01:shards:health`. Written by `HealthReporter` in `core/clustering/health.py`, in standalone mode too. The bot never decides a status; the API does.
+
+**Shard status**: what the status page says about a shard, decided by the API from its shard health (`app/status/rules.py`). `unresponsive`: no report for over 30 seconds, a closed socket, or heartbeat latency of 10 seconds or more. `lagging`: latency of 1 second or more, not ready, or gateway rate limited. `operational` otherwise.
+
+**Cluster status**: what the status page says about a status block, and (over every shard) about the whole bot. `unresponsive` if every shard is unresponsive or more than half are lagging or unresponsive; else `partially_unresponsive` if any shard is unresponsive; else `partially_operational` if any is lagging; else `operational`.
+
+**Status block**: a fixed group of `SHARDS_PER_CLUSTER` consecutive shards: block `n` holds shards `n * size` up to `(n + 1) * size - 1`. The status page's "clusters" are status blocks, not processes, so history stays comparable across restarts. A clustered bot process leases one whole free block (`RedisShardCoordinator`); `SHARD_IDS` overrides that. A standalone bot is one block of every shard.
+
 **Snowflake**: a Discord ID. Always a string on the wire (JavaScript numbers lose precision on them), an integer inside Python.
 
 ## Decisions
@@ -59,3 +69,5 @@ The words this repository (bot, API, website and dashboard) uses for its own con
 **Message visibility is configured per message, not in code.** Whether a response is ephemeral (and whether it deletes itself) comes from its localization key, which the dashboard will make editable per message. Commands don't hard-code `ephemeral`, and the bot doesn't defer slash commands automatically (a deferred response's visibility can't be changed afterwards). Commands that can take longer than Discord's 3-second window (rank card, snapshots, `voice play`, `info ip`, `info template`) call `ctx.defer()` themselves, so their replies are public. Revisit deferring when the dashboard work starts.
 
 **The API owns the database.** The API (`services/api/`) is meant to be the only service that connects to Postgres; the bot reaches its data through the Internal API, and the migrations service belongs to the API. Domains move one at a time (first: the Ledger, prefix and locale override); until a domain moves, the bot keeps querying its tables directly. Internal API operations mirror domain operations, not SQL, so invariants such as the Ledger's row-locked transactions stay in one transaction inside the API instead of becoming separate calls from the bot.
+
+**Status history is one row per change.** The API's status sampler (`StatusStore.run_sampler`) reads shard health every 30 seconds and writes to `shard_status_changes` only when a shard's status changes; `status_sampler_runs` records when it was sampling, so time the API was down shows as `no_data` instead of being guessed. History is kept for 90 days. Rows per sample were rejected (about 16 million rows per 90 days at 64 shards) because changes give exact uptime anyway. Only one API process may run the sampler (`status_sampler`), since it keeps the last recorded statuses in memory. Uptime checks from outside the host (a hosted monitor on `/public/status`) are left to an external service: a status page on the same host goes down with it.

@@ -15,6 +15,7 @@ from core.clustering import (
 	RedisShardCoordinator,
 	StandaloneCoordinator,
 )
+from core.clustering.coordinator import CLAIM_BLOCK_LUA
 from core.clustering.message_buffer import serialize_message
 
 
@@ -160,7 +161,6 @@ async def test_standalone_coordinator():
 	coordinator = StandaloneCoordinator()
 	assert await coordinator.acquire_shards(64, 16) is None
 	await coordinator.start_heartbeat()
-	await coordinator.update_health(0, 0.05, 100, "ready")
 	await coordinator.release_shards()
 	await coordinator.close()
 
@@ -186,12 +186,21 @@ class _FakeLeaseRedis:
 	async def expire(self, key: str, ttl: int) -> bool:
 		return key in self.data
 
+	async def eval(self, script: str, numkeys: int, *args):
+		assert script == CLAIM_BLOCK_LUA
+		keys, (owner, _ttl) = list(args[:numkeys]), args[numkeys:]
+		if any(self.data.get(key, owner) != owner for key in keys):
+			return 0
+		for key in keys:
+			self.data[key] = owner
+		return 1
+
 
 @pytest.mark.asyncio
 async def test_redis_coordinator_reports_unclaimed_shards(caplog):
 	redis = _FakeLeaseRedis()
 	first = RedisShardCoordinator(cast(aioredis.Redis, redis), cluster_id="cluster-a")
-	assert await first.acquire_shards(2, 1) == [0]
+	assert await first.acquire_shards(2, 1) == [0]  # block 0
 	assert await first.unclaimed_shards() == [1]
 
 	with caplog.at_level("WARNING", logger="core.clustering.coordinator"):
@@ -202,6 +211,23 @@ async def test_redis_coordinator_reports_unclaimed_shards(caplog):
 	second = RedisShardCoordinator(cast(aioredis.Redis, redis), cluster_id="cluster-b")
 	assert await second.acquire_shards(2, 1) == [1]
 	assert await first.unclaimed_shards() == []
+
+
+@pytest.mark.asyncio
+async def test_redis_coordinator_claims_whole_blocks():
+	redis = _FakeLeaseRedis()
+	redis.data["fm01:shard:lease:1"] = b"cluster-z"  # a stray lease inside block 0
+	first = RedisShardCoordinator(cast(aioredis.Redis, redis), cluster_id="cluster-a")
+	assert await first.acquire_shards(5, 2) == [2, 3]
+	second = RedisShardCoordinator(cast(aioredis.Redis, redis), cluster_id="cluster-b")
+	assert await second.acquire_shards(5, 2) == [4]  # the last block is smaller
+	third = RedisShardCoordinator(cast(aioredis.Redis, redis), cluster_id="cluster-c")
+	with pytest.raises(RuntimeError, match="no free shards"):
+		await third.acquire_shards(5, 2)
+	assert "fm01:shard:lease:0" not in redis.data  # a block is claimed whole or not at all
+
+	restarted = RedisShardCoordinator(cast(aioredis.Redis, redis), cluster_id="cluster-a")
+	assert await restarted.acquire_shards(5, 2) == [2, 3]  # its own leases count as free
 
 
 class _FakePubSub:

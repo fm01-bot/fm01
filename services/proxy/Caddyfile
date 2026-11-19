@@ -1,3 +1,13 @@
 preview.fm01.bot {
     reverse_proxy website:3007
 }
+
+# The Public API only: the Internal and Dashboard APIs stay on the Compose network.
+api.fm01.bot {
+    handle /public/* {
+        reverse_proxy api:8000
+    }
+    handle {
+        respond 404
+    }
+}

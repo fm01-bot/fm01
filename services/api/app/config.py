@@ -54,6 +54,8 @@ class Settings:
 		discord_api_url: Discord REST base URL.
 		session_ttl: How long a dashboard session lasts.
 		permission_ttl: How long a guild manager check is cached.
+		status_sampler: Whether this process records status history. Only one API process may.
+		status_sample_interval: How often status history is sampled.
 	"""
 
 	database_url: str
@@ -66,6 +68,8 @@ class Settings:
 	discord_api_url: str = "https://discord.com/api/v10"
 	session_ttl: timedelta = field(default=timedelta(days=30))
 	permission_ttl: timedelta = field(default=timedelta(seconds=60))
+	status_sampler: bool = True
+	status_sample_interval: timedelta = field(default=timedelta(seconds=30))
 
 	@property
 	def dashboard_enabled(self) -> bool:

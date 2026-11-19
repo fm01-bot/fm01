@@ -472,6 +472,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/public/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Status
+         * @description Get the bot's current status: overall, per status block, and per shard.
+         *
+         *     Updated at most every 10 seconds. Limited to 60 requests per minute per IP.
+         */
+        get: operations["status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/status/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Status History
+         * @description Get the bot's daily status history, overall, per status block and per shard. Days are UTC; today is partial.
+         *
+         *     Updated at most every 5 minutes. Limited to 10 requests per minute per IP.
+         */
+        get: operations["status_history"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -568,6 +612,58 @@ export interface components {
             message_id?: string | null;
         };
         /**
+         * ClusterDay
+         * @description One UTC day of a status block's (or the whole bot's) history. Fractions sum to 1.
+         */
+        ClusterDay: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** No Data */
+            no_data: number;
+            /** Operational */
+            operational: number;
+            /** Partially Operational */
+            partially_operational: number;
+            /** Partially Unresponsive */
+            partially_unresponsive: number;
+            /** Unresponsive */
+            unresponsive: number;
+            /** Worst */
+            worst: components["schemas"]["ClusterStatus"] | "no_data";
+        };
+        /**
+         * ClusterHistory
+         * @description A status block's daily history, oldest day first.
+         */
+        ClusterHistory: {
+            /** Days */
+            days: components["schemas"]["ClusterDay"][];
+            /** Id */
+            id: number;
+            /** Shards */
+            shards: components["schemas"]["ShardHistory"][];
+        };
+        /**
+         * ClusterState
+         * @description A status block on the status page.
+         */
+        ClusterState: {
+            /** Id */
+            id: number;
+            /** Shards */
+            shards: components["schemas"]["ShardState"][];
+            status: components["schemas"]["ClusterStatus"];
+        };
+        /**
+         * ClusterStatus
+         * @description How a status block of shards, or the whole bot, is doing.
+         * @enum {string}
+         */
+        ClusterStatus: "operational" | "partially_operational" | "partially_unresponsive" | "unresponsive";
+        /**
          * DashboardUser
          * @description A signed-in user's Discord profile.
          */
@@ -598,7 +694,7 @@ export interface components {
          * @description Why a request failed. Clients branch on this, never on the message.
          * @enum {string}
          */
-        ErrorCode: "invalid_request" | "unauthorized" | "forbidden" | "not_found" | "insufficient_funds" | "same_account" | "invalid_channel" | "discord_unavailable";
+        ErrorCode: "invalid_request" | "unauthorized" | "forbidden" | "not_found" | "insufficient_funds" | "same_account" | "invalid_channel" | "rate_limited" | "discord_unavailable";
         /**
          * GuildBearTrap
          * @description A guild's bear trap state, with the guild's ID.
@@ -774,6 +870,80 @@ export interface components {
             /** Token */
             token: string;
             user: components["schemas"]["DashboardUser"];
+        };
+        /**
+         * ShardDay
+         * @description One UTC day of a shard's history. Fractions cover the day, or its elapsed part for today, and sum to 1.
+         */
+        ShardDay: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Lagging */
+            lagging: number;
+            /** No Data */
+            no_data: number;
+            /** Operational */
+            operational: number;
+            /** Unresponsive */
+            unresponsive: number;
+            /** Worst */
+            worst: components["schemas"]["ShardStatus"] | "no_data";
+        };
+        /**
+         * ShardHistory
+         * @description A shard's daily history, oldest day first.
+         */
+        ShardHistory: {
+            /** Days */
+            days: components["schemas"]["ShardDay"][];
+            /** Id */
+            id: number;
+        };
+        /**
+         * ShardState
+         * @description A shard on the status page.
+         */
+        ShardState: {
+            /** Guild Count */
+            guild_count: number | null;
+            /** Id */
+            id: number;
+            /** Latency Ms */
+            latency_ms: number | null;
+            status: components["schemas"]["ShardStatus"];
+        };
+        /**
+         * ShardStatus
+         * @description How a shard is doing.
+         * @enum {string}
+         */
+        ShardStatus: "operational" | "lagging" | "unresponsive";
+        /**
+         * Status
+         * @description The bot's current status.
+         */
+        Status: {
+            /**
+             * Checked At
+             * Format: date-time
+             */
+            checked_at: string;
+            /** Clusters */
+            clusters: components["schemas"]["ClusterState"][];
+            status: components["schemas"]["ClusterStatus"];
+        };
+        /**
+         * StatusHistory
+         * @description The bot's daily history, oldest day first. Blocks are today's layout.
+         */
+        StatusHistory: {
+            /** Clusters */
+            clusters: components["schemas"]["ClusterHistory"][];
+            /** Overall */
+            overall: components["schemas"]["ClusterDay"][];
         };
         /**
          * TransferRequest
@@ -1948,6 +2118,84 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GuildPrefix"][];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Status"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    status_history: {
+        parameters: {
+            query?: {
+                days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatusHistory"];
                 };
             };
             /** @description The request failed. `code` says why. */

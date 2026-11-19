@@ -28,6 +28,7 @@ from core.api import ApiClient, ApiUnavailable
 from core.clustering import (
 	ClusterConfig,
 	EventBus,
+	HealthReporter,
 	InMemoryMessageBuffer,
 	InMemoryStateStore,
 	MessageBuffer,
@@ -40,6 +41,7 @@ from core.clustering import (
 	StateStore,
 	configure_gateway_proxy,
 	fetch_proxy_shard_count,
+	shard_health,
 )
 from core.config import Config
 from core.hybrid import FullAliasCommand, full_alias_commands
@@ -129,6 +131,10 @@ class Bot(commands.AutoShardedBot):
 		self.message_logging_guilds: set[int] = set()
 		"""Guilds whose messages are buffered for deletion/edit logging; maintained by the log setting."""
 		self._health_task: asyncio.Task | None = None
+		# Standalone bots report health too: the status page shows them as one block of every shard.
+		self.health = HealthReporter.from_url(self.cluster_config.redis_url)
+		self._ready_shards: set[int] = set()
+		"""Shards that received READY (or resumed) and haven't disconnected since."""
 		origin = uuid.uuid4().hex
 		self.api = ApiClient(os.getenv("API_URL", "http://localhost:8000"), os.getenv("API_INTERNAL_TOKEN", ""), origin)
 		self.settings = GuildSettings(lambda: self.db, self.event_bus, origin)
@@ -234,6 +240,9 @@ class Bot(commands.AutoShardedBot):
 			self._connection.shard_ids: list[int] = self.shard_ids  # type: ignore
 			await self.coordinator.start_heartbeat()
 
+		# Reports start before the shards connect, so a shard that never gets ready still shows up (as lagging).
+		self._health_task = asyncio.create_task(self._health_reporting_loop())
+
 		await self.load_cogs()
 		await self.settings.preload()
 		await self.tree.set_translator(SlashCommandLocalizer())
@@ -310,16 +319,40 @@ class Bot(commands.AutoShardedBot):
 			return
 		await super().before_identify_hook(shard_id, initial=initial)
 
+	async def on_shard_ready(self, shard_id: int) -> None:
+		self._ready_shards.add(shard_id)
+
+	async def on_shard_resumed(self, shard_id: int) -> None:
+		self._ready_shards.add(shard_id)
+
+	async def on_shard_disconnect(self, shard_id: int) -> None:
+		self._ready_shards.discard(shard_id)
+
 	async def _health_reporting_loop(self) -> None:
+		"""Report every shard's health to Redis every 10 seconds, for the API's status page."""
 		while not self.is_closed():
 			try:
 				await asyncio.sleep(10)
-				for shard_id, shard in self.shards.items():
-					ws = getattr(shard, "ws", None)
-					latency = getattr(ws, "latency", -1.0) if ws else -1.0
-					guild_count = sum(1 for g in self.guilds if g.shard_id == shard_id)
-					status = "ready" if self.is_ready() else "connecting"
-					await self.coordinator.update_health(shard_id, latency, guild_count, status)
+				if not self.shard_count:
+					continue
+				per_cluster = (
+					self.cluster_config.shards_per_cluster if self.cluster_config.is_clustered else self.shard_count
+				)
+				guild_counts: dict[int, int] = {}
+				for guild in self.guilds:
+					guild_counts[guild.shard_id] = guild_counts.get(guild.shard_id, 0) + 1
+				now = datetime.datetime.now(datetime.UTC)
+				reports = [
+					shard_health(
+						shard,
+						self.cluster_config.cluster_id,
+						guild_counts.get(shard.id, 0),
+						shard.id in self._ready_shards,
+						now,
+					)
+					for shard in self.shards.values()
+				]
+				await self.health.report(self.shard_count, per_cluster, reports)
 			except asyncio.CancelledError:
 				break
 			except (discord.DiscordException, OSError) as e:
@@ -334,6 +367,7 @@ class Bot(commands.AutoShardedBot):
 
 		await self.coordinator.release_shards()
 		await self.coordinator.close()
+		await self.health.close()
 		await self.message_buffer.close()
 		await self.event_bus.close()
 		await self.state_store.close()
@@ -397,8 +431,6 @@ class Bot(commands.AutoShardedBot):
 		self.logger.info(f"Servers: {len(self.guilds)}, Commands: {len(self.commands)}, Shards: {self.shard_count}")
 		self.logger.info(f"Loaded cogs: {', '.join([cog for cog in self.cogs])}")
 		self.logger.debug(f"discord-localization v{localization.__version__}")
-		if self.cluster_config.is_clustered and (self._health_task is None or self._health_task.done()):
-			self._health_task = asyncio.create_task(self._health_reporting_loop())
 
 	async def handle_error(self, ctx: Context, error: commands.CommandError | app_commands.AppCommandError):
 		command = None

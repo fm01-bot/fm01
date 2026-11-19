@@ -20,7 +20,9 @@ from app.dashboard.sessions import SessionStore
 from app.db import create_pool
 from app.economy.store import Ledger
 from app.events import Announcer
+from app.ratelimit import RateLimiter
 from app.settings.store import GuildSettingsStore
+from app.status.store import StatusStore
 
 __all__ = ("AppState", "build_state", "get_state")
 
@@ -37,6 +39,8 @@ class AppState:
 		discord: The Discord client.
 		sessions: The dashboard session store.
 		access: The guild manager checks.
+		status: The status store.
+		rate_limiter: Per-IP limits for the Public API.
 	"""
 
 	config: Settings
@@ -46,6 +50,8 @@ class AppState:
 	discord: DiscordClient
 	sessions: SessionStore
 	access: GuildAccess
+	status: StatusStore
+	rate_limiter: RateLimiter
 
 
 @asynccontextmanager
@@ -99,6 +105,8 @@ def assemble(config: Settings, pool: asyncpg.Pool, redis: aioredis.Redis, http: 
 		discord=discord,
 		sessions=sessions,
 		access=GuildAccess(discord, sessions, redis, config.permission_ttl),
+		status=StatusStore(pool, redis, config.status_sample_interval),
+		rate_limiter=RateLimiter(redis),
 	)
 
 

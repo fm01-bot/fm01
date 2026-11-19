@@ -22,6 +22,8 @@ class ErrorCode(StrEnum):
 	"""A Ledger transfer from a member to themselves."""
 	INVALID_CHANNEL = "invalid_channel"
 	"""The channel doesn't exist in the guild or isn't the kind of channel the setting needs."""
+	RATE_LIMITED = "rate_limited"
+	"""Too many requests from the caller's IP. ``Retry-After`` says when to try again."""
 	DISCORD_UNAVAILABLE = "discord_unavailable"
 	"""Discord's API failed or rate limited a request the API made on the caller's behalf."""
 

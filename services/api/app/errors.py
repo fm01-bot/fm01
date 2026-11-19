@@ -18,6 +18,7 @@ _STATUS: dict[ErrorCode, int] = {
 	ErrorCode.INSUFFICIENT_FUNDS: 409,
 	ErrorCode.SAME_ACCOUNT: 422,
 	ErrorCode.INVALID_CHANNEL: 422,
+	ErrorCode.RATE_LIMITED: 429,
 	ErrorCode.DISCORD_UNAVAILABLE: 502,
 }
 
@@ -34,12 +35,14 @@ class ApiError(Exception):
 	Args:
 		code: Why the request failed. Decides the HTTP status.
 		message: A human-readable detail. Defaults to the code in words.
+		headers: Extra response headers, e.g. ``Retry-After``.
 	"""
 
-	def __init__(self, code: ErrorCode, message: str | None = None) -> None:
+	def __init__(self, code: ErrorCode, message: str | None = None, headers: dict[str, str] | None = None) -> None:
 		super().__init__(message or code.value)
 		self.code = code
 		self.message = message or code.value.replace("_", " ")
+		self.headers = headers or {}
 
 	@property
 	def status(self) -> int:
@@ -77,10 +80,10 @@ def install_error_handlers(app: FastAPI) -> None:
 			exc: The error.
 
 		Returns:
-			The error response, with ``WWW-Authenticate`` for ``unauthorized``.
+			The error response, with ``WWW-Authenticate`` for ``unauthorized`` and the error's own headers.
 		"""
-		headers = {"WWW-Authenticate": "Bearer"} if exc.code is ErrorCode.UNAUTHORIZED else None
-		return _body(exc.code, exc.message, exc.status, headers)
+		headers = {"WWW-Authenticate": "Bearer"} if exc.code is ErrorCode.UNAUTHORIZED else {}
+		return _body(exc.code, exc.message, exc.status, headers | exc.headers or None)
 
 	@app.exception_handler(RequestValidationError)
 	async def _validation_error(_: Request, exc: RequestValidationError) -> JSONResponse:
