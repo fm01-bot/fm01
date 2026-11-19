@@ -93,7 +93,9 @@ class GuildSetting[T]:
 	async def set(self, guild_id: int, value: T) -> None:
 		"""Persist the guild's value and tell the other instances to reload it."""
 		if self._save is None:
-			raise TypeError(f"Guild setting {self.key!r} is written with targeted SQL; call changed() after writing")
+			raise TypeError(
+				f"Guild setting {self.key!r} has no single value to save; write it through its own operations"
+			)
 		await self._save(guild_id, value)
 		self._store(guild_id, value)
 		if self._announces:
@@ -199,7 +201,7 @@ class GuildSettings:
 		self,
 		key: str,
 		load: RemoteLoader[T],
-		save: RemoteSaver[T],
+		save: RemoteSaver[T] | None,
 		*,
 		load_all: RemoteBulkLoader[T] | None = None,
 		on_change: ChangeHook[T] | None = None,
@@ -209,7 +211,8 @@ class GuildSettings:
 		Args:
 			key: Unique name. Must match the key the API announces (constants in the ``api`` package).
 			load: Reads one guild's value through the API client.
-			save: Writes one guild's value through the API client.
+			save: Writes one guild's value through the API client. ``None`` for settings changed through their own
+				API operations (such as starboards, one board at a time); callers `remember` what the API returns.
 			load_all: Reads every guild's value. Makes the setting preloaded.
 			on_change: Called when a cached value changes or is dropped (see `GuildSetting`).
 

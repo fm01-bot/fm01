@@ -20,6 +20,7 @@ from app.dashboard import routes as dashboard_routes
 from app.economy import routes as economy_routes
 from app.errors import ERROR_RESPONSES, install_error_handlers
 from app.settings import routes as settings_routes
+from app.starboard import routes as starboard_routes
 from app.state import AppState, build_state
 from app.status import routes as status_routes
 
@@ -83,11 +84,13 @@ def create_app(config: Settings | None = None, state_factory: StateFactory = bui
 	internal.include_router(economy_routes.internal)
 	internal.include_router(settings_routes.internal)
 	internal.include_router(bear_trap_routes.internal)
+	internal.include_router(starboard_routes.internal)
 
 	dashboard = APIRouter(prefix="/dashboard")
 	dashboard.include_router(dashboard_routes.router)
 	dashboard.include_router(settings_routes.dashboard)
 	dashboard.include_router(bear_trap_routes.dashboard)
+	dashboard.include_router(starboard_routes.dashboard)
 
 	public = APIRouter(prefix="/public")
 	public.include_router(status_routes.public)

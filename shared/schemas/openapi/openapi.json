@@ -209,6 +209,25 @@
         "title": "BearTrapState",
         "type": "object"
       },
+      "ClearStars": {
+        "description": "Reactions removed from a message all at once. ``emoji: null`` means every emoji.",
+        "properties": {
+          "emoji": {
+            "anyOf": [
+              {
+                "pattern": "^(\\d{15,21}|[0-9#*]️?⃣|[^\\x00-\\x7F]{1,16})$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Emoji"
+          }
+        },
+        "title": "ClearStars",
+        "type": "object"
+      },
       "ClusterDay": {
         "description": "One UTC day of a status block's (or the whole bot's) history. Fractions sum to 1.",
         "properties": {
@@ -402,6 +421,10 @@
           "insufficient_funds",
           "same_account",
           "invalid_channel",
+          "invalid_emoji",
+          "starboard_limit",
+          "starboard_name_taken",
+          "starboard_tier_taken",
           "rate_limited",
           "discord_unavailable"
         ],
@@ -536,6 +559,32 @@
         "title": "GuildPrefix",
         "type": "object"
       },
+      "GuildStarboards": {
+        "description": "Every board of a guild.",
+        "properties": {
+          "boards": {
+            "items": {
+              "$ref": "#/components/schemas/Starboard"
+            },
+            "title": "Boards",
+            "type": "array"
+          },
+          "guild_id": {
+            "examples": [
+              "1234567890123456789"
+            ],
+            "pattern": "^[0-9]{1,20}$",
+            "title": "Guild Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "guild_id",
+          "boards"
+        ],
+        "title": "GuildStarboards",
+        "type": "object"
+      },
       "LeaderboardEntry": {
         "description": "One member on a guild's leaderboard.",
         "properties": {
@@ -615,6 +664,28 @@
           "name"
         ],
         "title": "ManagedGuild",
+        "type": "object"
+      },
+      "MessageIds": {
+        "description": "Messages that were deleted.",
+        "properties": {
+          "message_ids": {
+            "items": {
+              "examples": [
+                "1234567890123456789"
+              ],
+              "pattern": "^[0-9]{1,20}$",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Message Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "message_ids"
+        ],
+        "title": "MessageIds",
         "type": "object"
       },
       "MoveRequest": {
@@ -877,6 +948,496 @@
         ],
         "title": "ShardStatus",
         "type": "string"
+      },
+      "StarChange": {
+        "description": "A member added or removed a star. ``message_id`` may be the original or one of its posts.",
+        "properties": {
+          "emoji": {
+            "pattern": "^(\\d{15,21}|[0-9#*]️?⃣|[^\\x00-\\x7F]{1,16})$",
+            "title": "Emoji",
+            "type": "string"
+          },
+          "message_id": {
+            "examples": [
+              "1234567890123456789"
+            ],
+            "pattern": "^[0-9]{1,20}$",
+            "title": "Message Id",
+            "type": "string"
+          },
+          "starred": {
+            "title": "Starred",
+            "type": "boolean"
+          },
+          "user_id": {
+            "examples": [
+              "1234567890123456789"
+            ],
+            "pattern": "^[0-9]{1,20}$",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message_id",
+          "emoji",
+          "user_id",
+          "starred"
+        ],
+        "title": "StarChange",
+        "type": "object"
+      },
+      "StarResult": {
+        "description": "The outcome of a star change. ``message`` is ``None`` when the API has never seen the message: the bot then\nseeds it (an original) or ignores the change (a message in a board channel that isn't a post).",
+        "properties": {
+          "message": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StarredMessage"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "title": "StarResult",
+        "type": "object"
+      },
+      "StarSeed": {
+        "description": "Everyone who starred a message with an emoji, read from Discord the first time the API sees the message.",
+        "properties": {
+          "author_id": {
+            "examples": [
+              "1234567890123456789"
+            ],
+            "pattern": "^[0-9]{1,20}$",
+            "title": "Author Id",
+            "type": "string"
+          },
+          "channel_id": {
+            "examples": [
+              "1234567890123456789"
+            ],
+            "pattern": "^[0-9]{1,20}$",
+            "title": "Channel Id",
+            "type": "string"
+          },
+          "emoji": {
+            "pattern": "^(\\d{15,21}|[0-9#*]️?⃣|[^\\x00-\\x7F]{1,16})$",
+            "title": "Emoji",
+            "type": "string"
+          },
+          "message_id": {
+            "examples": [
+              "1234567890123456789"
+            ],
+            "pattern": "^[0-9]{1,20}$",
+            "title": "Message Id",
+            "type": "string"
+          },
+          "user_ids": {
+            "items": {
+              "examples": [
+                "1234567890123456789"
+              ],
+              "pattern": "^[0-9]{1,20}$",
+              "type": "string"
+            },
+            "maxItems": 10000,
+            "title": "User Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "message_id",
+          "channel_id",
+          "author_id",
+          "emoji",
+          "user_ids"
+        ],
+        "title": "StarSeed",
+        "type": "object"
+      },
+      "Starboard": {
+        "description": "A board.",
+        "properties": {
+          "channel_id": {
+            "examples": [
+              "1234567890123456789"
+            ],
+            "pattern": "^[0-9]{1,20}$",
+            "title": "Channel Id",
+            "type": "string"
+          },
+          "channel_ids": {
+            "default": [],
+            "items": {
+              "examples": [
+                "1234567890123456789"
+              ],
+              "pattern": "^[0-9]{1,20}$",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Channel Ids",
+            "type": "array"
+          },
+          "channel_mode": {
+            "default": "blocklist",
+            "enum": [
+              "blocklist",
+              "allowlist"
+            ],
+            "title": "Channel Mode",
+            "type": "string"
+          },
+          "emoji": {
+            "default": "⭐",
+            "pattern": "^(\\d{15,21}|[0-9#*]️?⃣|[^\\x00-\\x7F]{1,16})$",
+            "title": "Emoji",
+            "type": "string"
+          },
+          "enabled": {
+            "default": true,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "max_age_days": {
+            "anyOf": [
+              {
+                "maximum": 3650.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Age Days"
+          },
+          "name": {
+            "pattern": "^[a-z0-9_-]{1,32}$",
+            "title": "Name",
+            "type": "string"
+          },
+          "threshold": {
+            "default": 3,
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Threshold",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "channel_id",
+          "name"
+        ],
+        "title": "Starboard",
+        "type": "object"
+      },
+      "StarboardBlock": {
+        "description": "A message blocked from a board.",
+        "properties": {
+          "message_id": {
+            "examples": [
+              "1234567890123456789"
+            ],
+            "pattern": "^[0-9]{1,20}$",
+            "title": "Message Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message_id"
+        ],
+        "title": "StarboardBlock",
+        "type": "object"
+      },
+      "StarboardEntry": {
+        "description": "A message on one board: its post there, if any, and whether a moderator blocked it.",
+        "properties": {
+          "blocked": {
+            "default": false,
+            "title": "Blocked",
+            "type": "boolean"
+          },
+          "board": {
+            "pattern": "^[a-z0-9_-]{1,32}$",
+            "title": "Board",
+            "type": "string"
+          },
+          "message_id": {
+            "examples": [
+              "1234567890123456789"
+            ],
+            "pattern": "^[0-9]{1,20}$",
+            "title": "Message Id",
+            "type": "string"
+          },
+          "post_channel_id": {
+            "anyOf": [
+              {
+                "examples": [
+                  "1234567890123456789"
+                ],
+                "pattern": "^[0-9]{1,20}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Post Channel Id"
+          },
+          "post_id": {
+            "anyOf": [
+              {
+                "examples": [
+                  "1234567890123456789"
+                ],
+                "pattern": "^[0-9]{1,20}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Post Id"
+          }
+        },
+        "required": [
+          "board",
+          "message_id"
+        ],
+        "title": "StarboardEntry",
+        "type": "object"
+      },
+      "StarboardPost": {
+        "description": "The post the bot made for a message on a board. ``None`` fields record that it removed the post.",
+        "properties": {
+          "board": {
+            "pattern": "^[a-z0-9_-]{1,32}$",
+            "title": "Board",
+            "type": "string"
+          },
+          "message_id": {
+            "examples": [
+              "1234567890123456789"
+            ],
+            "pattern": "^[0-9]{1,20}$",
+            "title": "Message Id",
+            "type": "string"
+          },
+          "post_channel_id": {
+            "anyOf": [
+              {
+                "examples": [
+                  "1234567890123456789"
+                ],
+                "pattern": "^[0-9]{1,20}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Post Channel Id"
+          },
+          "post_id": {
+            "anyOf": [
+              {
+                "examples": [
+                  "1234567890123456789"
+                ],
+                "pattern": "^[0-9]{1,20}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Post Id"
+          }
+        },
+        "required": [
+          "board",
+          "message_id"
+        ],
+        "title": "StarboardPost",
+        "type": "object"
+      },
+      "StarboardUpdate": {
+        "description": "Changes to a board. Fields left out keep their value; ``max_age_days: null`` removes the limit.",
+        "properties": {
+          "channel_id": {
+            "anyOf": [
+              {
+                "examples": [
+                  "1234567890123456789"
+                ],
+                "pattern": "^[0-9]{1,20}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Channel Id"
+          },
+          "channel_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "examples": [
+                    "1234567890123456789"
+                  ],
+                  "pattern": "^[0-9]{1,20}$",
+                  "type": "string"
+                },
+                "maxItems": 100,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Channel Ids"
+          },
+          "channel_mode": {
+            "anyOf": [
+              {
+                "enum": [
+                  "blocklist",
+                  "allowlist"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Channel Mode"
+          },
+          "emoji": {
+            "anyOf": [
+              {
+                "pattern": "^(\\d{15,21}|[0-9#*]️?⃣|[^\\x00-\\x7F]{1,16})$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Emoji"
+          },
+          "enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enabled"
+          },
+          "max_age_days": {
+            "anyOf": [
+              {
+                "maximum": 3650.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Age Days"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "pattern": "^[a-z0-9_-]{1,32}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "threshold": {
+            "anyOf": [
+              {
+                "maximum": 100.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold"
+          }
+        },
+        "title": "StarboardUpdate",
+        "type": "object"
+      },
+      "StarredMessage": {
+        "description": "A message's stars with one emoji, and its entries on the boards that use the emoji.",
+        "properties": {
+          "author_id": {
+            "examples": [
+              "1234567890123456789"
+            ],
+            "pattern": "^[0-9]{1,20}$",
+            "title": "Author Id",
+            "type": "string"
+          },
+          "channel_id": {
+            "examples": [
+              "1234567890123456789"
+            ],
+            "pattern": "^[0-9]{1,20}$",
+            "title": "Channel Id",
+            "type": "string"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "emoji": {
+            "pattern": "^(\\d{15,21}|[0-9#*]️?⃣|[^\\x00-\\x7F]{1,16})$",
+            "title": "Emoji",
+            "type": "string"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/StarboardEntry"
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "message_id": {
+            "examples": [
+              "1234567890123456789"
+            ],
+            "pattern": "^[0-9]{1,20}$",
+            "title": "Message Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message_id",
+          "channel_id",
+          "author_id",
+          "emoji",
+          "count",
+          "entries"
+        ],
+        "title": "StarredMessage",
+        "type": "object"
       },
       "Status": {
         "description": "The bot's current status.",
@@ -1523,6 +2084,447 @@
         "tags": [
           "dashboard",
           "settings"
+        ]
+      }
+    },
+    "/dashboard/guilds/{guild_id}/settings/starboards": {
+      "get": {
+        "description": "List a guild's boards.",
+        "operationId": "starboards",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "guild_id",
+            "required": true,
+            "schema": {
+              "examples": [
+                "1234567890123456789"
+              ],
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Guild Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Starboard"
+                  },
+                  "title": "Response Starboards",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The request failed. `code` says why."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The API or Discord failed."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Starboards",
+        "tags": [
+          "dashboard",
+          "starboard"
+        ]
+      },
+      "post": {
+        "description": "Add a board. A guild can have at most 5.",
+        "operationId": "create_starboard",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "guild_id",
+            "required": true,
+            "schema": {
+              "examples": [
+                "1234567890123456789"
+              ],
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Guild Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Starboard"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Starboard"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The request failed. `code` says why."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The API or Discord failed."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Starboard",
+        "tags": [
+          "dashboard",
+          "starboard"
+        ]
+      }
+    },
+    "/dashboard/guilds/{guild_id}/settings/starboards/{name}": {
+      "delete": {
+        "description": "Remove a board with its entries and blocks. Its posts stay in the channel.",
+        "operationId": "delete_starboard",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z0-9_-]{1,32}$",
+              "title": "Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "guild_id",
+            "required": true,
+            "schema": {
+              "examples": [
+                "1234567890123456789"
+              ],
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Guild Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The request failed. `code` says why."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The API or Discord failed."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Starboard",
+        "tags": [
+          "dashboard",
+          "starboard"
+        ]
+      },
+      "patch": {
+        "description": "Change a board. Fields left out keep their value. Existing posts follow the change at their next star.",
+        "operationId": "update_starboard",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z0-9_-]{1,32}$",
+              "title": "Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "guild_id",
+            "required": true,
+            "schema": {
+              "examples": [
+                "1234567890123456789"
+              ],
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Guild Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StarboardUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Starboard"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The request failed. `code` says why."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The API or Discord failed."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Starboard",
+        "tags": [
+          "dashboard",
+          "starboard"
+        ]
+      }
+    },
+    "/dashboard/guilds/{guild_id}/settings/starboards/{name}/blocks": {
+      "get": {
+        "description": "List the messages blocked from a board: those whose post someone deleted.",
+        "operationId": "starboard_blocks",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z0-9_-]{1,32}$",
+              "title": "Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "guild_id",
+            "required": true,
+            "schema": {
+              "examples": [
+                "1234567890123456789"
+              ],
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Guild Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StarboardBlock"
+                  },
+                  "title": "Response Starboard Blocks",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The request failed. `code` says why."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The API or Discord failed."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Starboard Blocks",
+        "tags": [
+          "dashboard",
+          "starboard"
+        ]
+      }
+    },
+    "/dashboard/guilds/{guild_id}/settings/starboards/{name}/blocks/{message_id}": {
+      "delete": {
+        "description": "Let a blocked message be posted on the board again, at its next star.",
+        "operationId": "unblock_starboard_message",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z0-9_-]{1,32}$",
+              "title": "Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "message_id",
+            "required": true,
+            "schema": {
+              "examples": [
+                "1234567890123456789"
+              ],
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Message Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "guild_id",
+            "required": true,
+            "schema": {
+              "examples": [
+                "1234567890123456789"
+              ],
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Guild Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The request failed. `code` says why."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The API or Discord failed."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Unblock Starboard Message",
+        "tags": [
+          "dashboard",
+          "starboard"
         ]
       }
     },
@@ -2688,6 +3690,808 @@
         ]
       }
     },
+    "/internal/guilds/{guild_id}/settings/starboards": {
+      "get": {
+        "description": "List a guild's boards.",
+        "operationId": "internal_starboards",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "guild_id",
+            "required": true,
+            "schema": {
+              "examples": [
+                "1234567890123456789"
+              ],
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Guild Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Starboard"
+                  },
+                  "title": "Response Internal Starboards",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The request failed. `code` says why."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The API or Discord failed."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Internal Starboards",
+        "tags": [
+          "internal",
+          "starboard"
+        ]
+      },
+      "post": {
+        "description": "Add a board to a guild.",
+        "operationId": "internal_create_starboard",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "guild_id",
+            "required": true,
+            "schema": {
+              "examples": [
+                "1234567890123456789"
+              ],
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Guild Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The calling bot instance's ID. Change events from this request carry it, so that instance ignores them.",
+            "in": "header",
+            "name": "X-Fm01-Origin",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The calling bot instance's ID. Change events from this request carry it, so that instance ignores them.",
+              "title": "X-Fm01-Origin"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Starboard"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Starboard"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The request failed. `code` says why."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The API or Discord failed."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Internal Create Starboard",
+        "tags": [
+          "internal",
+          "starboard"
+        ]
+      }
+    },
+    "/internal/guilds/{guild_id}/settings/starboards/{name}": {
+      "delete": {
+        "description": "Remove a board with its entries and blocks. Its posts stay in the channel.",
+        "operationId": "internal_delete_starboard",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "guild_id",
+            "required": true,
+            "schema": {
+              "examples": [
+                "1234567890123456789"
+              ],
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Guild Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z0-9_-]{1,32}$",
+              "title": "Name",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The calling bot instance's ID. Change events from this request carry it, so that instance ignores them.",
+            "in": "header",
+            "name": "X-Fm01-Origin",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The calling bot instance's ID. Change events from this request carry it, so that instance ignores them.",
+              "title": "X-Fm01-Origin"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The request failed. `code` says why."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The API or Discord failed."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Internal Delete Starboard",
+        "tags": [
+          "internal",
+          "starboard"
+        ]
+      },
+      "patch": {
+        "description": "Change a board. Fields left out keep their value.",
+        "operationId": "internal_update_starboard",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "guild_id",
+            "required": true,
+            "schema": {
+              "examples": [
+                "1234567890123456789"
+              ],
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Guild Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z0-9_-]{1,32}$",
+              "title": "Name",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The calling bot instance's ID. Change events from this request carry it, so that instance ignores them.",
+            "in": "header",
+            "name": "X-Fm01-Origin",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The calling bot instance's ID. Change events from this request carry it, so that instance ignores them.",
+              "title": "X-Fm01-Origin"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StarboardUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Starboard"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The request failed. `code` says why."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The API or Discord failed."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Internal Update Starboard",
+        "tags": [
+          "internal",
+          "starboard"
+        ]
+      }
+    },
+    "/internal/guilds/{guild_id}/starboard/messages/deleted": {
+      "post": {
+        "description": "Forget deleted originals with their stars and entries.",
+        "operationId": "internal_starred_messages_deleted",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "guild_id",
+            "required": true,
+            "schema": {
+              "examples": [
+                "1234567890123456789"
+              ],
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Guild Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageIds"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StarboardEntry"
+                  },
+                  "title": "Response Internal Starred Messages Deleted",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The request failed. `code` says why."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The API or Discord failed."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Internal Starred Messages Deleted",
+        "tags": [
+          "internal",
+          "starboard"
+        ]
+      }
+    },
+    "/internal/guilds/{guild_id}/starboard/messages/{message_id}/clear": {
+      "post": {
+        "description": "Forget a message's stars after its reactions were cleared, and take down its posts.",
+        "operationId": "internal_clear_stars",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "guild_id",
+            "required": true,
+            "schema": {
+              "examples": [
+                "1234567890123456789"
+              ],
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Guild Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "message_id",
+            "required": true,
+            "schema": {
+              "examples": [
+                "1234567890123456789"
+              ],
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Message Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClearStars"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StarboardEntry"
+                  },
+                  "title": "Response Internal Clear Stars",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The request failed. `code` says why."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The API or Discord failed."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Internal Clear Stars",
+        "tags": [
+          "internal",
+          "starboard"
+        ]
+      }
+    },
+    "/internal/guilds/{guild_id}/starboard/posts": {
+      "put": {
+        "description": "Record the post the bot made for a message on a board. `null` fields record that it removed the post.",
+        "operationId": "internal_set_starboard_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "guild_id",
+            "required": true,
+            "schema": {
+              "examples": [
+                "1234567890123456789"
+              ],
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Guild Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StarboardPost"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StarboardEntry"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The request failed. `code` says why."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The API or Discord failed."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Internal Set Starboard Post",
+        "tags": [
+          "internal",
+          "starboard"
+        ]
+      }
+    },
+    "/internal/guilds/{guild_id}/starboard/posts/deleted": {
+      "post": {
+        "description": "Block the messages whose posts were deleted by someone other than the bot.",
+        "operationId": "internal_starboard_posts_deleted",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "guild_id",
+            "required": true,
+            "schema": {
+              "examples": [
+                "1234567890123456789"
+              ],
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Guild Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageIds"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StarboardEntry"
+                  },
+                  "title": "Response Internal Starboard Posts Deleted",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The request failed. `code` says why."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The API or Discord failed."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Internal Starboard Posts Deleted",
+        "tags": [
+          "internal",
+          "starboard"
+        ]
+      }
+    },
+    "/internal/guilds/{guild_id}/starboard/seeds": {
+      "post": {
+        "description": "Record everyone who starred a message with an emoji, as read from Discord.",
+        "operationId": "internal_seed_stars",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "guild_id",
+            "required": true,
+            "schema": {
+              "examples": [
+                "1234567890123456789"
+              ],
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Guild Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StarSeed"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StarredMessage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The request failed. `code` says why."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The API or Discord failed."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Internal Seed Stars",
+        "tags": [
+          "internal",
+          "starboard"
+        ]
+      }
+    },
+    "/internal/guilds/{guild_id}/starboard/stars": {
+      "post": {
+        "description": "Add or remove one member's star on a message, or on one of its posts.\n\n`message` is `null` if the API has never seen the message. The bot then seeds it, or ignores the star if it was\non a message in a board channel that isn't a post.",
+        "operationId": "internal_star",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "guild_id",
+            "required": true,
+            "schema": {
+              "examples": [
+                "1234567890123456789"
+              ],
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Guild Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StarChange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StarResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The request failed. `code` says why."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The API or Discord failed."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Internal Star",
+        "tags": [
+          "internal",
+          "starboard"
+        ]
+      }
+    },
     "/internal/settings/bear-trap": {
       "get": {
         "description": "List every guild whose trap is on or still has a message posted.",
@@ -2841,6 +4645,58 @@
         "tags": [
           "internal",
           "settings"
+        ]
+      }
+    },
+    "/internal/settings/starboards": {
+      "get": {
+        "description": "List the boards of every guild that has any.",
+        "operationId": "all_starboards",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/GuildStarboards"
+                  },
+                  "title": "Response All Starboards",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The request failed. `code` says why."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The API or Discord failed."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "All Starboards",
+        "tags": [
+          "internal",
+          "starboard"
         ]
       }
     },

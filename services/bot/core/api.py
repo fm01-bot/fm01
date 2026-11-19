@@ -18,16 +18,27 @@ from api import (
 	BearTrapKicks,
 	BearTrapMessage,
 	BearTrapState,
+	ClearStars,
 	ErrorBody,
 	ErrorCode,
 	GuildBearTrap,
 	GuildLocale,
 	GuildPrefix,
+	GuildStarboards,
 	LeaderboardEntry,
 	LocaleOverride,
+	MessageIds,
 	MoveRequest,
 	Prefix,
 	RemoveMoneyRequest,
+	Starboard,
+	StarboardEntry,
+	StarboardPost,
+	StarboardUpdate,
+	StarChange,
+	StarredMessage,
+	StarResult,
+	StarSeed,
 	TransferRequest,
 	Wallet,
 )
@@ -40,6 +51,7 @@ __all__ = (
 	"EconomyApi",
 	"InsufficientFunds",
 	"SettingsApi",
+	"StarboardApi",
 )
 
 logger = logging.getLogger(__name__)
@@ -90,6 +102,7 @@ class ApiClient:
 		self.economy = EconomyApi(self)
 		self.settings = SettingsApi(self)
 		self.bear_trap = BearTrapApi(self)
+		self.starboard = StarboardApi(self)
 
 	async def close(self) -> None:
 		"""Close the HTTP session. The next request opens a new one."""
@@ -123,13 +136,16 @@ class ApiClient:
 		except ValidationError as exc:
 			raise ApiUnavailable(f"{method} {path}: unexpected response") from exc
 
-	async def send(self, method: str, path: str, *, body: BaseModel | None = None, **params: Any) -> bytes:
+	async def send(
+		self, method: str, path: str, *, body: BaseModel | None = None, exclude_unset: bool = False, **params: Any
+	) -> bytes:
 		"""Send one request without parsing the response.
 
 		Args:
 			method: The HTTP method.
 			path: The path under ``/internal``.
 			body: The JSON body, if any.
+			exclude_unset: Leave fields out of ``body`` that weren't set, for partial updates (``PATCH``).
 			**params: Query parameters.
 
 		Returns:
@@ -143,7 +159,7 @@ class ApiClient:
 		"""
 		if self._session is None or self._session.closed:
 			self._session = aiohttp.ClientSession(headers=self._headers, timeout=self._timeout)
-		payload = body.model_dump(mode="json") if body is not None else None
+		payload = body.model_dump(mode="json", exclude_unset=exclude_unset) if body is not None else None
 		try:
 			async with self._session.request(method, self._base + path, json=payload, params=params or None) as resp:
 				data = await resp.read()
@@ -432,3 +448,171 @@ class BearTrapApi:
 			The new count.
 		"""
 		return (await self._client.request("POST", f"/guilds/{guild_id}/settings/bear-trap/kicks", BearTrapKicks)).kicks
+
+
+class StarboardApi:
+	"""Starboard operations: boards, stars and the bot's posts. Every method can also raise `ApiUnavailable`.
+
+	Args:
+		client: The API client.
+	"""
+
+	def __init__(self, client: ApiClient) -> None:
+		self._client = client
+
+	async def boards(self, guild_id: int) -> list[Starboard]:
+		"""List a guild's boards.
+
+		Args:
+			guild_id: The guild.
+
+		Returns:
+			The boards, by name.
+		"""
+		return await self._client.request("GET", f"/guilds/{guild_id}/settings/starboards", list[Starboard])
+
+	async def all(self) -> dict[int, list[Starboard]]:
+		"""List the boards of every guild that has any.
+
+		Returns:
+			The boards, by guild ID.
+		"""
+		entries = await self._client.request("GET", "/settings/starboards", list[GuildStarboards])
+		return {entry.guild_id: entry.boards for entry in entries}
+
+	async def create(self, guild_id: int, board: Starboard) -> Starboard:
+		"""Add a board to a guild.
+
+		Args:
+			guild_id: The guild.
+			board: The board.
+
+		Returns:
+			The stored board.
+
+		Raises:
+			ApiError: ``starboard_limit``, ``starboard_name_taken`` or ``starboard_tier_taken``.
+		"""
+		return await self._client.request("POST", f"/guilds/{guild_id}/settings/starboards", Starboard, body=board)
+
+	async def update(self, guild_id: int, name: str, changes: StarboardUpdate) -> Starboard:
+		"""Change a board. Fields not set on ``changes`` keep their value.
+
+		Args:
+			guild_id: The guild.
+			name: The board.
+			changes: The changes.
+
+		Returns:
+			The stored board.
+
+		Raises:
+			ApiError: ``not_found``, ``starboard_name_taken`` or ``starboard_tier_taken``.
+		"""
+		path = f"/guilds/{guild_id}/settings/starboards/{name}"
+		data = await self._client.send("PATCH", path, body=changes, exclude_unset=True)
+		return Starboard.model_validate_json(data)
+
+	async def delete(self, guild_id: int, name: str) -> None:
+		"""Remove a board with its entries and blocks.
+
+		Args:
+			guild_id: The guild.
+			name: The board.
+
+		Raises:
+			ApiError: ``not_found`` if the guild has no such board.
+		"""
+		await self._client.send("DELETE", f"/guilds/{guild_id}/settings/starboards/{name}")
+
+	async def star(
+		self, guild_id: int, message_id: int, emoji: str, user_id: int, starred: bool
+	) -> StarredMessage | None:
+		"""Add or remove one member's star on a message, or on one of its posts.
+
+		Args:
+			guild_id: The guild.
+			message_id: The message reacted to.
+			emoji: The board emoji.
+			user_id: The member.
+			starred: Whether the reaction was added.
+
+		Returns:
+			The original's stars and entries, or ``None`` if the API has never seen the message.
+		"""
+		body = StarChange(message_id=message_id, emoji=emoji, user_id=user_id, starred=starred)
+		return (
+			await self._client.request("POST", f"/guilds/{guild_id}/starboard/stars", StarResult, body=body)
+		).message
+
+	async def seed(self, guild_id: int, seed: StarSeed) -> StarredMessage:
+		"""Record everyone who starred a message with an emoji, as read from Discord.
+
+		Args:
+			guild_id: The guild.
+			seed: The message and its starrers.
+
+		Returns:
+			The message's stars and entries.
+		"""
+		return await self._client.request("POST", f"/guilds/{guild_id}/starboard/seeds", StarredMessage, body=seed)
+
+	async def set_post(self, guild_id: int, post: StarboardPost) -> StarboardEntry:
+		"""Record the post the bot made for a message on a board, or that it removed it.
+
+		Args:
+			guild_id: The guild.
+			post: The post. ``None`` fields record that there is none.
+
+		Returns:
+			The message's entry on the board.
+		"""
+		return await self._client.request("PUT", f"/guilds/{guild_id}/starboard/posts", StarboardEntry, body=post)
+
+	async def posts_deleted(self, guild_id: int, post_ids: list[int]) -> list[StarboardEntry]:
+		"""Block the messages whose posts someone other than the bot deleted.
+
+		Args:
+			guild_id: The guild.
+			post_ids: Messages deleted in board channels, at most 100.
+
+		Returns:
+			The entries now blocked.
+		"""
+		body = MessageIds(message_ids=post_ids)
+		return await self._client.request(
+			"POST", f"/guilds/{guild_id}/starboard/posts/deleted", list[StarboardEntry], body=body
+		)
+
+	async def messages_deleted(self, guild_id: int, message_ids: list[int]) -> list[StarboardEntry]:
+		"""Forget deleted originals.
+
+		Args:
+			guild_id: The guild.
+			message_ids: The deleted messages, at most 100.
+
+		Returns:
+			The entries that had a post, which the caller deletes.
+		"""
+		body = MessageIds(message_ids=message_ids)
+		return await self._client.request(
+			"POST", f"/guilds/{guild_id}/starboard/messages/deleted", list[StarboardEntry], body=body
+		)
+
+	async def clear(self, guild_id: int, message_id: int, emoji: str | None) -> list[StarboardEntry]:
+		"""Forget a message's stars after its reactions were cleared.
+
+		Args:
+			guild_id: The guild.
+			message_id: The original.
+			emoji: The emoji cleared. ``None`` for all of them.
+
+		Returns:
+			The entries that had a post, which the caller deletes.
+		"""
+		return await self._client.request(
+			"POST",
+			f"/guilds/{guild_id}/starboard/messages/{message_id}/clear",
+			list[StarboardEntry],
+			body=ClearStars(emoji=emoji),
+		)
