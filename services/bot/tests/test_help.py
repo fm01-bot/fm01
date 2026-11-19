@@ -377,3 +377,52 @@ async def test_help_select_dropdown_single_command_group_cog(mock_bot):
 	all_text = " ".join(t.content for t in text_items)
 	assert "case delete" in all_text
 	assert "case edit" in all_text
+
+
+@pytest.fixture
+def argument_help(mock_bot):
+	from core import slash_localization
+
+	slash_localization.update_slash_localizations()
+	help_cmd = HelpCommand()
+	help_cmd.custom_response = mock_bot.custom_response
+	ctx = MagicMock(spec=commands.Context)
+	ctx.bot = mock_bot
+	ctx.interaction = None
+	ctx.guild.preferred_locale = "en"
+	help_cmd.context = ctx
+	return help_cmd
+
+
+@pytest.mark.asyncio
+async def test_format_arguments_choices_ranges_and_defaults(argument_help):
+	from cogs.economy import Economy
+
+	text = await argument_help.format_arguments(Economy.addmoney)
+	assert text is not None
+	lines = text.split("\n")
+	assert lines[0] == "**Arguments**"
+	assert lines[1] == "**`member`**: The member you want to give money to"
+	assert lines[2] == "-# Required"
+	assert lines[4] == "-# Required · At least 1"
+	assert lines[6] == "-# Optional · Default: `cash` · One of: `cash`, `bank`"
+
+
+@pytest.mark.asyncio
+async def test_format_arguments_greedy_labelled_choices_and_rest(argument_help):
+	from cogs.admin import Admin
+	from cogs.say import Say
+
+	sync = await argument_help.format_arguments(Admin.sync)
+	assert sync is not None
+	assert "-# Optional · Accepts several values" in sync
+	assert "`~` (Sync locally)" in sync
+
+	say = await argument_help.format_arguments(Say.say)
+	assert say is not None
+	assert say.endswith("-# Required · 1–2000 characters · Takes the rest of the message")
+
+
+@pytest.mark.asyncio
+async def test_format_arguments_none_without_parameters(argument_help):
+	assert await argument_help.format_arguments(DummyBasicCog.ping) is None

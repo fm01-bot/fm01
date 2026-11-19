@@ -673,6 +673,27 @@
     }
   },
   "help": {
+    "arguments": {
+      "bare": "**`{name}`**",
+      "choice": "`{value}`",
+      "choice_labelled": "`{value}` ({label})",
+      "choices": "One of: {choices}",
+      "default": "Default: `{default}`",
+      "described": "**`{name}`**: {description}",
+      "details": "-# {details}",
+      "greedy": "Accepts several values",
+      "length_maximum": "Up to {maximum} characters",
+      "length_minimum": "At least {minimum} characters",
+      "length_range": "{minimum}–{maximum} characters",
+      "maximum": "At most {maximum}",
+      "minimum": "At least {minimum}",
+      "optional": "Optional",
+      "range": "From {minimum} to {maximum}",
+      "required": "Required",
+      "rest": "Takes the rest of the message",
+      "separator": " · ",
+      "title": "**Arguments**"
+    },
     "bot": {
       "components": [
         {
@@ -715,6 +736,13 @@
           "components": [
             {
               "content": "# 📖 `{command.usage}`\n{command.description}",
+              "type": "text_display"
+            },
+            {
+              "type": "separator"
+            },
+            {
+              "content": "{arguments}",
               "type": "text_display"
             },
             {
