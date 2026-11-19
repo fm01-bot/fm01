@@ -6,6 +6,7 @@ import { MDXRemote } from "next-mdx-remote/rsc";
 import { getDictionary, hasLocale } from "../../dictionaries";
 import type { Metadata } from "next";
 import { pageMetadata } from "@/_lib/functions/metadata";
+import { WEBSITE_L10N_DIR } from "@lib/functions/paths";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import "@lib/css/legal.css";
@@ -16,12 +17,12 @@ type DocKey = keyof LegalLang["documents"];
 
 /** URL path → MDX file and its key in the `legal.documents` dictionary. */
 const LEGAL_DATA: Record<string, { key: DocKey; mdx: string }> = {
-    providers: { key: "providers", mdx: "documents/providers.mdx" },
-    "bot/tos": { key: "bot-tos", mdx: "documents/bot-tos.mdx" },
-    "bot/privacy": { key: "bot-privacy", mdx: "documents/bot-privacy.mdx" },
-    "web/tos": { key: "web-tos", mdx: "documents/web-tos.mdx" },
-    "web/privacy": { key: "web-privacy", mdx: "documents/web-privacy.mdx" },
-    "web/cookies": { key: "web-cookies", mdx: "documents/web-cookies.mdx" },
+    providers: { key: "providers", mdx: "providers.mdx" },
+    "bot/tos": { key: "bot-tos", mdx: "bot-tos.mdx" },
+    "bot/privacy": { key: "bot-privacy", mdx: "bot-privacy.mdx" },
+    "web/tos": { key: "web-tos", mdx: "web-tos.mdx" },
+    "web/privacy": { key: "web-privacy", mdx: "web-privacy.mdx" },
+    "web/cookies": { key: "web-cookies", mdx: "web-cookies.mdx" },
 };
 
 /** `label` is a key in `legal.groups`; a group without one has no heading. */
@@ -83,7 +84,7 @@ export default async function Page({ params }: PageProps) {
         notFound();
     }
 
-    const filePath = path.join(process.cwd(), "_lib", "translations", lang, data.mdx);
+    const filePath = path.join(WEBSITE_L10N_DIR, "doc", lang, data.mdx);
     let mdxContent: string;
 
     try {

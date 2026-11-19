@@ -1,0 +1,11 @@
+# Used only for services/website/Dockerfile, whose build context is the repo root.
+# Allowlist: send just the website and the shared localization files.
+*
+!services/website
+!shared/localization
+
+**/node_modules
+**/.next
+**/*.tsbuildinfo
+services/website/TODOS
+services/website/Dockerfile*

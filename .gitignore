@@ -5,6 +5,9 @@ assets/*
 !assets/fonts/
 !assets/fonts/**
 
+# graphify knowledge graph output (graph.json, graph.html, GRAPH_REPORT.md, extraction cache) used for local development
+graphify-out/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

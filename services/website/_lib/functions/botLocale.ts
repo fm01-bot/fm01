@@ -1,185 +1,118 @@
 import { randomInt } from 'node:crypto'
-import type { EmbedType } from '@/_lib/types/EmbedLang'
-import type { MessageType } from '@/_lib/types/MessageLang'
+import type { MessageType, ValueSpec } from '@/_lib/types/MessageLang'
+import { getResponse } from './botResponses'
+import { payloadToMessage } from './responseExtractor'
 
 /**
- * Resolves embed references in showcase messages.
+ * Resolves showcase messages that reference a real bot response.
  *
- * A message's `embeds` may hold strings such as `"bot-locale.warn.embed"`: a path into the
- * language JSON, pointing at the embed the real bot sends. The embed is looked up, and its
- * `{placeholders}` are filled from the closest preceding user command (`?!warn @rnxm 1w …`),
- * falling back to showcase defaults.
+ * A message with `"botResponse": "mod.warn.response"` is replaced by that response from the
+ * bot's locale files (English if the key is missing in the page's language). Its
+ * `{placeholders}` are filled from:
+ *   1. the closest preceding user command (`?!warn @rnxm 1w Hacking threats`), then
+ *   2. the message's `values`, which win over the command.
  */
 
-type PlaceholderValues = Record<string, string>
+type Values = Record<string, string>
 
-const showcaseDefaults: Record<string, PlaceholderValues> = {
-    warn: {
-        "warn.user.mention": "@rnxm",
-        "warn.reason": "Hacking threats",
-        "warn.length": "1w",
-        "warn.date": "1w",
-    },
-    giveaway: giveawayValues("Nitro Classic Giveaway", "1", "2 days"),
-}
-
-/** Older bot locales use `{prize}`, newer ones `{giveaway.prize}`; fill both. */
-function giveawayValues(prize: string, winners: string, ends: string, host = "@fm01"): PlaceholderValues {
-    return {
-        prize,
-        winners,
-        ends,
-        "giveaway.prize": prize,
-        "giveaway.winners": winners,
-        "giveaway.ends": ends,
-        "giveaway.ends.relative": `in ${ends}`,
-        "author.mention": host,
-        requirements: "",
-    }
-}
-
-export function getPathValue(value: unknown, reference: string): unknown {
-    return reference.split('.').reduce<unknown>((current, key) => {
-        if (typeof current !== 'object' || current === null) return undefined
-        return (current as Record<string, unknown>)[key]
-    }, value)
-}
-
-function randomInteger(min: number, max: number): string {
-    return String(randomInt(min, max + 1))
-}
-
-function replacePlaceholders(value: string, values: PlaceholderValues): string {
+function replacePlaceholders(value: string, values: Values): string {
     return value.replace(/\{([^{}]+)\}/g, (placeholder, key: string) => values[key] ?? placeholder)
 }
 
-function replaceNestedPlaceholders(value: unknown, values: PlaceholderValues): unknown {
+function replaceNestedPlaceholders(value: unknown, values: Values): unknown {
     if (typeof value === 'string') return replacePlaceholders(value, values)
     if (Array.isArray(value)) return value.map((item) => replaceNestedPlaceholders(item, values))
     if (typeof value !== 'object' || value === null) return value
 
     return Object.fromEntries(
-        Object.entries(value).map(([key, nestedValue]) => [
-            key,
-            replaceNestedPlaceholders(nestedValue, values),
-        ])
+        Object.entries(value).map(([key, nestedValue]) => [key, replaceNestedPlaceholders(nestedValue, values)])
     )
 }
 
-function parseCommand(message: string | undefined, author: { name: string, avatar: string } | undefined): { module?: string, values: PlaceholderValues } {
+/** Placeholder values implied by a user command, so the reply matches what was typed. */
+function parseCommand(message: string | undefined, author: { name: string, avatar: string } | undefined): Values {
     const command = message?.match(/^\s*\?!([^\s]+)(?:\s+(.+))?$/)
-    const values: PlaceholderValues = {}
-
-    if (!command) return { values }
-
-    const commandName = command[1].toLowerCase()
-    const argumentsText = command[2]?.trim() ?? ''
-    const argumentsList = argumentsText ? argumentsText.split(/\s+/) : []
-
-    if (commandName === 'warn') {
-        const reason = argumentsList.slice(2).join(' ')
-        values['warn.user.mention'] = argumentsList[0] ?? showcaseDefaults.warn['warn.user.mention']
-        values['warn.length'] = argumentsList[1] ?? showcaseDefaults.warn['warn.length']
-        values['warn.date'] = values['warn.length']
-        values['warn.reason'] = reason || showcaseDefaults.warn['warn.reason']
+    const values: Values = {}
+    if (author) {
+        values['author.name'] = author.name
+        values['author.avatar'] = author.avatar
+        values['author.mention'] = `@${author.name}`
     }
-    if (commandName === 'play') {
-        values['author.name'] = author?.name ?? "Pearoo"
-        values['author.avatar'] = author?.avatar ?? "/images/pearoo.png"
-        values['track.author'] = "Rick Astley"
-        values['track.duration'] = "3:34"
-        values['track.title'] = "Never Gonna Give You Up"
-        values['track.url'] = "https://www.youtube.com/watch?v=iNTeY4hFwNU"
+    if (!command) return values
+
+    const name = command[1].toLowerCase()
+    const args = command[2]?.trim().split(/\s+/) ?? []
+
+    if (name === 'warn') {
+        // ?!warn <user> <length> <reason…>
+        if (args[0]) values['warn.user.mention'] = args[0]
+        if (args[1]) values['warn.length'] = values['warn.date'] = args[1]
+        if (args.length > 2) values['warn.reason'] = args.slice(2).join(' ')
     }
-    if (commandName == 'giveaway') {
-        const defaults = showcaseDefaults.giveaway
-        Object.assign(values, giveawayValues(
-            argumentsList.slice(2).join(' ') || defaults.prize,
-            argumentsList[1] ?? defaults.winners,
-            argumentsList[0] ?? defaults.ends,
-            author ? `@${author.name}` : undefined,
-        ))
+    if (name === 'giveaway') {
+        // ?!giveaway <length> <winners> <prize…>
+        if (args[0]) values['giveaway.ends'] = values['giveaway.ends.relative'] = args[0]
+        if (args[1]) values['giveaway.winners'] = args[1]
+        if (args.length > 2) values['giveaway.prize'] = args.slice(2).join(' ')
     }
-
-    return { module: commandName, values }
-}
-
-function getModuleFromReference(reference: string): string | undefined {
-    return reference.match(/^bot-locale\.([^.]+)\./)?.[1]
-}
-
-function getBotEmbed(dictionary: unknown, module: string): unknown {
-    const embed = getPathValue(dictionary, `bot-locale.${module}.embed`)
-    if (embed && typeof embed === 'object' && !Array.isArray(embed)) return embed
-
-    const embeds = getPathValue(dictionary, `bot-locale.${module}.embeds`)
-    return Array.isArray(embeds) ? embeds[0] : undefined
+    return values
 }
 
 /**
- * Returns a copy of `messages` with every embed reference replaced by the resolved embed.
- * `fallbackModule` names the bot-locale module used when neither the reference nor a
- * preceding command says which one applies (the home page passes the channel title).
+ * Turns a message's `values` into strings. Plain strings and random numbers resolve first;
+ * `botText`/`botList` then pull bot texts and fill their own placeholders with everything
+ * known so far (e.g. `work.random` entries use `{amount}`).
  */
-export function resolveMessages(dictionary: unknown, messages: MessageType[], fallbackModule?: string): MessageType[] {
-    return messages.map((message, messageIndex) => {
-        if (!message.embeds?.length) return message
+function resolveValues(locale: string, specs: Record<string, ValueSpec>, known: Values): Values {
+    const values: Values = {}
+    const texts: [string, { botText: string } | { botList: string }][] = []
 
-        const previousMessage = messages
-            .slice(0, messageIndex)
-            .reverse()
-            .find((candidate) => !candidate.bot && candidate.message)
-        const author = previousMessage ? {
-            name: previousMessage.username,
-            avatar: previousMessage.avatar
-        } : undefined
-        const command = parseCommand(previousMessage?.message, author)
+    for (const [key, spec] of Object.entries(specs)) {
+        if (typeof spec === 'string') values[key] = spec
+        else if ('randomInt' in spec) {
+            const [min, max] = spec.randomInt
+            values[key] = `${spec.prefix ?? ''}${randomInt(min, max + 1)}`
+        } else texts.push([key, spec])
+    }
 
-        const embeds = message.embeds.map((embed) => {
-            const referenceModule = typeof embed === 'string'
-                ? getModuleFromReference(embed)
-                : undefined
-            const localeModule = referenceModule ?? command.module ?? fallbackModule
-            const resolvedEmbed = typeof embed === 'string'
-                ? getPathValue(dictionary, embed)
-                : embed
-            const fallbackEmbed = localeModule ? getBotEmbed(dictionary, localeModule) : undefined
-            const sourceEmbed = resolvedEmbed && typeof resolvedEmbed === 'object'
-                ? resolvedEmbed
-                : fallbackEmbed
+    for (const [key, spec] of texts) {
+        const isList = 'botList' in spec
+        const ref = isList ? spec.botList : spec.botText
+        const found = getResponse(locale, ref)
+        const text = isList
+            ? (Array.isArray(found) && found.length ? found[randomInt(0, found.length)] : undefined)
+            : found
+        if (typeof text !== 'string') {
+            console.warn(`[botLocale] ${locale}: value "${key}" points at "${ref}", which isn't a ${isList ? 'list of texts' : 'text'}`)
+            continue
+        }
+        values[key] = replacePlaceholders(text, { ...known, ...values })
+    }
+    return values
+}
 
-            if (!sourceEmbed || typeof sourceEmbed !== 'object' || Array.isArray(sourceEmbed)) {
-                return embed
-            }
+/** Returns a copy of `messages` with every `botResponse` reference replaced by the bot's reply. */
+export function resolveMessages(locale: string, messages: MessageType[]): MessageType[] {
+    return messages.map((message, index) => {
+        if (!message.botResponse) return message
+        const { botResponse, values: specs, ...rest } = message
 
-            const values: PlaceholderValues = {
-                ...(localeModule ? showcaseDefaults[localeModule] ?? {} : {}),
-                ...command.values,
-            }
+        const previous = messages.slice(0, index).reverse().find((m) => !m.bot && m.message)
+        const known = parseCommand(previous?.message, previous && { name: previous.username, avatar: previous.avatar })
+        const values = { ...known, ...resolveValues(locale, specs ?? {}, known) }
 
-            if (localeModule === 'work') {
-                const randomEntries = getPathValue(dictionary, 'bot-locale.work.random')
-                const randomText = Array.isArray(randomEntries) && randomEntries.length > 0
-                    ? randomEntries[randomInt(0, randomEntries.length)]
-                    : undefined
-                values.amount = randomInteger(50, 500)
-                values.random = typeof randomText === 'string'
-                    ? replacePlaceholders(randomText, values)
-                    : ''
-            }
+        const parts = payloadToMessage(replaceNestedPlaceholders(structuredClone(getResponse(locale, botResponse)), values))
+        if (!parts) {
+            console.warn(`[botLocale] ${locale}: bot response "${botResponse}" not found or not renderable`)
+            return rest
+        }
+        // Empty values (e.g. `{requirements}`) can leave dangling blank lines.
+        for (const embed of parts.embeds) if (embed.description) embed.description = embed.description.trim()
 
-            if (localeModule === 'giveaway') {
-                values.participants = randomInteger(111, 999)
-                values['giveaway.entries'] = values.participants
-            }
-            if (localeModule === 'warn') values['warn.id'] = `#${randomInteger(1111, 9999)}`
-
-            const resolved = replaceNestedPlaceholders(structuredClone(sourceEmbed), values) as EmbedType
-            // Empty placeholders (e.g. `{requirements}`) can leave dangling blank lines.
-            if (resolved.description) resolved.description = resolved.description.trim()
-            return resolved
-        })
-
-        return { ...message, embeds }
+        return {
+            ...rest,
+            message: parts.content ?? rest.message ?? '',
+            embeds: parts.embeds.length ? parts.embeds : undefined,
+        }
     })
 }

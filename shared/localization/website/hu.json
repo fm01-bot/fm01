@@ -67,16 +67,31 @@
             "description": "Kezeld a szabálysértőket könnyedén!",
             "messages": [
               {
-                "message": "Hahaha feltöröm a szerver!",
-                "username": "Pearoo",
-                "avatar": "/images/pearoo.webp",
-                "bot": false
+                "username": "rnxm",
+                "avatar": "/images/rnxm.webp",
+                "bot": false,
+                "message": "Hahaha feltöröm a szervered!"
               },
               {
-                "message": "A felhasználót sikeresen figyelmeztettük.",
+                "username": "Pearoo",
+                "avatar": "/images/pearoo.webp",
+                "bot": false,
+                "message": "?!warn @rnxm 1w Feltöréssel fenyegetőzés"
+              },
+              {
                 "username": "fm01",
                 "avatar": "/images/logo.webp",
-                "bot": true
+                "bot": true,
+                "botResponse": "mod.warn.response",
+                "values": {
+                  "warn.id": {
+                    "randomInt": [
+                      1111,
+                      9999
+                    ],
+                    "prefix": "#"
+                  }
+                }
               }
             ]
           },
@@ -85,59 +100,33 @@
             "description": "Könnyedén jutalmazd közösségedet!",
             "messages": [
               {
-                "message": "A sorsolás most indul!",
+                "username": "Pearoo",
+                "avatar": "/images/pearoo.webp",
+                "bot": false,
+                "message": "?!giveaway 2d 2 nitro ($10)"
+              },
+              {
                 "username": "fm01",
                 "avatar": "/images/logo.webp",
                 "bot": true,
-                "embeds": [
-                  {
-                    "title": "Nitro Classic Sorsolás",
-                    "description": "Jelöld a 🎉-t a részvételhez!",
-                    "url": "https://fm01.bot",
-                    "color": "#f56f42",
-                    "fields": [
-                      {
-                        "name": "Szervező",
-                        "value": "@Pearoo",
-                        "inline": true
-                      },
-                      {
-                        "name": "Lejárat",
-                        "value": "2 nap",
-                        "inline": true
-                      },
-                      {
-                        "name": "Nyertesek",
-                        "value": "1",
-                        "inline": true
-                      }
-                    ],
-                    "thumbnail": {
-                      "url": "/images/logo.webp"
-                    },
-                    "author": {
-                      "name": "Sorsolási rendszer",
-                      "url": "https://fm01.bot",
-                      "icon_url": "/images/logo.webp"
-                    },
-                    "buttons": [
-                      [
-                        {
-                          "label": "Részt veszek a sorsoláson",
-                          "url": "https://fm01.bot/giveaways",
-                          "disabled": true,
-                          "color": 0
-                        }
-                      ]
+                "botResponse": "giveaway.layout.active",
+                "values": {
+                  "giveaway.ends.relative": "2 nap múlva",
+                  "giveaway.ends": "2 nap",
+                  "giveaway.entries": {
+                    "randomInt": [
+                      111,
+                      999
                     ]
-                  }
-                ]
-              },
-              {
-                "message": "Piros buzi!",
-                "username": "fm01",
-                "avatar": "/images/logo.webp",
-                "bot": true
+                  },
+                  "giveaway.id": {
+                    "randomInt": [
+                      1000,
+                      9999
+                    ]
+                  },
+                  "requirements": ""
+                }
               }
             ]
           },
@@ -146,10 +135,27 @@
             "description": "Vonzd be a tagokat globális gazdasággal!",
             "messages": [
               {
-                "message": "Most kaptál 500 érmét!",
+                "username": "Pearoo",
+                "avatar": "/images/pearoo.webp",
+                "bot": false,
+                "message": "?!work"
+              },
+              {
                 "username": "fm01",
                 "avatar": "/images/logo.webp",
-                "bot": true
+                "bot": true,
+                "botResponse": "work.embeds",
+                "values": {
+                  "amount": {
+                    "randomInt": [
+                      50,
+                      500
+                    ]
+                  },
+                  "random": {
+                    "botList": "work.random"
+                  }
+                }
               }
             ]
           },
@@ -206,10 +212,22 @@
             "description": "Zenével dobhatod fel a hangulatot szervereden!",
             "messages": [
               {
-                "message": "Most kaptál 500 érmét!",
+                "username": "Pearoo",
+                "avatar": "/images/pearoo.webp",
+                "bot": false,
+                "message": "?!play rick astley"
+              },
+              {
                 "username": "fm01",
                 "avatar": "/images/logo.webp",
-                "bot": true
+                "bot": true,
+                "botResponse": "voice.play.now_playing",
+                "values": {
+                  "track.title": "Never Gonna Give You Up",
+                  "track.author": "Rick Astley",
+                  "track.duration": "3:34",
+                  "track.url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+                }
               }
             ]
           },
@@ -432,10 +450,16 @@
           "username": "fm01",
           "avatar": "/images/logo.webp",
           "bot": true,
-          "message": "",
-          "embeds": [
-            "bot-locale.warn.embed"
-          ]
+          "botResponse": "mod.warn.response",
+          "values": {
+            "warn.id": {
+              "randomInt": [
+                1111,
+                9999
+              ],
+              "prefix": "#"
+            }
+          }
         }
       ]
     },
@@ -518,10 +542,13 @@
           "username": "fm01",
           "avatar": "/images/logo.webp",
           "bot": true,
-          "message": "",
-          "embeds": [
-            "bot-locale.music.embed"
-          ]
+          "botResponse": "voice.play.now_playing",
+          "values": {
+            "track.title": "Never Gonna Give You Up",
+            "track.author": "Rick Astley",
+            "track.duration": "3:34",
+            "track.url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+          }
         }
       ]
     },
@@ -742,270 +769,6 @@
           ]
         }
       ]
-    }
-  },
-  "bot-locale": {
-    "warn": {
-      "embed": {
-        "description": "{warn.user.mention} figyelmeztetve.",
-        "fields": [
-          {
-            "name": "Indok",
-            "value": "{warn.reason}"
-          },
-          {
-            "name": "Lejár",
-            "value": "{warn.date}"
-          }
-        ],
-        "footer": {
-          "text": "{warn.id}"
-        },
-        "title": "Figyelmeztetés"
-      }
-    },
-    "giveaway": {
-      "embed": {
-        "description": "{prize}",
-        "fields": [
-          {
-            "inline": true,
-            "name": "Nyertesek száma",
-            "value": "{winners}"
-          },
-          {
-            "inline": true,
-            "name": "Vége",
-            "value": "{ends}"
-          }
-        ],
-        "footer": {
-          "text": "Nyomj a gombra hogy belépj a nyereményjátékra!"
-        },
-        "title": "🎉 Nyereményjáték!",
-        "buttons": [
-          {
-            "label": "🎉 {participants}"
-          }
-        ]
-      }
-    },
-    "work": {
-      "embed": {
-        "description": "{random}",
-        "title": "Munka"
-      },
-      "random": [
-        "Hazaértél, és láttad, hogy **{amount} Ft-al** bővült a számlád egyenlege.",
-        "Egy nehéz nap után **{amount} Ft-ot** kaptál fizetségül!",
-        "Sikeresen teljesítetted az első napod az új melóban, így **{amount} Ft-ot** kaptál.",
-        "Cégbeli előléptetésed mellé kaptál egy **{amount} Ft-os** bónuszt!",
-        "Részvényeid után **{amount} Ft-ot** kaptál.",
-        "Előléptettek a munkahelyeden, így szereztél **{amount} Ft-ot**.",
-        "Taxisofőrként **{amount} Ft-ot** szereztél ma.",
-        "Elmentél a boltba zacskós levest venni, de a kasszás többet adott vissza. Szereztél **{amount} Ft-ot** és egy csomag zacskós levest.",
-        "Nehéz napod volt a mezőn - kaptál **{amount} Ft-ot**."
-      ]
-    },
-    "music": {
-      "embed": {
-        "description": "**[{track.title}]({track.url})**",
-        "fields": [
-          {
-            "inline": true,
-            "name": "Előadó",
-            "value": "{track.author}"
-          },
-          {
-            "inline": true,
-            "name": "Hossz",
-            "value": "{track.duration}"
-          },
-          {
-            "inline": true,
-            "name": "Pozíció a lejátszási sorban",
-            "value": "Most"
-          }
-        ],
-        "footer": {
-          "icon_url": "{author.avatar}",
-          "text": "{author.name}"
-        },
-        "title": "Most szól"
-      }
-    },
-    "info": {
-      "user": {
-        "author": {
-          "icon_url": "{member.avatar}",
-          "name": "{member}",
-          "url": "https://discord.com/users/{member.id}"
-        },
-        "fields": [
-          {
-            "inline": true,
-            "name": "Felhasználónév",
-            "value": "{member.username}"
-          },
-          {
-            "inline": true,
-            "name": "Megjelenített név",
-            "value": "{member.display_name}"
-          },
-          {
-            "inline": true,
-            "name": "Hashtag",
-            "value": "{member.discriminator}"
-          },
-          {
-            "inline": true,
-            "name": "ID",
-            "value": "{member.id}"
-          },
-          {
-            "name": "Bot?",
-            "value": "{member.bot}"
-          },
-          {
-            "name": "Fiók készült",
-            "value": "{member.created_at.long}"
-          }
-        ],
-        "timestamp": "{now}",
-        "title": "Felhasználó információk"
-      },
-      "server": {
-        "author": {
-          "icon_url": "{server.icon}",
-          "name": "{server.name}"
-        },
-        "fields": [
-          {
-            "inline": true,
-            "name": "Leírás",
-            "value": "{server.description}"
-          },
-          {
-            "inline": true,
-            "name": "ID",
-            "value": "{server.id}"
-          },
-          {
-            "inline": true,
-            "name": "Tulajdonos",
-            "value": "{server.owner.mention}"
-          },
-          {
-            "inline": true,
-            "name": "Szerver készült",
-            "value": "{server.created_at.long}"
-          },
-          {
-            "inline": true,
-            "name": "Nyelvezet",
-            "value": "{server.language}"
-          },
-          {
-            "inline": true,
-            "name": "Örök meghívó",
-            "value": "{server.vanity_url}"
-          },
-          {
-            "inline": true,
-            "name": "Gyorsítás fokozat",
-            "value": "{server.boost_tier}"
-          },
-          {
-            "inline": true,
-            "name": "Gyorsítók száma",
-            "value": "{server.boosters}"
-          },
-          {
-            "inline": true,
-            "name": "Gyorsító rang",
-            "value": "{server.boost_role}"
-          },
-          {
-            "inline": true,
-            "name": "Rangok",
-            "value": "{server.roles}"
-          },
-          {
-            "inline": true,
-            "name": "Emojik",
-            "value": "{server.emojis}"
-          },
-          {
-            "inline": true,
-            "name": "Bitráta limit",
-            "value": "{server.bitrate_limit} kbps"
-          },
-          {
-            "name": "Feltöltési limit",
-            "value": "{server.upload_limit} MB"
-          }
-        ],
-        "image": {
-          "url": "{server.banner}"
-        },
-        "timestamp": "{now}",
-        "title": "Szerver információ"
-      },
-      "role": {
-        "fields": [
-          {
-            "inline": true,
-            "name": "Név",
-            "value": "{role.name}"
-          },
-          {
-            "inline": true,
-            "name": "ID",
-            "value": "{role.id}"
-          },
-          {
-            "inline": true,
-            "name": "Pozíció",
-            "value": "{role.position}"
-          },
-          {
-            "inline": true,
-            "name": "Külön megjelenített?",
-            "value": "{role.hoist}"
-          },
-          {
-            "inline": true,
-            "name": "Integráció kezelt?",
-            "value": "{role.managed}"
-          },
-          {
-            "inline": true,
-            "name": "Mindenki megemlítheti?",
-            "value": "{role.mentionable}"
-          },
-          {
-            "inline": true,
-            "name": "Bot rang?",
-            "value": "{role.bot}"
-          },
-          {
-            "inline": true,
-            "name": "Rang készült",
-            "value": "{role.created}"
-          },
-          {
-            "inline": true,
-            "name": "Tagok száma",
-            "value": "{role.members}"
-          },
-          {
-            "inline": false,
-            "name": "Jogok",
-            "value": "```{role.permissions}```"
-          }
-        ],
-        "title": "Rang információk"
-      }
     }
   }
 }

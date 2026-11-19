@@ -127,9 +127,9 @@ export default async function Page({ params }: PageProps) {
     const dict = await getDictionary(lang);
     const t = dict.features;
 
-    /** A section's mock Discord messages, with `bot-locale.*` embed references resolved. */
+    /** A section's mock Discord messages, with `botResponse` references resolved. */
     const messagesOf = (section: { messages: unknown }) =>
-        resolveMessages(dict, section.messages as MessageType[]);
+        resolveMessages(lang, section.messages as MessageType[]);
 
     return (
         <div className="features-page">
