@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime
 import logging
+from collections.abc import Callable
 from copy import deepcopy
 from typing import Literal
 
@@ -27,6 +28,7 @@ from discord import app_commands
 from discord.ext import commands, localization
 from helpers import custom_response, seconds_to_text, text_to_seconds
 from helpers.pagination import PaginationView
+from helpers.regex import URL_REGEX
 
 __all__ = (
 	"Ban",
@@ -43,6 +45,52 @@ __all__ = (
 )
 
 logger = logging.getLogger(__name__)
+
+
+type PurgeFilter = Literal["bots", "humans", "links", "attachments", "embeds"]
+
+# Discord only bulk-deletes messages younger than 14 days; the margin keeps a message from ageing past it mid-purge.
+BULK_DELETE_MAX_AGE = datetime.timedelta(days=14) - datetime.timedelta(minutes=5)
+# Discord bulk-deletes at most 100 messages per request.
+BULK_DELETE_CHUNK = 100
+# How far back `purge` looks for matching messages before giving up.
+PURGE_SCAN_LIMIT = 2000
+
+
+def _purge_check(
+	user: discord.abc.Snowflake | None, filter: PurgeFilter | None, contains: str | None
+) -> Callable[[discord.Message], bool]:
+	"""Build the predicate deciding which scanned messages `purge` deletes. Pinned messages are always kept.
+
+	Args:
+		user: Only delete this user's messages.
+		filter: Only delete messages of this kind.
+		contains: Only delete messages whose content contains this text, ignoring case.
+	"""
+	needle = contains.casefold() if contains else None
+
+	def check(message: discord.Message) -> bool:
+		if message.pinned:
+			return False
+		if user is not None and message.author.id != user.id:
+			return False
+		if needle is not None and needle not in message.content.casefold():
+			return False
+		match filter:
+			case "bots":
+				return message.author.bot
+			case "humans":
+				return not message.author.bot
+			case "links":
+				return URL_REGEX.search(message.content) is not None
+			case "attachments":
+				return bool(message.attachments)
+			case "embeds":
+				# Components V2 messages (containers, sections) can't carry embeds; they are what replaces them.
+				return bool(message.embeds) or message.flags.components_v2
+		return True
+
+	return check
 
 
 def _parse_case_id(case_id: str) -> int:
@@ -254,6 +302,60 @@ class Moderation(commands.GroupCog, name="Moderation", group_name="mod"):
 			time_before=seconds_to_text(slowmode_before),
 			time=seconds_to_text(seconds),
 		)
+
+	@command(user=False, permissions=["manage_messages"])
+	@commands.bot_has_permissions(manage_messages=True, read_message_history=True)
+	@app_commands.choices(
+		filter=[
+			app_commands.Choice(name="purge-args-filter-bots", value="bots"),
+			app_commands.Choice(name="purge-args-filter-humans", value="humans"),
+			app_commands.Choice(name="purge-args-filter-links", value="links"),
+			app_commands.Choice(name="purge-args-filter-attachments", value="attachments"),
+			app_commands.Choice(name="purge-args-filter-embeds", value="embeds"),
+		]
+	)
+	async def purge(
+		self,
+		ctx: Context,
+		amount: commands.Range[int, 1, 1000],
+		user: discord.User | None = None,
+		filter: PurgeFilter | None = None,
+		*,
+		contains: str | None = None,
+	):
+		channel = ctx.channel
+		if not isinstance(channel, (discord.TextChannel, discord.Thread, discord.VoiceChannel, discord.StageChannel)):
+			raise commands.BadArgument("Channel can't be purged")
+		await ctx.defer()
+		# Scan from just before the command, so neither the invoking message nor the deferred response is counted.
+		before = discord.Object(ctx.interaction.id) if ctx.interaction else ctx.message
+		reason: str = await self.custom_response("mod.purge.reason", ctx, moderator=ctx.author)
+		check = _purge_check(user, filter, contains)
+		deleted: list[discord.Message] = []
+		async for message in channel.history(
+			limit=PURGE_SCAN_LIMIT,
+			before=before,
+			after=discord.utils.utcnow() - BULK_DELETE_MAX_AGE,
+			oldest_first=False,
+		):
+			if check(message):
+				deleted.append(message)
+				if len(deleted) == amount:
+					break
+		for start in range(0, len(deleted), BULK_DELETE_CHUNK):
+			try:
+				await channel.delete_messages(deleted[start : start + BULK_DELETE_CHUNK], reason=reason)
+			except discord.NotFound:  # a single message deleted by someone else in the meantime
+				pass
+		if not ctx.interaction:
+			try:
+				await ctx.message.delete()
+			except discord.NotFound:
+				pass
+		if not deleted:
+			await ctx.send("mod.purge.none", channel=channel)
+			return
+		await ctx.send("mod.purge.response", channel=channel, count=len(deleted))
 
 
 class Cases(commands.Cog, name="Cases"):

@@ -693,6 +693,34 @@
     "name": "prefix",
     "usage": "prefix [prefix]"
   },
+  "purge": {
+    "args": {
+      "amount": {
+        "desc": "How many matching messages to delete (1-1000; messages older than 14 days are skipped)",
+        "name": "amount"
+      },
+      "contains": {
+        "desc": "Only delete messages containing this text",
+        "name": "contains"
+      },
+      "filter": {
+        "attachments": "attachments",
+        "bots": "bots",
+        "desc": "Only delete messages of this kind",
+        "embeds": "embeds",
+        "humans": "humans",
+        "links": "links",
+        "name": "filter"
+      },
+      "user": {
+        "desc": "Only delete messages from this user",
+        "name": "user"
+      }
+    },
+    "desc": "Bulk delete recent messages in this channel",
+    "name": "purge",
+    "usage": "purge [amount: 1...1000] (user) (filter) (contains...)"
+  },
   "qr_code": {
     "args": {
       "data": {

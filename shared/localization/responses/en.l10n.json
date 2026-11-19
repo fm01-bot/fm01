@@ -3053,6 +3053,23 @@
         ]
       }
     },
+    "purge": {
+      "none": {
+        "content": "No messages in {channel.mention} matched.",
+        "delete_after": 5
+      },
+      "reason": "Messages purged by {moderator.name}",
+      "response": {
+        "delete_after": 5,
+        "embeds": [
+          {
+            "description": "Deleted **{count}** messages in {channel.mention}.",
+            "timestamp": "{now}",
+            "title": "Messages purged"
+          }
+        ]
+      }
+    },
     "remove": {
       "errors": {
         "not_found": {

@@ -82,7 +82,7 @@ Dataclasses decorated with `@dataclass(slots=True)` that wrap Discord objects (e
 - `join_leave.py`: Welcome/leave announcement handlers and autorole assignment.
 - `level.py`: Message XP awarding, rank card generator (`?!level`), leaderboards (`?!levels`), and level role rewards.
 - `log.py`: Server event audit logger (message edits/deletions, member changes, channel updates). `LogSettings` is the log configuration guild setting; the config commands use it too.
-- `mod/`: Moderation command suite (`ban`, `kick`, `mute`, `warn`, `case`). `mod/cases.py` is the Case module: `CaseStore` owns every query on `cases`, retention, and expiry. `Softban` has no command; the bear trap opens it.
+- `mod/`: Moderation command suite (`ban`, `kick`, `mute`, `warn`, `slowmode`, `purge`, `case`). `mod/cases.py` is the Case module: `CaseStore` owns every query on `cases`, retention, and expiry. `Softban` has no command; the bear trap opens it.
 - `say.py`: Echo and Minecraft achievement message generators.
 - `setup.py`: Interactive first-time server setup helper.
 - `snapshot.py`: Guild structural backup and restoration system.
