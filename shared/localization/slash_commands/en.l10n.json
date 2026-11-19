@@ -298,6 +298,21 @@
     "name": "deposit",
     "usage": "deposit [amount]"
   },
+  "download": {
+    "args": {
+      "audio": {
+        "desc": "Download only the audio",
+        "name": "audio"
+      },
+      "link": {
+        "desc": "Link to the post, video or song to download",
+        "name": "link"
+      }
+    },
+    "desc": "Download a video, image or song from a link",
+    "name": "download",
+    "usage": "download [link] (audio)"
+  },
   "economy": "economy",
   "edit_message": {
     "args": {

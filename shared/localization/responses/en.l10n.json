@@ -217,6 +217,33 @@
       "content": "You have successfully deposited **${amount}** into your bank account!"
     }
   },
+  "download": {
+    "errors": {
+      "content": {
+        "content": "That post couldn't be downloaded. It may be private, deleted or region-locked.",
+        "ephemeral": true
+      },
+      "failed": {
+        "content": "The download failed. Try again later.",
+        "ephemeral": true
+      },
+      "too_large": {
+        "content": "That file is larger than the **{limit:.0f} MB** upload limit here.",
+        "ephemeral": true
+      },
+      "unavailable": {
+        "content": "Downloads are unavailable right now. Try again later.",
+        "ephemeral": true
+      },
+      "unsupported": {
+        "content": "That link isn't supported, or it isn't a valid link.",
+        "ephemeral": true
+      }
+    },
+    "success": {
+      "content": "📥 <{link}>"
+    }
+  },
   "errors": {
     "api_unavailable": {
       "embeds": [

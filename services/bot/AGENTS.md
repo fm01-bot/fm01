@@ -89,6 +89,7 @@ Dataclasses decorated with `@dataclass(slots=True)` that wrap Discord objects (e
 - `state_sync.py`: Mirrors guild, channel and role data into the cluster `StateStore`. (Setting caches are invalidated by `core/settings.py`, not here.)
 - `status.py`: Presence and bot activity status cycler.
 - `ticket.py`: Interactive support ticket system with components, modals, and transcript export.
+- `utility.py`: `convert` (units, currencies and crypto through Coinbase) and `download` (media from a link through the self-hosted cobalt instance, `COBALT_URL`).
 - `voice.py`: Lavalink v4 music playback controls via Wavelink.
 
 ---

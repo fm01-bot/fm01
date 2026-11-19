@@ -68,6 +68,19 @@ services:
       retries: 5
       start_period: 20s
 
+  # Self-hosted cobalt: resolves and downloads media for the download command. No port is published, so only
+  # services on the Compose network (the bot) can reach it. Every request comes from the bot's one address, so the
+  # per-IP rate limits are raised well above cobalt's defaults.
+  cobalt:
+    image: ghcr.io/imputnet/cobalt:11
+    restart: unless-stopped
+    read_only: true
+    environment:
+      # Tunnel links are built from this, so it must be the address the bot reaches cobalt at.
+      API_URL: http://cobalt:9000/
+      RATELIMIT_MAX: ${COBALT_RATELIMIT_MAX:-600}
+      TUNNEL_RATELIMIT_MAX: ${COBALT_RATELIMIT_MAX:-600}
+
   twilight-proxy:
     image: ghcr.io/twilight-rs/http-proxy:latest
     restart: unless-stopped
@@ -153,6 +166,8 @@ services:
         condition: service_healthy
       rsshub:
         condition: service_started
+      cobalt:
+        condition: service_started
       migrations:
         condition: service_completed_successfully
       api:
@@ -182,6 +197,8 @@ services:
       RSSHUB_URL: ${RSSHUB_URL:-http://rsshub:1200}
       TWITCH_CLIENT_ID: ${TWITCH_CLIENT_ID:-}
       TWITCH_CLIENT_SECRET: ${TWITCH_CLIENT_SECRET:-}
+      COBALT_URL: ${COBALT_URL:-http://cobalt:9000}
+      COBALT_API_KEY: ${COBALT_API_KEY:-}
     volumes:
       # Mirrors the repository layout, as the image does: the bot resolves localizations and schemas at ../../shared.
       - ./services/bot:/fm01/services/bot
