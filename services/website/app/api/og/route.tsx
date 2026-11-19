@@ -1,9 +1,10 @@
 import { ImageResponse } from 'next/og';
 import fs from 'fs/promises';
 import path from 'path';
+import { hasValidOgSignature } from '@/_lib/functions/ogSignature';
 
 // 1200×630 social preview card used by every page's og:image / twitter:image.
-// Usage: /api/og?title=Features&description=Short+summary
+// Usage: /api/og?title=Features&description=Short+summary&sig=... (links come from pageMetadata, which signs them)
 
 const WIDTH = 1200;
 const HEIGHT = 630;
@@ -30,6 +31,9 @@ function clamp(value: string | null, fallback: string, max: number) {
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
+    if (!hasValidOgSignature(searchParams.get('title') ?? '', searchParams.get('description') ?? '', searchParams.get('sig'))) {
+        return new Response(null, { status: 404 });
+    }
     const title = clamp(searchParams.get('title'), 'fm01bot', 70);
     const description = clamp(searchParams.get('description'), 'Your all-in-one Discord bot.', 160);
 

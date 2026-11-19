@@ -1,9 +1,21 @@
+(security_headers) {
+    header {
+        Strict-Transport-Security "max-age=31536000"
+        X-Content-Type-Options nosniff
+        Referrer-Policy strict-origin-when-cross-origin
+        X-Frame-Options DENY
+        -Server
+    }
+}
+
 preview.fm01.bot {
+    import security_headers
     reverse_proxy website:3007
 }
 
 # The Public API only: the Internal and Dashboard APIs stay on the Compose network.
 api.fm01.bot {
+    import security_headers
     handle /public/* {
         reverse_proxy api:8000
     }

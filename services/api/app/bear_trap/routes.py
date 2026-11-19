@@ -14,7 +14,7 @@ from api import (
 )
 from fastapi import APIRouter
 
-from app.auth import ManagedGuildId, Origin, State
+from app.auth import BanManagedGuildId, ManagedGuildId, Origin, State
 from app.errors import ApiError
 
 __all__ = ("dashboard", "internal")
@@ -126,14 +126,15 @@ async def bear_trap(guild_id: ManagedGuildId, state: State) -> BearTrap:
 
 
 @dashboard.put("")
-async def set_bear_trap(guild_id: ManagedGuildId, body: BearTrapChannel, state: State) -> BearTrap:
+async def set_bear_trap(guild_id: BanManagedGuildId, body: BearTrapChannel, state: State) -> BearTrap:
 	"""Set a guild's bear trap channel. A `null` channel turns the trap off.
 
-	The bot posts the trap message in the channel. If it can't, it turns the trap off again.
+	The bot posts the trap message in the channel. If it can't, it turns the trap off again. The trap soft-bans
+	whoever posts there, so the caller needs Ban Members as well as managing the guild.
 
 	\f
 	Args:
-		guild_id: The guild. The caller must manage it.
+		guild_id: The guild. The caller must manage it and be able to ban members.
 		body: The channel. It must be a text channel in the guild.
 		state: The app state.
 

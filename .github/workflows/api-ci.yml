@@ -10,6 +10,9 @@ on:
       - shared/schemas/**
       - .github/workflows/api-ci.yml
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true

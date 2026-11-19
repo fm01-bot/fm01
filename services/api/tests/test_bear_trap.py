@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 
 import pytest
-from app.dashboard.access import MANAGE_GUILD
+from app.dashboard.access import BAN_MEMBERS, MANAGE_GUILD
 
 pytestmark = pytest.mark.db
 
@@ -20,7 +20,13 @@ def discord(api):
 	fake.codes["code"] = "access"
 	fake.users["access"] = {"id": "1", "username": "alice", "global_name": None, "avatar": None}
 	fake.guilds["access"] = [
-		{"id": str(GUILD), "name": "Managed", "icon": None, "owner": False, "permissions": str(MANAGE_GUILD)},
+		{
+			"id": str(GUILD),
+			"name": "Managed",
+			"icon": None,
+			"owner": False,
+			"permissions": str(MANAGE_GUILD | BAN_MEMBERS),
+		},
 	]
 	fake.bot_guilds = {GUILD, OTHER_GUILD}
 	fake.channels = {
@@ -144,3 +150,16 @@ async def test_manager_turns_the_trap_off_without_a_channel_lookup(api, discord)
 
 	assert response.json() == {"channel_id": None, "kicks": 0}
 	assert not any(call.startswith("GET /channels/") for call in discord.calls)
+
+
+async def test_manage_server_alone_cannot_set_the_trap(api, discord, events):
+	discord.guilds["access"][0]["permissions"] = str(MANAGE_GUILD)
+	auth = await sign_in(api)
+
+	response = await api.client.put(
+		f"/dashboard/guilds/{GUILD}/settings/bear-trap", json={"channel_id": str(TEXT)}, headers=auth
+	)
+
+	assert response.status_code == 403
+	assert await events.drain() == []
+	assert (await api.client.get(f"/dashboard/guilds/{GUILD}/settings/bear-trap", headers=auth)).status_code == 200

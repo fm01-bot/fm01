@@ -1,6 +1,3 @@
-'use server'
-
-
 export async function getStatsCount() {
 
     const COUNTS: number[] = [

@@ -26,7 +26,7 @@ app/
 ├── main.py           # create_app(): routers, error handlers, lifespan
 ├── config.py         # Settings.from_env()
 ├── state.py          # AppState: the stores and clients a running app holds
-├── auth.py           # require_internal, CurrentSession, ManagedGuildId, Origin
+├── auth.py           # require_internal, CurrentSession, ManagedGuildId, BanManagedGuildId, Origin
 ├── errors.py         # ApiError(ErrorCode) -> ErrorBody responses
 ├── events.py         # Announcer: INVALIDATE_SETTING on Redis
 ├── openapi.py        # Writes the OpenAPI schema (source of the TS types)
@@ -44,7 +44,7 @@ tests/                # One file per area; conftest.py has the database, fake Re
 - **Announce every guild setting write** through `Announcer.setting_changed`, with the key the bot registers (constants in `shared/schemas/api`), passing the caller's origin (Internal API) or `None` (Dashboard API).
 - **Errors** are `ApiError(ErrorCode.X)`. Add a code to `api.ErrorCode` in `shared/schemas/api/errors.py` (and its status in `app/errors.py`) rather than returning ad-hoc bodies. The bot's API client maps codes back to exceptions in `services/bot/core/api.py`.
 - **Snowflakes** use `api.Snowflake`: `int` in Python, string on the wire, in bodies and paths alike.
-- **Dashboard routes** that act on a guild take `ManagedGuildId`, which enforces the guild manager rule (owner, Administrator or Manage Server, from the user's Discord guild list cached for 60 s, and the bot in the guild).
+- **Dashboard routes** that act on a guild take `ManagedGuildId`, which enforces the guild manager rule (owner, Administrator or Manage Server, from the user's Discord guild list cached for 60 s, and the bot in the guild). Routes whose setting makes the bot remove members (the bear trap) take `BanManagedGuildId`, which also requires Ban Members.
 - **Schema changes** go in `services/migrations/` (see its `AGENTS.md`).
 - **Generated types**: after changing a route or a model, run `just schemas` and commit `shared/schemas/openapi/openapi.json` and `shared/schemas/ts/api.d.ts`. CI fails on drift.
 

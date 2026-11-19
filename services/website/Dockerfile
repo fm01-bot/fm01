@@ -5,7 +5,7 @@ WORKDIR /app
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 
-RUN npm install -g pnpm
+RUN npm install -g pnpm@10.34.9
 
 FROM base AS deps
 
@@ -42,7 +42,10 @@ ENV NODE_ENV=production
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-RUN pnpm run build
+# The server writes its image cache and refreshed translations at runtime; nothing else needs to be writable.
+RUN pnpm run build && chown -R node:node .next _lib/translations
+
+USER node
 
 EXPOSE 3007
 

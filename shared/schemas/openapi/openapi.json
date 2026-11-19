@@ -1187,7 +1187,7 @@
         ]
       },
       "put": {
-        "description": "Set a guild's bear trap channel. A `null` channel turns the trap off.\n\nThe bot posts the trap message in the channel. If it can't, it turns the trap off again.",
+        "description": "Set a guild's bear trap channel. A `null` channel turns the trap off.\n\nThe bot posts the trap message in the channel. If it can't, it turns the trap off again. The trap soft-bans\nwhoever posts there, so the caller needs Ban Members as well as managing the guild.",
         "operationId": "set_bear_trap",
         "parameters": [
           {

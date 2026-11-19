@@ -261,6 +261,11 @@ def setup_level_subcommands(parent_node: CLINode) -> CLINode:
 		target_role = resolve_role(ctx.guild, role)
 		if not target_role:
 			raise CLIParseError(f"Role `{role}` was not found.", rewards_add_node)
+		author = ctx.author
+		if author.id != ctx.guild.owner_id and (
+			not isinstance(author, discord.Member) or target_role >= author.top_role
+		):
+			raise CLIParseError("You can only reward roles below your own top role.", rewards_add_node)
 
 		cog: Any = ctx.bot.get_cog("Level")
 		if cog:

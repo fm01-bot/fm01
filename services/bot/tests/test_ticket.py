@@ -874,3 +874,28 @@ async def test_ticket_close_disables_components_v2_view():
 			if isinstance(item, discord.ui.Button):
 				item.disabled = True
 		assert btn.disabled is True
+
+
+@pytest.mark.asyncio
+async def test_fallback_transcript_escapes_names_and_filenames():
+	cog = Ticket(MagicMock())
+	channel = MagicMock(spec=discord.TextChannel)
+	channel.name = "ticket"
+	message = MagicMock()
+	message.author.display_name = "<script>alert(1)</script>"
+	message.author.id = 1
+	message.clean_content = "hi"
+	attachment = MagicMock()
+	attachment.filename = "<img src=x onerror=alert(1)>.png"
+	message.attachments = [attachment]
+
+	async def history(**_):
+		yield message
+
+	channel.history = history
+	with patch("chat_exporter.export", AsyncMock(return_value=None)):
+		result = await cog.export_transcript(channel, 42)
+
+	assert "<script>" not in result
+	assert "<img" not in result
+	assert "&lt;script&gt;" in result

@@ -10,6 +10,7 @@ import time
 import xml.etree.ElementTree as ET
 from html.parser import HTMLParser
 from typing import TYPE_CHECKING, Any
+from urllib.parse import quote
 
 import aiohttp
 from args.media import Media
@@ -27,6 +28,12 @@ YT_NAMESPACES = {
 	"yt": "http://www.youtube.com/xml/schemas/2015",
 	"media": "http://search.yahoo.com/mrss/",
 }
+
+
+TWITCH_LOGIN = re.compile(r"[a-z0-9_]{1,25}")
+"""A Twitch login name."""
+RSS_ACCOUNT = re.compile(r"(?!\.+$)[A-Za-z0-9._-]{1,64}")
+"""An account name an RSSHub route accepts as its last path segment: no slashes, queries or dot segments."""
 
 
 class AlertSourceError(Exception):
@@ -444,6 +451,8 @@ class TwitchProvider(AlertProvider):
 		cleaned = channel_input.strip()
 		url_match = re.search(r"twitch\.tv/([^/?#]+)", cleaned)
 		login = (url_match.group(1) if url_match else cleaned).lstrip("@").lower()
+		if not TWITCH_LOGIN.fullmatch(login):
+			raise AccountNotFoundError(f"no Twitch user named {login}")
 
 		users = await self._helix_get(session, f"users?login={login}")
 		if not users:
@@ -465,7 +474,7 @@ class TwitchProvider(AlertProvider):
 		"""
 		# account_id could be numeric user_id or login name
 		param_key = "user_id" if account_id.isdigit() else "user_login"
-		data = await self._helix_get(session, f"streams?{param_key}={account_id.lower()}")
+		data = await self._helix_get(session, f"streams?{param_key}={quote(account_id.lower(), safe='')}")
 
 		if not data:
 			return None
@@ -526,7 +535,9 @@ class GenericRSSProvider(AlertProvider):
 			FeedUnavailableError: The feed could not be downloaded or parsed.
 
 		"""
-		feed_url = f"{self._get_base_url()}/{self.path_prefix}/{account_id}"
+		if not RSS_ACCOUNT.fullmatch(account_id):
+			raise FeedUnavailableError(f"{self._get_base_url()}/{self.path_prefix}/", "invalid account name")
+		feed_url = f"{self._get_base_url()}/{self.path_prefix}/{quote(account_id, safe='')}"
 		try:
 			async with session.get(feed_url, timeout=aiohttp.ClientTimeout(total=10)) as resp:
 				if resp.status != 200:
@@ -548,6 +559,8 @@ class GenericRSSProvider(AlertProvider):
 		handle_match = re.search(r"(?:com|app)/(?:@|p/)?([^/?#]+)", cleaned)
 		candidate = handle_match.group(1) if handle_match else cleaned
 		candidate = candidate.lstrip("@")
+		if not RSS_ACCOUNT.fullmatch(candidate):
+			raise AccountNotFoundError(f"no {self.display_name} account named {candidate}")
 		# Fail on add rather than silently never alerting.
 		await self._fetch_feed(session, candidate)
 		return candidate, candidate

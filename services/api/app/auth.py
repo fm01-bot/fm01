@@ -9,11 +9,12 @@ from api import ErrorCode, Snowflake
 from fastapi import Depends, Header
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from app.dashboard.access import BAN_MEMBERS
 from app.dashboard.sessions import Session
 from app.errors import ApiError
 from app.state import AppState, get_state
 
-__all__ = ("CurrentSession", "ManagedGuildId", "Origin", "State", "require_internal")
+__all__ = ("BanManagedGuildId", "CurrentSession", "ManagedGuildId", "Origin", "State", "require_internal")
 
 State = Annotated[AppState, Depends(get_state)]
 
@@ -102,3 +103,26 @@ async def managed_guild_id(guild_id: Snowflake, state: State, session: CurrentSe
 
 
 ManagedGuildId = Annotated[int, Depends(managed_guild_id)]
+
+
+async def ban_managed_guild_id(guild_id: Snowflake, state: State, session: CurrentSession) -> int:
+	"""Check that the session's user is a guild manager of the guild who may also ban members in it.
+
+	For settings that make the bot remove members (the bear trap soft-bans), so Manage Server alone can't.
+
+	Args:
+		guild_id: The ``guild_id`` path parameter.
+		state: The app state.
+		session: The caller's dashboard session.
+
+	Returns:
+		The guild ID.
+
+	Raises:
+		ApiError: ``forbidden`` or ``not_found``. See `GuildAccess.require_manager`.
+	"""
+	await state.access.require_manager(session, guild_id, BAN_MEMBERS)
+	return guild_id
+
+
+BanManagedGuildId = Annotated[int, Depends(ban_managed_guild_id)]

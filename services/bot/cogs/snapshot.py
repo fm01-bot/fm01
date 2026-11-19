@@ -139,13 +139,17 @@ class Snapshot(commands.Cog, name="Snapshots"):
 
 	async def delete_all_roles(self, ctx: Context):
 		assert ctx.guild is not None
-		"""Deletes all roles in the server.
+		"""Deletes every role in the server that the author outranks (every role, for the owner).
 
 		Args:
 			ctx (Context): The context to get the guild data from.
 
 		"""
+		author = ctx.author
 		for x in ctx.guild.roles:
+			# Only the owner may delete roles that aren't below their own top role.
+			if author.id != ctx.guild.owner_id and (not isinstance(author, discord.Member) or x >= author.top_role):
+				continue
 			try:
 				await x.delete(reason=await self.custom_response("snapshot.strings.save_load_reason", ctx))
 			except (discord.Forbidden, discord.NotFound, discord.HTTPException):

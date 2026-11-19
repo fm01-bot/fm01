@@ -1,5 +1,3 @@
-'use server'
-
 import { PromotedServersJson } from "@/_lib/types/MainPageLang"
 
 export async function getPromotedServers() {

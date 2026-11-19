@@ -44,6 +44,7 @@ from core.clustering import (
 	shard_health,
 )
 from core.config import Config
+from core.cooldowns import SharedCooldowns
 from core.hybrid import FullAliasCommand, full_alias_commands
 from core.settings import GuildSetting, GuildSettings, Prefix, locale_override_setting, prefix_setting
 
@@ -133,6 +134,7 @@ class Bot(commands.AutoShardedBot):
 		self._health_task: asyncio.Task | None = None
 		# Standalone bots report health too: the status page shows them as one block of every shard.
 		self.health = HealthReporter.from_url(self.cluster_config.redis_url)
+		self.cooldowns = SharedCooldowns.from_url(self.cluster_config.redis_url)
 		self._ready_shards: set[int] = set()
 		"""Shards that received READY (or resumed) and haven't disconnected since."""
 		origin = uuid.uuid4().hex
@@ -368,6 +370,7 @@ class Bot(commands.AutoShardedBot):
 		await self.coordinator.release_shards()
 		await self.coordinator.close()
 		await self.health.close()
+		await self.cooldowns.close()
 		await self.message_buffer.close()
 		await self.event_bus.close()
 		await self.state_store.close()
@@ -474,6 +477,8 @@ class Bot(commands.AutoShardedBot):
 			case commands.CommandOnCooldown():
 				retry_after = seconds_to_text(int(error.retry_after))
 				await ctx.send("errors.command_on_cooldown", command=command, retry_after=retry_after)
+			case commands.MaxConcurrencyReached():
+				await ctx.send("errors.max_concurrency", command=command)
 			case commands.ChannelNotFound():
 				await ctx.send("errors.channel_not_found", command=command)
 			case commands.EmojiNotFound():

@@ -15,6 +15,7 @@ TIME = re.compile(
 	r"(\d+)(years|year|yrs|yr|y|months|month|mos|mo|weeks|week|wks|wk|w|days|day|dys|dy|d|hours|hour|hrs|hr|h|minutes|mins|min|mns|mn|m|seconds|secs|sec|scs|sc|s)"
 )
 URL_REGEX = re.compile(
-	r"(?:https?://[^\s<>\"]+|www\.[^\s<>\"]+|\b[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:/[^\s<>\"]*)?)",
+	# Bounded domain labels keep a message like "a.a.a.…" linear instead of quadratic in its length.
+	r"(?:https?://[^\s<>\"]+|www\.[^\s<>\"]+|\b(?:[a-z0-9-]{1,63}\.){1,16}[a-z]{2,63}\b(?:/[^\s<>\"]*)?)",
 	re.IGNORECASE,
 )
