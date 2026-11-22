@@ -129,6 +129,32 @@ class SessionStore:
 			expires_at=row["expires_at"],
 		)
 
+	async def discord_tokens(self, session_id: str) -> OAuthTokenSet | None:
+		"""Read a session's current Discord tokens, e.g. after another request refreshed them.
+
+		Args:
+			session_id: The session.
+
+		Returns:
+			The tokens. ``None`` if the session ended or was encrypted with an old key.
+		"""
+		row = await self._db.fetchrow(
+			"SELECT access_token, refresh_token, discord_expires_at, scopes FROM dashboard_sessions "
+			"WHERE id = $1 AND expires_at > now()",
+			session_id,
+		)
+		if row is None:
+			return None
+		try:
+			return OAuthTokenSet(
+				access_token=self._decrypt(row["access_token"]),
+				refresh_token=self._decrypt(row["refresh_token"]),
+				expires_at=row["discord_expires_at"],
+				scopes=frozenset(row["scopes"]),
+			)
+		except InvalidToken:
+			return None
+
 	async def update_tokens(self, session_id: str, tokens: OAuthTokenSet) -> None:
 		"""Replace a session's Discord tokens.
 

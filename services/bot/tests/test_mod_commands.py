@@ -303,3 +303,86 @@ async def test_purge_rejects_unpurgeable_channels(mod_cog, mock_ctx):
 
 	with pytest.raises(commands.BadArgument):
 		await mod_cog.purge.callback(mod_cog, mock_ctx, 10)
+
+
+def _hierarchy_ctx(mock_ctx, *, author_role: int, bot_role: int, owner_id: int = 1) -> MagicMock:
+	mock_ctx.guild.owner_id = owner_id
+	mock_ctx.author.top_role = author_role
+	mock_ctx.me = MagicMock(spec=discord.Member)
+	mock_ctx.guild.me = mock_ctx.me
+	mock_ctx.me.top_role = bot_role
+	return mock_ctx
+
+
+def _target(mock_ctx, role: int, *, administrator: bool = False) -> MagicMock:
+	member = MagicMock(spec=discord.Member)
+	member.id = 42
+	member.guild = mock_ctx.guild
+	member.top_role = role
+	member.guild_permissions.administrator = administrator
+	return member
+
+
+@pytest.mark.parametrize(
+	("author_role", "target_role", "bot_role", "owner_id", "key"),
+	[
+		(5, 5, 10, 1, "mod.kick.errors.hierarchy"),
+		(5, 7, 10, 1, "mod.kick.errors.hierarchy"),
+		(9, 5, 3, 1, "mod.kick.errors.bot_hierarchy"),
+		(1, 5, 10, 999, None),  # the owner may kick anyone below the bot
+		(9, 5, 10, 42, "mod.kick.errors.hierarchy"),  # nobody kicks the owner
+	],
+)
+async def test_kick_checks_the_role_hierarchy(
+	mod_cog, store, mock_ctx, author_role, target_role, bot_role, owner_id, key
+):
+	ctx = _hierarchy_ctx(mock_ctx, author_role=author_role, bot_role=bot_role, owner_id=owner_id)
+	member = _target(ctx, target_role)
+
+	await mod_cog.kick.callback(mod_cog, ctx, member, reason="r")
+
+	if key is None:
+		store.open.assert_awaited_once()
+	else:
+		store.open.assert_not_awaited()
+		ctx.send.assert_awaited_once_with(key)
+
+
+async def test_ban_checks_the_hierarchy_of_members(mod_cog, store, mock_ctx):
+	ctx = _hierarchy_ctx(mock_ctx, author_role=5, bot_role=10)
+	member = _target(ctx, 7)
+	ctx.guild.get_member.return_value = member
+	user = MagicMock(spec=discord.User)
+	user.id = member.id
+
+	await mod_cog.ban.callback(mod_cog, ctx, user, None, reason="r")
+
+	store.open.assert_not_awaited()
+	ctx.send.assert_awaited_once_with("mod.ban.errors.hierarchy")
+
+
+async def test_mute_refuses_administrators(mod_cog, store, mock_ctx):
+	ctx = _hierarchy_ctx(mock_ctx, author_role=9, bot_role=10)
+	member = _target(ctx, 5, administrator=True)
+
+	await mod_cog.mute.callback(mod_cog, ctx, member, "1h")
+
+	store.open.assert_not_awaited()
+	ctx.send.assert_awaited_once_with("mod.mute.errors.administrator")
+
+
+@pytest.mark.parametrize("command", ["remove", "delete", "edit"])
+async def test_closing_a_ban_case_needs_ban_members(cases_cog, store, mock_bot, mock_ctx, command):
+	mock_ctx.author.guild_permissions.ban_members = False
+	case = make_warn(mock_bot, mock_ctx)
+	case.type = CaseType.BAN
+	store.get.return_value = case
+	args = ("123", "expires") if command == "edit" else ("123",)
+	kwargs = {"new_value": "1s"} if command == "edit" else {}
+
+	with pytest.raises(commands.MissingPermissions):
+		await getattr(cases_cog, command).callback(cases_cog, mock_ctx, *args, **kwargs)
+
+	store.close.assert_not_awaited()
+	store.delete.assert_not_awaited()
+	store.edit.assert_not_awaited()

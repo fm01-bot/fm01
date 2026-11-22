@@ -6,6 +6,7 @@ import discord
 from args import Role, User
 from core import Bot, Context, command, group
 from core.api import InsufficientFunds
+from core.cooldowns import shared_cooldown
 from discord import app_commands
 from discord.ext import commands
 from helpers import custom_response, random_helper
@@ -89,7 +90,7 @@ class Economy(commands.GroupCog, name="Economy", group_name="economy"):
 		await ctx.send(**message)
 
 	@command(user=False)
-	@commands.cooldown(1, 3600, commands.BucketType.user)
+	@shared_cooldown(3600)
 	async def work(self, ctx: Context):
 		assert ctx.guild is not None
 		amount: int = random.randint(300, 1500)
@@ -98,6 +99,7 @@ class Economy(commands.GroupCog, name="Economy", group_name="economy"):
 		await ctx.send("work", amount=amount)
 
 	@command(user=False)
+	@shared_cooldown(3600)
 	async def crime(self, ctx: Context):
 		assert ctx.guild is not None
 		amount = random.randint(500, 2000)
@@ -106,7 +108,7 @@ class Economy(commands.GroupCog, name="Economy", group_name="economy"):
 		await ctx.send("crime", amount=amount)
 
 	@command(user=False)
-	@commands.cooldown(1, 86400, commands.BucketType.user)
+	@shared_cooldown(86400)
 	async def daily(self, ctx: Context):
 		assert ctx.guild is not None
 		amount = 5000
@@ -159,7 +161,7 @@ class Economy(commands.GroupCog, name="Economy", group_name="economy"):
 		await ctx.send("removemoney.success", amount=amount, member=member)
 
 	@command(user=False)
-	@commands.cooldown(1, 3600, commands.BucketType.user)
+	@shared_cooldown(3600)
 	async def luck(self, ctx: Context):
 		assert ctx.guild is not None
 		minimum_balance = 1000
@@ -206,7 +208,7 @@ class Economy(commands.GroupCog, name="Economy", group_name="economy"):
 		)
 
 	@command(user=False)
-	@commands.cooldown(1, 3600, commands.BucketType.user)
+	@shared_cooldown(3600)
 	async def slots(self, ctx: Context, bet: int):
 		assert ctx.guild is not None
 		if bet <= 0:
@@ -357,6 +359,7 @@ class Shop(commands.Cog, name="Shop"):
 
 	@shop.command()
 	@app_commands.checks.has_permissions(manage_guild=True)
+	@commands.has_permissions(manage_guild=True)
 	async def remove_item(self, ctx: Context, item_name: str):
 		assert ctx.guild is not None
 		assert isinstance(ctx.author, discord.Member)

@@ -9,6 +9,6 @@ export const languages = ['hu', 'en'];
 export type Locale = keyof typeof dictionaries
 
 export const hasLocale = (locale: string): locale is Locale =>
-    locale in dictionaries
+    Object.hasOwn(dictionaries, locale)
 
 export const getDictionary = async (locale: Locale) => dictionaries[locale]()

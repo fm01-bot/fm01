@@ -367,6 +367,14 @@
         }
       ]
     },
+    "max_concurrency": {
+      "embeds": [
+        {
+          "description": "Too many people are using this command right now. Try again in a moment.",
+          "title": "Busy"
+        }
+      ]
+    },
     "member_not_found": {
       "embeds": [
         {
@@ -2824,6 +2832,9 @@
         },
         "hierarchy": {
           "content": "You can't ban a user with a higher role than you."
+        },
+        "bot_hierarchy": {
+          "content": "I can't ban a member whose top role is the same as or higher than mine."
         }
       },
       "notify": {
@@ -2958,6 +2969,12 @@
       "errors": {
         "bot": {
           "content": "I'm invincible."
+        },
+        "hierarchy": {
+          "content": "You can't kick a user with a higher role than you."
+        },
+        "bot_hierarchy": {
+          "content": "I can't kick a member whose top role is the same as or higher than mine."
         }
       },
       "notify": {
@@ -3018,6 +3035,12 @@
         },
         "hierarchy": {
           "content": "You can't mute a user with a higher role than you."
+        },
+        "bot_hierarchy": {
+          "content": "I can't mute a member whose top role is the same as or higher than mine."
+        },
+        "administrator": {
+          "content": "I can't mute an administrator."
         }
       },
       "notify": {

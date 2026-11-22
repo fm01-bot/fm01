@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import dataclasses
 import hashlib
 from datetime import UTC, datetime, timedelta
@@ -154,6 +155,17 @@ async def test_expired_discord_token_is_refreshed(api, discord):
 	assert response.status_code == 200
 	assert "POST /oauth2/token" in discord.calls[2:]
 	assert await api.db.fetchval("SELECT discord_expires_at > now() FROM dashboard_sessions")
+
+
+async def test_concurrent_requests_refresh_the_discord_token_once(api, discord):
+	auth = await sign_in(api)
+	await api.db.execute("UPDATE dashboard_sessions SET discord_expires_at = now() - interval '1 second'")
+
+	responses = await asyncio.gather(*(api.client.get("/dashboard/guilds", headers=auth) for _ in range(3)))
+
+	assert [response.status_code for response in responses] == [200, 200, 200]
+	# Discord rotates refresh tokens, so a second refresh with the old one would fail and end the session.
+	assert discord.calls.count("POST /oauth2/token") == 2  # the sign-in, then one refresh
 
 
 async def test_dashboard_routes_need_a_session(api):

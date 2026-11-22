@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+import html
 import io
 import logging
 import re
@@ -204,6 +206,7 @@ class Ticket(commands.Cog, name="Ticket"):
 	def __init__(self, bot: Bot):
 		self.bot = bot
 		self.config = ticket_config_setting(bot.settings)
+		self._create_locks: dict[tuple[int, int], asyncio.Lock] = {}
 
 	async def cog_load(self):
 		self.bot.add_view(TicketLauncherView())
@@ -392,14 +395,14 @@ class Ticket(commands.Cog, name="Ticket"):
 		if not transcript_str:
 			lines = [
 				f"<!DOCTYPE html><html><head><meta charset='utf-8'><title>Ticket #{ticket_id}</title></head>",
-				f"<body><h1>Ticket #{ticket_id} - #{getattr(channel, 'name', 'ticket')}</h1><ul>",
+				f"<body><h1>Ticket #{ticket_id} - #{html.escape(getattr(channel, 'name', 'ticket'))}</h1><ul>",
 			]
 			if isinstance(channel, discord.TextChannel):
 				try:
 					async for msg in channel.history(limit=500, oldest_first=True):
-						author_str = f"{msg.author.display_name} ({msg.author.id})"
-						content_str = msg.clean_content.replace("<", "&lt;").replace(">", "&gt;")
-						att_parts: list[str] = [f"<br>[Attachment: {att.filename}]" for att in msg.attachments]
+						author_str = html.escape(f"{msg.author.display_name} ({msg.author.id})")
+						content_str = html.escape(msg.clean_content)
+						att_parts = [f"<br>[Attachment: {html.escape(att.filename)}]" for att in msg.attachments]
 						att_str = "".join(att_parts)
 						lines.append(
 							f"<li><strong>{author_str}</strong> [{msg.created_at.strftime('%Y-%m-%d %H:%M:%S UTC')}]: {content_str}{att_str}</li>"
@@ -415,6 +418,19 @@ class Ticket(commands.Cog, name="Ticket"):
 		assert interaction.guild is not None
 		assert isinstance(interaction.user, discord.Member)
 		await interaction.response.defer(thinking=True, ephemeral=True)
+		# One creation per member at a time, so quick double submits can't pass the open ticket limit together.
+		key = (interaction.guild.id, interaction.user.id)
+		lock = self._create_locks.setdefault(key, asyncio.Lock())
+		try:
+			async with lock:
+				return await self._create_ticket(interaction, topic, description)
+		finally:
+			if not lock.locked():
+				self._create_locks.pop(key, None)
+
+	async def _create_ticket(self, interaction: discord.Interaction, topic: str, description: str):
+		assert interaction.guild is not None
+		assert isinstance(interaction.user, discord.Member)
 
 		cfg = await self.get_ticket_config(interaction.guild.id)
 		if cfg and not cfg.get("is_on", True):

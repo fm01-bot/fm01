@@ -49,6 +49,7 @@ class _Cache[T]:
 	def __init__(self, ttl: float) -> None:
 		self._ttl = ttl
 		self._entries: dict[object, tuple[float, T]] = {}
+		self._locks: dict[object, asyncio.Lock] = {}
 
 	async def get(self, key: object, compute: Callable[[], Awaitable[T]]) -> T:
 		"""Get a value, computing it if it's missing or too old.
@@ -60,13 +61,15 @@ class _Cache[T]:
 		Returns:
 			The value.
 		"""
-		now = time.monotonic()
-		entry = self._entries.get(key)
-		if entry is not None and now - entry[0] < self._ttl:
-			return entry[1]
-		value = await compute()
-		self._entries[key] = (now, value)
-		return value
+		# One computation per key at a time, so a burst of requests after expiry computes the value once, not once each.
+		async with self._locks.setdefault(key, asyncio.Lock()):
+			now = time.monotonic()
+			entry = self._entries.get(key)
+			if entry is not None and now - entry[0] < self._ttl:
+				return entry[1]
+			value = await compute()
+			self._entries[key] = (now, value)
+			return value
 
 
 class StatusStore:

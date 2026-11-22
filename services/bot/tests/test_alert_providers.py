@@ -412,3 +412,23 @@ async def test_twitch_fetch_latest_reads_profile_image(monkeypatch: pytest.Monke
 	assert media is not None
 	assert media.author.avatar_url == "https://static-cdn.jtvnw.net/p.png"
 	assert session.get.call_args_list[1].args[0].endswith("users?id=123")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("account", ["..", "a/b", "../../twitter/user/x", "a?b=c", "a%2fb"])
+async def test_generic_rss_provider_refuses_account_names_that_change_the_route(account: str):
+	session = _mock_session(200, RSS_SAMPLE_FEED)
+
+	with pytest.raises(AccountNotFoundError):
+		await TikTokProvider().resolve_channel(session, account)
+	session.get.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_twitch_resolve_refuses_malformed_logins(monkeypatch: pytest.MonkeyPatch):
+	provider = _twitch_with_token(monkeypatch)
+	session = _mock_session(200)
+
+	with pytest.raises(AccountNotFoundError):
+		await provider.resolve_channel(session, "someone&login=other")
+	session.get.assert_not_called()

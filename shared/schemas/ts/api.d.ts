@@ -82,7 +82,8 @@ export interface paths {
          * Set Bear Trap
          * @description Set a guild's bear trap channel. A `null` channel turns the trap off.
          *
-         *     The bot posts the trap message in the channel. If it can't, it turns the trap off again.
+         *     The bot posts the trap message in the channel. If it can't, it turns the trap off again. The trap soft-bans
+         *     whoever posts there, so the caller needs Ban Members as well as managing the guild.
          */
         put: operations["set_bear_trap"];
         post?: never;

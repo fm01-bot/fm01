@@ -30,6 +30,8 @@ from core.context import Context
 from core.locale import resolve_locale
 from discord.ext import commands, localization
 
+from helpers.formatting import SafeFormatter, StrictFormatter
+
 if TYPE_CHECKING:
 	from core.bot import Bot
 
@@ -113,7 +115,7 @@ def _parse_button_style(style: Any) -> discord.ButtonStyle:
 	return discord.ButtonStyle.secondary
 
 
-class CustomResponseFormatter(localization.CustomFormatter):
+class CustomResponseFormatter(SafeFormatter):
 	def format(self, format_string: str, /, *args: Any, **kwargs: Any) -> Any:
 		lines = format_string.split("\n")
 		kept_lines: list[str] = []
@@ -138,6 +140,7 @@ class CustomResponseFormatter(localization.CustomFormatter):
 
 class CustomLocalization(localization.Localization):
 	_custom_formatter = CustomResponseFormatter()
+	_strict_formatter = StrictFormatter()
 
 	@classmethod
 	def format_strings(cls, data: Any, *, placeholders: bool = True, **kwargs: Any) -> Any:
@@ -146,7 +149,8 @@ class CustomLocalization(localization.Localization):
 		elif isinstance(data, list):
 			return [cls.format_strings(item, placeholders=placeholders, **kwargs) for item in data]
 		elif isinstance(data, str):
-			return cls._custom_formatter.format(data, **kwargs) if placeholders else data.format(**kwargs)
+			formatter = cls._custom_formatter if placeholders else cls._strict_formatter
+			return formatter.format(data, **kwargs)
 		else:
 			return data
 
@@ -603,7 +607,7 @@ class CustomResponse:
 
 		if isinstance(payload, dict):
 			if random_value := payload.get("random"):
-				payload = localization.Localization.format_strings(payload, random=random.choice(random_value))
+				payload = CustomLocalization.format_strings(payload, random=random.choice(random_value))
 			payload.pop("random", None)
 			payload = self.convert_embeds(payload) if convert_embeds else payload
 			payload = self.convert_components(payload) if convert_components else payload

@@ -10,6 +10,7 @@ from cogs.basic import Basic
 from cogs.config_subcommands.leave import setup_leave_subcommands
 from cogs.status import Status
 from core.clustering import ClusterConfig
+from discord.ext import commands
 from helpers.cli_parser import CLINode, CLIParseError
 
 
@@ -358,7 +359,9 @@ class TestSayCog:
 
 		cog = Say(mock_bot)
 		ctx = MagicMock()
+		ctx.author = MagicMock(spec=discord.Member)
 		channel = MagicMock(spec=discord.TextChannel)
+		channel.guild = ctx.author.guild
 		channel.send = AsyncMock()
 
 		await cog.channel_say.callback(cog, ctx, channel=channel, message="Channel message")
@@ -367,6 +370,22 @@ class TestSayCog:
 		assert args[0] == "Channel message"
 		assert isinstance(kwargs["allowed_mentions"], discord.AllowedMentions)
 		assert kwargs["allowed_mentions"].everyone is False
+
+	@pytest.mark.asyncio
+	async def test_channel_say_needs_manage_messages_in_the_target_channel(self, mock_bot):
+		from cogs.say import Say
+
+		cog = Say(mock_bot)
+		ctx = MagicMock()
+		ctx.author = MagicMock(spec=discord.Member)
+		channel = MagicMock(spec=discord.TextChannel)
+		channel.guild = ctx.author.guild
+		channel.permissions_for.return_value = discord.Permissions(send_messages=True)
+		channel.send = AsyncMock()
+
+		with pytest.raises(commands.MissingPermissions):
+			await cog.channel_say.callback(cog, ctx, channel=channel, message="Channel message")
+		channel.send.assert_not_called()
 
 	@pytest.mark.asyncio
 	async def test_reverse_say_command(self, mock_bot):
@@ -418,6 +437,7 @@ class TestBanCommand:
 		target_user = MagicMock(spec=discord.User)
 		target_user.id = 999
 		ctx.guild.id = 123
+		ctx.guild.get_member.return_value = None  # not a member, so no role hierarchy applies
 		ctx.author.id = 456
 		ctx.message.id = 789
 		ctx.message.reference = None
@@ -443,6 +463,7 @@ class TestBanCommand:
 		target_user = MagicMock(spec=discord.User)
 		target_user.id = 999
 		ctx.guild.id = 123
+		ctx.guild.get_member.return_value = None  # not a member, so no role hierarchy applies
 		ctx.author.id = 456
 		ctx.message.id = 789
 		ctx.message.reference = None
@@ -467,6 +488,7 @@ class TestBanCommand:
 		target_user = MagicMock(spec=discord.User)
 		target_user.id = 999
 		ctx.guild.id = 123
+		ctx.guild.get_member.return_value = None  # not a member, so no role hierarchy applies
 		ctx.author.id = 456
 		ctx.message.id = 789
 		ctx.message.reference = None
@@ -491,6 +513,7 @@ class TestBanCommand:
 		target_user = MagicMock(spec=discord.User)
 		target_user.id = 999
 		ctx.guild.id = 123
+		ctx.guild.get_member.return_value = None  # not a member, so no role hierarchy applies
 		ctx.author.id = 456
 		ctx.message.id = 789
 		ctx.message.reference = None

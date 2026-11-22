@@ -284,6 +284,10 @@ class Cobalt:
 		return bytes(buffer)
 
 
+DOWNLOAD_CONCURRENCY = 3
+"""How many downloads one bot process runs at once: each holds its files in memory until they're sent."""
+
+
 def upload_limit(ctx: Context) -> int:
 	"""The largest attachment, in bytes, a response to ``ctx`` may carry."""
 	if ctx.interaction is not None:
@@ -346,6 +350,8 @@ class Utility(commands.GroupCog, name="Utility", group_name="utility"):
 		)
 
 	@command()
+	@commands.cooldown(1, 30, commands.BucketType.user)
+	@commands.max_concurrency(DOWNLOAD_CONCURRENCY)
 	async def download(self, ctx: Context, link: str, audio: bool = False) -> None:
 		if self.cobalt is None:
 			await ctx.send("download.errors.unavailable")
@@ -355,9 +361,12 @@ class Utility(commands.GroupCog, name="Utility", group_name="utility"):
 		limit = upload_limit(ctx)
 		try:
 			media = await self.cobalt.resolve(link, audio)
-			files = [
-				discord.File(io.BytesIO(await self.cobalt.fetch(item, limit)), filename=item.filename) for item in media
-			]
+			files: list[discord.File] = []
+			remaining = limit  # every file of a response together, so one request holds at most `limit` bytes
+			for item in media:
+				data = await self.cobalt.fetch(item, remaining)
+				remaining -= len(data)
+				files.append(discord.File(io.BytesIO(data), filename=item.filename))
 		except CobaltError as error:
 			logger.info(f"cobalt refused {link!r}: {error.code}")
 			await ctx.send(error_key(error.code))

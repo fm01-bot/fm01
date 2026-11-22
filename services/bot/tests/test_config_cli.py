@@ -255,6 +255,7 @@ async def test_config_level_execution():
 	guild.get_role.return_value = test_role
 
 	ctx.guild = guild
+	guild.owner_id = ctx.author.id  # the owner may reward any role
 	ctx.channel = test_channel
 
 	config_cog = Config(bot)

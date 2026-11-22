@@ -10,8 +10,8 @@ from args.format_date_time import FormatDateTime
 from args.guild import Guild
 from args.member import Member
 from discord.ext import commands
-from discord.ext.localization import CustomFormatter
 from helpers.custom_response import KWARG_MAPPING
+from helpers.formatting import SafeFormatter
 
 if TYPE_CHECKING:
 	import asyncpg
@@ -133,7 +133,7 @@ class JoinLeave(commands.Cog, name="JoinLeave"):
 		self, template: str, member: discord.Member, channel: discord.abc.Messageable | None = None, **extra: Any
 	) -> str:
 		try:
-			formatter = CustomFormatter()
+			formatter = SafeFormatter()
 			member_arg = Member.from_member(member)
 			guild_arg = Guild.from_guild(member.guild) if member.guild else None
 			channel_arg = (

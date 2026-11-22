@@ -12,10 +12,15 @@ const handle = app.getRequestHandler()
 
 app.prepare().then(async () => {
     const server = createServer((req, res) => {
-        const requestUrl = new URL(
-            req.url || '/',
-            `http://${req.headers.host || 'localhost'}`
-        )
+        let requestUrl: URL
+        try {
+            // A fixed base: a path like `//:99999` would otherwise be read as a host and make `new URL` throw,
+            // and an exception here would end the process.
+            requestUrl = new URL(`http://localhost${req.url || '/'}`)
+        } catch {
+            res.writeHead(400).end()
+            return
+        }
         const query: ParsedUrlQuery = {}
 
         requestUrl.searchParams.forEach((value, key) => {
