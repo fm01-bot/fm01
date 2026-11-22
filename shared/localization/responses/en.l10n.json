@@ -3605,6 +3605,46 @@
       "server_snapshot": "Snapshot of {guild.name}"
     }
   },
+  "starboard": {
+    "post": {
+      "content": "{emoji} **{count}** | {channel}",
+      "jump": "Jump to message",
+      "message": {
+        "embeds": [
+          {
+            "author": {
+              "icon_url": "{author.avatar}",
+              "name": "{author.display_name}",
+              "url": "{jump}"
+            },
+            "color": "#FFAC33",
+            "description": "{content}",
+            "fields": [
+              {
+                "inline": false,
+                "name": "Attachments",
+                "value": "{attachments}"
+              }
+            ],
+            "timestamp": "{timestamp}"
+          }
+        ]
+      },
+      "reply": {
+        "embeds": [
+          {
+            "author": {
+              "icon_url": "{author.avatar}",
+              "name": "↩️ Replying to {author.display_name}",
+              "url": "{jump}"
+            },
+            "color": "#99AAB5",
+            "description": "{content}"
+          }
+        ]
+      }
+    }
+  },
   "ticket": {
     "actions": {
       "archived": {

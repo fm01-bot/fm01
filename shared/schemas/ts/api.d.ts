@@ -140,6 +140,94 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/dashboard/guilds/{guild_id}/settings/starboards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Starboards
+         * @description List a guild's boards.
+         */
+        get: operations["starboards"];
+        put?: never;
+        /**
+         * Create Starboard
+         * @description Add a board. A guild can have at most 5.
+         */
+        post: operations["create_starboard"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/dashboard/guilds/{guild_id}/settings/starboards/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Starboard
+         * @description Remove a board with its entries and blocks. Its posts stay in the channel.
+         */
+        delete: operations["delete_starboard"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Starboard
+         * @description Change a board. Fields left out keep their value. Existing posts follow the change at their next star.
+         */
+        patch: operations["update_starboard"];
+        trace?: never;
+    };
+    "/dashboard/guilds/{guild_id}/settings/starboards/{name}/blocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Starboard Blocks
+         * @description List the messages blocked from a board: those whose post someone deleted.
+         */
+        get: operations["starboard_blocks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/dashboard/guilds/{guild_id}/settings/starboards/{name}/blocks/{message_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Unblock Starboard Message
+         * @description Let a blocked message be posted on the board again, at its next star.
+         */
+        delete: operations["unblock_starboard_message"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/dashboard/me": {
         parameters: {
             query?: never;
@@ -412,6 +500,177 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/internal/guilds/{guild_id}/settings/starboards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Starboards
+         * @description List a guild's boards.
+         */
+        get: operations["internal_starboards"];
+        put?: never;
+        /**
+         * Internal Create Starboard
+         * @description Add a board to a guild.
+         */
+        post: operations["internal_create_starboard"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/settings/starboards/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Internal Delete Starboard
+         * @description Remove a board with its entries and blocks. Its posts stay in the channel.
+         */
+        delete: operations["internal_delete_starboard"];
+        options?: never;
+        head?: never;
+        /**
+         * Internal Update Starboard
+         * @description Change a board. Fields left out keep their value.
+         */
+        patch: operations["internal_update_starboard"];
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/starboard/messages/deleted": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Internal Starred Messages Deleted
+         * @description Forget deleted originals with their stars and entries.
+         */
+        post: operations["internal_starred_messages_deleted"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/starboard/messages/{message_id}/clear": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Internal Clear Stars
+         * @description Forget a message's stars after its reactions were cleared, and take down its posts.
+         */
+        post: operations["internal_clear_stars"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/starboard/posts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Internal Set Starboard Post
+         * @description Record the post the bot made for a message on a board. `null` fields record that it removed the post.
+         */
+        put: operations["internal_set_starboard_post"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/starboard/posts/deleted": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Internal Starboard Posts Deleted
+         * @description Block the messages whose posts were deleted by someone other than the bot.
+         */
+        post: operations["internal_starboard_posts_deleted"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/starboard/seeds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Internal Seed Stars
+         * @description Record everyone who starred a message with an emoji, as read from Discord.
+         */
+        post: operations["internal_seed_stars"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/starboard/stars": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Internal Star
+         * @description Add or remove one member's star on a message, or on one of its posts.
+         *
+         *     `message` is `null` if the API has never seen the message. The bot then seeds it, or ignores the star if it was
+         *     on a message in a board channel that isn't a post.
+         */
+        post: operations["internal_star"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/internal/settings/bear-trap": {
         parameters: {
             query?: never;
@@ -464,6 +723,26 @@ export interface paths {
          * @description List every guild's prefix.
          */
         get: operations["all_prefixes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/settings/starboards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * All Starboards
+         * @description List the boards of every guild that has any.
+         */
+        get: operations["all_starboards"];
         put?: never;
         post?: never;
         delete?: never;
@@ -612,6 +891,14 @@ export interface components {
             message_id?: string | null;
         };
         /**
+         * ClearStars
+         * @description Reactions removed from a message all at once. ``emoji: null`` means every emoji.
+         */
+        ClearStars: {
+            /** Emoji */
+            emoji?: string | null;
+        };
+        /**
          * ClusterDay
          * @description One UTC day of a status block's (or the whole bot's) history. Fractions sum to 1.
          */
@@ -694,7 +981,7 @@ export interface components {
          * @description Why a request failed. Clients branch on this, never on the message.
          * @enum {string}
          */
-        ErrorCode: "invalid_request" | "unauthorized" | "forbidden" | "not_found" | "insufficient_funds" | "same_account" | "invalid_channel" | "rate_limited" | "discord_unavailable";
+        ErrorCode: "invalid_request" | "unauthorized" | "forbidden" | "not_found" | "insufficient_funds" | "same_account" | "invalid_channel" | "invalid_emoji" | "starboard_limit" | "starboard_name_taken" | "starboard_tier_taken" | "rate_limited" | "discord_unavailable";
         /**
          * GuildBearTrap
          * @description A guild's bear trap state, with the guild's ID.
@@ -752,6 +1039,19 @@ export interface components {
             prefix: string;
         };
         /**
+         * GuildStarboards
+         * @description Every board of a guild.
+         */
+        GuildStarboards: {
+            /** Boards */
+            boards: components["schemas"]["Starboard"][];
+            /**
+             * Guild Id
+             * @example 1234567890123456789
+             */
+            guild_id: string;
+        };
+        /**
          * LeaderboardEntry
          * @description One member on a guild's leaderboard.
          */
@@ -788,6 +1088,14 @@ export interface components {
             id: string;
             /** Name */
             name: string;
+        };
+        /**
+         * MessageIds
+         * @description Messages that were deleted.
+         */
+        MessageIds: {
+            /** Message Ids */
+            message_ids: string[];
         };
         /**
          * MoveRequest
@@ -921,6 +1229,199 @@ export interface components {
          * @enum {string}
          */
         ShardStatus: "operational" | "lagging" | "unresponsive";
+        /**
+         * StarChange
+         * @description A member added or removed a star. ``message_id`` may be the original or one of its posts.
+         */
+        StarChange: {
+            /** Emoji */
+            emoji: string;
+            /**
+             * Message Id
+             * @example 1234567890123456789
+             */
+            message_id: string;
+            /** Starred */
+            starred: boolean;
+            /**
+             * User Id
+             * @example 1234567890123456789
+             */
+            user_id: string;
+        };
+        /**
+         * StarResult
+         * @description The outcome of a star change. ``message`` is ``None`` when the API has never seen the message: the bot then
+         *     seeds it (an original) or ignores the change (a message in a board channel that isn't a post).
+         */
+        StarResult: {
+            message?: components["schemas"]["StarredMessage"] | null;
+        };
+        /**
+         * StarSeed
+         * @description Everyone who starred a message with an emoji, read from Discord the first time the API sees the message.
+         */
+        StarSeed: {
+            /**
+             * Author Id
+             * @example 1234567890123456789
+             */
+            author_id: string;
+            /**
+             * Channel Id
+             * @example 1234567890123456789
+             */
+            channel_id: string;
+            /** Emoji */
+            emoji: string;
+            /**
+             * Message Id
+             * @example 1234567890123456789
+             */
+            message_id: string;
+            /** User Ids */
+            user_ids: string[];
+        };
+        /**
+         * Starboard
+         * @description A board.
+         */
+        Starboard: {
+            /**
+             * Channel Id
+             * @example 1234567890123456789
+             */
+            channel_id: string;
+            /**
+             * Channel Ids
+             * @default []
+             */
+            channel_ids: string[];
+            /**
+             * Channel Mode
+             * @default blocklist
+             * @enum {string}
+             */
+            channel_mode: "blocklist" | "allowlist";
+            /**
+             * Emoji
+             * @default ⭐
+             */
+            emoji: string;
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+            /** Max Age Days */
+            max_age_days?: number | null;
+            /** Name */
+            name: string;
+            /**
+             * Threshold
+             * @default 3
+             */
+            threshold: number;
+        };
+        /**
+         * StarboardBlock
+         * @description A message blocked from a board.
+         */
+        StarboardBlock: {
+            /**
+             * Message Id
+             * @example 1234567890123456789
+             */
+            message_id: string;
+        };
+        /**
+         * StarboardEntry
+         * @description A message on one board: its post there, if any, and whether a moderator blocked it.
+         */
+        StarboardEntry: {
+            /**
+             * Blocked
+             * @default false
+             */
+            blocked: boolean;
+            /** Board */
+            board: string;
+            /**
+             * Message Id
+             * @example 1234567890123456789
+             */
+            message_id: string;
+            /** Post Channel Id */
+            post_channel_id?: string | null;
+            /** Post Id */
+            post_id?: string | null;
+        };
+        /**
+         * StarboardPost
+         * @description The post the bot made for a message on a board. ``None`` fields record that it removed the post.
+         */
+        StarboardPost: {
+            /** Board */
+            board: string;
+            /**
+             * Message Id
+             * @example 1234567890123456789
+             */
+            message_id: string;
+            /** Post Channel Id */
+            post_channel_id?: string | null;
+            /** Post Id */
+            post_id?: string | null;
+        };
+        /**
+         * StarboardUpdate
+         * @description Changes to a board. Fields left out keep their value; ``max_age_days: null`` removes the limit.
+         */
+        StarboardUpdate: {
+            /** Channel Id */
+            channel_id?: string | null;
+            /** Channel Ids */
+            channel_ids?: string[] | null;
+            /** Channel Mode */
+            channel_mode?: ("blocklist" | "allowlist") | null;
+            /** Emoji */
+            emoji?: string | null;
+            /** Enabled */
+            enabled?: boolean | null;
+            /** Max Age Days */
+            max_age_days?: number | null;
+            /** Name */
+            name?: string | null;
+            /** Threshold */
+            threshold?: number | null;
+        };
+        /**
+         * StarredMessage
+         * @description A message's stars with one emoji, and its entries on the boards that use the emoji.
+         */
+        StarredMessage: {
+            /**
+             * Author Id
+             * @example 1234567890123456789
+             */
+            author_id: string;
+            /**
+             * Channel Id
+             * @example 1234567890123456789
+             */
+            channel_id: string;
+            /** Count */
+            count: number;
+            /** Emoji */
+            emoji: string;
+            /** Entries */
+            entries: components["schemas"]["StarboardEntry"][];
+            /**
+             * Message Id
+             * @example 1234567890123456789
+             */
+            message_id: string;
+        };
         /**
          * Status
          * @description The bot's current status.
@@ -1319,6 +1820,255 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Prefix"];
                 };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    starboards: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Starboard"][];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    create_starboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Starboard"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Starboard"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    delete_starboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    update_starboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StarboardUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Starboard"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    starboard_blocks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StarboardBlock"][];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    unblock_starboard_message: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+                message_id: string;
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description The request failed. `code` says why. */
             "4XX": {
@@ -2026,6 +2776,448 @@ export interface operations {
             };
         };
     };
+    internal_starboards: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Starboard"][];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_create_starboard: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description The calling bot instance's ID. Change events from this request carry it, so that instance ignores them. */
+                "X-Fm01-Origin"?: string | null;
+            };
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Starboard"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Starboard"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_delete_starboard: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description The calling bot instance's ID. Change events from this request carry it, so that instance ignores them. */
+                "X-Fm01-Origin"?: string | null;
+            };
+            path: {
+                guild_id: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_update_starboard: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description The calling bot instance's ID. Change events from this request carry it, so that instance ignores them. */
+                "X-Fm01-Origin"?: string | null;
+            };
+            path: {
+                guild_id: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StarboardUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Starboard"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_starred_messages_deleted: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MessageIds"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StarboardEntry"][];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_clear_stars: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+                message_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClearStars"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StarboardEntry"][];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_set_starboard_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StarboardPost"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StarboardEntry"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_starboard_posts_deleted: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MessageIds"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StarboardEntry"][];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_seed_stars: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StarSeed"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StarredMessage"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_star: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StarChange"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StarResult"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     all_bear_traps: {
         parameters: {
             query?: never;
@@ -2118,6 +3310,44 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GuildPrefix"][];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    all_starboards: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuildStarboards"][];
                 };
             };
             /** @description The request failed. `code` says why. */
