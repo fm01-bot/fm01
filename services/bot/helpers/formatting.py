@@ -91,7 +91,9 @@ class _Guarded(string.Formatter):
 		if _PRIVATE.search(field_name):
 			raise RefusedFieldError(field_name)
 		first, rest = _split(field_name)
-		obj = self.get_value(first, args, kwargs)
+		# The plain lookup, which raises for a missing name: `CustomFormatter.get_value` returns ``"{name}"`` instead,
+		# and following the path into that text would print a piece of it (``{name[0]}`` gives ``{``).
+		obj = string.Formatter.get_value(self, first, args, kwargs)
 		for is_attr, key in rest:
 			if isinstance(obj, _OPAQUE):
 				raise RefusedFieldError(field_name)

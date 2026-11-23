@@ -7,6 +7,13 @@ import translationFetcher from './translationFetcher'
 const port = parseInt(process.env.PORT || '3007', 10)
 const dev = process.env.NODE_ENV !== 'production'
 
+if (!dev && !process.env.OG_IMAGE_SECRET) {
+    // Without it each process signs preview image links with its own random key, so links in cached pages and in
+    // posts Discord or Twitter already fetched break on every restart.
+    console.error('> OG_IMAGE_SECRET must be set in production (any long random string)')
+    process.exit(1)
+}
+
 const app = next({ dev })
 const handle = app.getRequestHandler()
 

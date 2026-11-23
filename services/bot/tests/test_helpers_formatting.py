@@ -45,6 +45,11 @@ def test_bad_index_stays_as_typed():
 	assert SafeFormatter().format("{member[0]}", member=SimpleNamespace()) == "{member[0]}"
 
 
+def test_unknown_fields_with_a_path_stay_as_typed():
+	assert SafeFormatter().format("Welcome {nickname[0]}") == "Welcome {nickname[0]}"
+	assert SafeFormatter().format("{nickname.upper}") == "{nickname.upper}"
+
+
 def test_strict_formatter_raises_on_missing_fields():
 	with pytest.raises(KeyError):
 		StrictFormatter().format("{missing}")

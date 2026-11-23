@@ -47,9 +47,11 @@ class SharedCooldowns:
 			``None`` if the cooldown started, else the seconds left on the running one.
 		"""
 		name = f"fm01:cooldown:{key}"
-		if await self._redis.set(name, 1, nx=True, ex=seconds):
-			return None
-		return max(await self._redis.pttl(name), 0) / 1000
+		while not await self._redis.set(name, 1, nx=True, ex=seconds):
+			ttl = await self._redis.pttl(name)
+			if ttl != -2:  # -2: the key expired between the two calls, so the cooldown is over; start a new one
+				return max(ttl, 0) / 1000
+		return None
 
 	async def close(self) -> None:
 		"""Close the Redis connection."""

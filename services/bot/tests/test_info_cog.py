@@ -137,3 +137,12 @@ async def test_ip_refuses_anything_but_an_address(cog, ctx):
 	with pytest.raises(commands.BadArgument):
 		await cog.ip.callback(cog, ctx, "../me")
 	cog.client.request.assert_not_called()
+
+
+@pytest.mark.parametrize("ip_addr", ["fe80::1%a#", "fe80::1%a?x=y", "fe80::1%eth0"])
+async def test_ip_refuses_scope_ids(cog, ctx, ip_addr):
+	cog.client.request = AsyncMock()
+
+	with pytest.raises(commands.BadArgument):
+		await cog.ip.callback(cog, ctx, ip_addr)
+	cog.client.request.assert_not_called()

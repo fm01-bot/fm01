@@ -215,6 +215,7 @@ class Ticket(commands.Cog, name="Ticket"):
 		self.bot = bot
 		self.config = ticket_config_setting(bot.settings, bot.api)
 		self._create_locks: dict[tuple[int, int], asyncio.Lock] = {}
+		self._create_users: dict[tuple[int, int], int] = {}
 
 	async def cog_load(self):
 		self.bot.add_view(TicketLauncherView())
@@ -411,12 +412,16 @@ class Ticket(commands.Cog, name="Ticket"):
 		# One creation per member at a time, so quick double submits can't pass the open ticket limit together.
 		key = (interaction.guild.id, interaction.user.id)
 		lock = self._create_locks.setdefault(key, asyncio.Lock())
+		# Counts the holder and every waiter: `lock.locked()` is False while a woken waiter has yet to take the lock,
+		# so dropping the lock then would let a later submit make a new one and run alongside that waiter.
+		self._create_users[key] = self._create_users.get(key, 0) + 1
 		try:
 			async with lock:
 				return await self._create_ticket(interaction, topic, description)
 		finally:
-			if not lock.locked():
-				self._create_locks.pop(key, None)
+			self._create_users[key] -= 1
+			if not self._create_users[key]:
+				del self._create_users[key], self._create_locks[key]
 
 	async def _create_ticket(self, interaction: discord.Interaction, topic: str, description: str):
 		assert interaction.guild is not None
