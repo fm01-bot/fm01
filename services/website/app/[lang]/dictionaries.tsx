@@ -1,7 +1,7 @@
 
 const dictionaries = {
-    en: () => import('@lib/translations/en.json').then((module) => module.default),
-    hu: () => import('@lib/translations/hu.json').then((module) => module.default),
+    en: () => import('@shared/localization/website/en.json').then((module) => module.default),
+    hu: () => import('@shared/localization/website/hu.json').then((module) => module.default),
 }
 
 export const languages = ['hu', 'en'];

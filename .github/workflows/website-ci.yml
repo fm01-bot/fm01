@@ -1,0 +1,66 @@
+name: Website checks
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - services/website/**
+      # The showcase points at bot responses by exact key, so renaming a bot text can break the site.
+      - shared/localization/**
+      - .github/workflows/website-ci.yml
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  localization:
+    name: Localization references
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "26"
+
+      # No dependencies needed. Errors fail the job; missing Hungarian texts and en/hu
+      # mismatches are reported as warnings on the PR.
+      - name: Check showcase references and en/hu parity
+        run: node services/website/scripts/check-localization.mjs
+
+  lint-and-typecheck:
+    name: Lint & typecheck
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/website
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: "12"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "26"
+          cache: pnpm
+          cache-dependency-path: services/website/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck

@@ -67,24 +67,31 @@
             "description": "Handle rule breakers with ease!",
             "messages": [
               {
-                "message": "Hahaha I'll hack your server!",
                 "username": "rnxm",
                 "avatar": "/images/rnxm.webp",
-                "bot": false
+                "bot": false,
+                "message": "Hahaha I'll hack your server!"
               },
               {
-                "message": "?!warn @rnxm 1w Hacking threats",
                 "username": "Pearoo",
                 "avatar": "/images/pearoo.webp",
-                "bot": false
+                "bot": false,
+                "message": "?!warn @rnxm 1w Hacking threats"
               },
               {
                 "username": "fm01",
                 "avatar": "/images/logo.webp",
                 "bot": true,
-                "embeds": [
-                  "bot-locale.warn.embed"
-                ]
+                "botResponse": "mod.warn.response",
+                "values": {
+                  "warn.id": {
+                    "randomInt": [
+                      1111,
+                      9999
+                    ],
+                    "prefix": "#"
+                  }
+                }
               }
             ]
           },
@@ -93,19 +100,33 @@
             "description": "Easily reward your community!",
             "messages": [
               {
-                "message": "?!giveaway 2d 2 nitro ($10)",
                 "username": "Pearoo",
                 "avatar": "/images/pearoo.webp",
-                "bot": false
+                "bot": false,
+                "message": "?!giveaway 2d 2 nitro ($10)"
               },
               {
-                "message": "",
                 "username": "fm01",
                 "avatar": "/images/logo.webp",
                 "bot": true,
-                "embeds": [
-                  "bot-locale.giveaway.embed"
-                ]
+                "botResponse": "giveaway.layout.active",
+                "values": {
+                  "giveaway.ends.relative": "in 2 days",
+                  "giveaway.ends": "2 days",
+                  "giveaway.entries": {
+                    "randomInt": [
+                      111,
+                      999
+                    ]
+                  },
+                  "giveaway.id": {
+                    "randomInt": [
+                      1000,
+                      9999
+                    ]
+                  },
+                  "requirements": ""
+                }
               }
             ]
           },
@@ -114,19 +135,27 @@
             "description": "Engage members with a global economy!",
             "messages": [
               {
-                "message": "?!work",
                 "username": "Pearoo",
                 "avatar": "/images/pearoo.webp",
-                "bot": false
+                "bot": false,
+                "message": "?!work"
               },
               {
-                "message": "",
                 "username": "fm01",
                 "avatar": "/images/logo.webp",
                 "bot": true,
-                "embeds": [
-                  "bot-locale.work.embed"
-                ]
+                "botResponse": "work.embeds",
+                "values": {
+                  "amount": {
+                    "randomInt": [
+                      50,
+                      500
+                    ]
+                  },
+                  "random": {
+                    "botList": "work.random"
+                  }
+                }
               }
             ]
           },
@@ -205,19 +234,22 @@
             "description": "Engage members with a global economy!",
             "messages": [
               {
-                "message": "?!play rick ashley",
                 "username": "Pearoo",
                 "avatar": "/images/pearoo.webp",
-                "bot": false
+                "bot": false,
+                "message": "?!play rick astley"
               },
               {
-                "message": "",
                 "username": "fm01",
                 "avatar": "/images/logo.webp",
                 "bot": true,
-                "embeds": [
-                  "bot-locale.music.embed"
-                ]
+                "botResponse": "voice.play.now_playing",
+                "values": {
+                  "track.title": "Never Gonna Give You Up",
+                  "track.author": "Rick Astley",
+                  "track.duration": "3:34",
+                  "track.url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+                }
               }
             ]
           },
@@ -440,10 +472,16 @@
           "username": "fm01",
           "avatar": "/images/logo.webp",
           "bot": true,
-          "message": "",
-          "embeds": [
-            "bot-locale.warn.embed"
-          ]
+          "botResponse": "mod.warn.response",
+          "values": {
+            "warn.id": {
+              "randomInt": [
+                1111,
+                9999
+              ],
+              "prefix": "#"
+            }
+          }
         }
       ]
     },
@@ -526,10 +564,13 @@
           "username": "fm01",
           "avatar": "/images/logo.webp",
           "bot": true,
-          "message": "",
-          "embeds": [
-            "bot-locale.music.embed"
-          ]
+          "botResponse": "voice.play.now_playing",
+          "values": {
+            "track.title": "Never Gonna Give You Up",
+            "track.author": "Rick Astley",
+            "track.duration": "3:34",
+            "track.url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+          }
         }
       ]
     },
@@ -750,257 +791,6 @@
           ]
         }
       ]
-    }
-  },
-  "bot-locale": {
-    "warn": {
-      "embed": {
-        "description": "Warned {warn.user.mention}.",
-        "fields": [
-          {
-            "name": "Reason",
-            "value": "{warn.reason}"
-          },
-          {
-            "name": "Expires",
-            "value": "{warn.length}"
-          }
-        ],
-        "footer": {
-          "text": "{warn.id}"
-        },
-        "title": "Warn"
-      }
-    },
-    "giveaway": {
-      "embed": {
-        "color": "#f1c40f",
-        "title": "🎉 {giveaway.prize}",
-        "description": "Hosted by {author.mention}\nEnds {giveaway.ends.relative} ({giveaway.ends})\nWinners: **{giveaway.winners}**\n{requirements}",
-        "buttons": [
-          {
-            "label": "🎉 {giveaway.entries}",
-            "color": 0
-          }
-        ]
-      }
-    },
-    "work": {
-      "embed": {
-        "description": "{random}",
-        "title": "Work"
-      },
-      "random": [
-        "You arrived home from work and saw that **${amount}** was added to your account.",
-        "You've reached the end of a tiring day. You received **${amount}** for your hard work!",
-        "You've successfully completed your first day at work. Your reward: **${amount}**.",
-        "You've been promoted at your company, so you received a **${amount}** bonus!",
-        "You received **${amount}** dividend on your shares.",
-        "You've been successfully promoted at your workplace! You received an advance of **${amount}**",
-        "As a taxi driver, you earned **${amount}** today.",
-        "You went to the store, bought noodles, but the cashier gave you the wrong change. You received **${amount}** and a pack of noodles.",
-        "You had a hard day on the fields and earned **${amount}**."
-      ]
-    },
-    "music": {
-      "embed": {
-        "description": "**[{track.title}]({track.url})**",
-        "fields": [
-          {
-            "inline": true,
-            "name": "Artist",
-            "value": "{track.author}"
-          },
-          {
-            "inline": true,
-            "name": "Duration",
-            "value": "{track.duration}"
-          },
-          {
-            "inline": true,
-            "name": "Position in queue",
-            "value": "Now"
-          }
-        ],
-        "footer": {
-          "icon_url": "{author.avatar}",
-          "text": "{author.name}"
-        },
-        "title": "Now playing"
-      }
-    },
-    "info": {
-      "user": {
-        "author": {
-          "icon_url": "{member.avatar}",
-          "name": "{member}",
-          "url": "https://discord.com/users/{member.id}"
-        },
-        "fields": [
-          {
-            "inline": true,
-            "name": "Username",
-            "value": "{member.username}"
-          },
-          {
-            "inline": true,
-            "name": "Displayed name",
-            "value": "{member.display_name}"
-          },
-          {
-            "inline": true,
-            "name": "Discriminator",
-            "value": "{member.discriminator}"
-          },
-          {
-            "inline": true,
-            "name": "ID",
-            "value": "{member.id}"
-          },
-          {
-            "name": "Bot?",
-            "value": "{member.bot}"
-          },
-          {
-            "name": "Account created",
-            "value": "{member.created_at.long}"
-          }
-        ],
-        "timestamp": "{now}",
-        "title": "User information"
-      },
-      "server": {
-        "author": {
-          "icon_url": "{server.icon}",
-          "name": "{server.name}"
-        },
-        "fields": [
-          {
-            "inline": true,
-            "name": "Description",
-            "value": "{server.description}"
-          },
-          {
-            "inline": true,
-            "name": "ID",
-            "value": "{server.id}"
-          },
-          {
-            "inline": true,
-            "name": "Owner",
-            "value": "{server.owner.mention}"
-          },
-          {
-            "inline": true,
-            "name": "Server created at",
-            "value": "{server.created_at.long}"
-          },
-          {
-            "inline": true,
-            "name": "Language",
-            "value": "{server.language}"
-          },
-          {
-            "inline": true,
-            "name": "Vanity URL",
-            "value": "{server.vanity_url}"
-          },
-          {
-            "inline": true,
-            "name": "Boost tier",
-            "value": "{server.boost_tier}"
-          },
-          {
-            "inline": true,
-            "name": "Number of boosters",
-            "value": "{server.boosters}"
-          },
-          {
-            "inline": true,
-            "name": "Boost role",
-            "value": "{server.boost_role}"
-          },
-          {
-            "inline": true,
-            "name": "Roles",
-            "value": "{server.roles}"
-          },
-          {
-            "inline": true,
-            "name": "Emojis",
-            "value": "{server.emojis}"
-          },
-          {
-            "inline": true,
-            "name": "Bitrate limit",
-            "value": "{server.bitrate_limit} kbps"
-          },
-          {
-            "name": "Upload limit",
-            "value": "{server.upload_limit} MB"
-          }
-        ],
-        "image": {
-          "url": "{server.banner}"
-        },
-        "timestamp": "{now}",
-        "title": "Server information"
-      },
-      "role": {
-        "fields": [
-          {
-            "inline": true,
-            "name": "Name",
-            "value": "{role.name}"
-          },
-          {
-            "inline": true,
-            "name": "ID",
-            "value": "{role.id}"
-          },
-          {
-            "inline": true,
-            "name": "Position",
-            "value": "{role.position}"
-          },
-          {
-            "inline": true,
-            "name": "Hoisted?",
-            "value": "{role.hoist}"
-          },
-          {
-            "inline": true,
-            "name": "Managed by integration?",
-            "value": "{role.managed}"
-          },
-          {
-            "inline": true,
-            "name": "Mentionable by everyone?",
-            "value": "{role.mentionable}"
-          },
-          {
-            "inline": true,
-            "name": "Bot role?",
-            "value": "{role.bot}"
-          },
-          {
-            "inline": true,
-            "name": "Role created",
-            "value": "{role.created}"
-          },
-          {
-            "inline": true,
-            "name": "Members",
-            "value": "{role.members}"
-          },
-          {
-            "inline": false,
-            "name": "Permissions",
-            "value": "```{role.permissions}```"
-          }
-        ],
-        "title": "Role information"
-      }
     }
   }
 }

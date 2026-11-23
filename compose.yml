@@ -225,6 +225,22 @@ services:
       - ./shared:/fm01/shared:ro
     networks: [default, data, rsshub, lavalink, cobalt, discord]
 
+  # The public website. Opt-in (COMPOSE_PROFILES=website): self-hosters running only the bot don't need it.
+  # Built from the repo root so it can read shared/; text is baked in at build time, so rebuild after locale changes.
+  website:
+    build:
+      context: .
+      dockerfile: services/website/Dockerfile
+      target: prod
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3007
+    ports:
+      - "127.0.0.1:${WEBSITE_PORT:-3007}:3007"
+    profiles:
+      - website
+
 volumes:
   postgres_data:
 

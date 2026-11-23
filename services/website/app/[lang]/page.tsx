@@ -43,9 +43,8 @@ export default async function Page({ params }: PageProps) {
 
         for (const channel of resolvedDictionary.main.features.container.channels ?? []) {
             channel.messages = resolveMessages(
-                resolvedDictionary,
+                lang,
                 (channel.messages ?? []) as MessageType[],
-                channel.title,
             ) as typeof channel.messages
         }
 

@@ -1,5 +1,4 @@
 import { MessageType, ButtonType } from '@/_lib/types/MessageLang';
-import { EmbedType } from '@/_lib/types/EmbedLang';
 import Button from './Button';
 import Embed from './Embed';
 import Image from 'next/image';
@@ -38,12 +37,9 @@ export default function Message({
                     </div>
                     <div>
                         <div className='message-text'>
-                            <StringParser message={message} />
+                            <StringParser message={message ?? ''} />
                         </div>
-                        {embeds?.map((e, i) => {
-                            if (typeof e === "string") return
-                            return <Embed key={i} {...e} />
-                        })}
+                        {embeds?.map((e, i) => <Embed key={i} {...e} />)}
                         {
                             buttons?.map((r: [ButtonType?, ButtonType?, ButtonType?], i: number) => (
                                 <div key={`row-${i}`} className="button-row">

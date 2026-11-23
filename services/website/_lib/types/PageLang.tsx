@@ -10,8 +10,7 @@ export interface WebLangJson {
     main: MainPageLangJson,
     team: TeamPageLangJson,
     status: StatusPageLangJson,
-    premium: PremiumPageLangJson,
-    "bot-locale": Record<string, unknown>
+    premium: PremiumPageLangJson
 }
 
 export interface HeaderLangJson {
