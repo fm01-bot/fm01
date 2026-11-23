@@ -11,6 +11,7 @@ from typing import Any
 import redis.asyncio as aioredis
 from api import ErrorCode, ManagedGuild
 
+from app.blacklist.store import BlacklistStore
 from app.dashboard.discord import DiscordClient, OAuthTokenSet
 from app.dashboard.sessions import Session, SessionStore
 from app.errors import ApiError
@@ -52,22 +53,33 @@ def is_guild_manager(guild: dict[str, Any]) -> bool:
 class GuildAccess:
 	"""Checks guild managers against the user's Discord guild list, cached in Redis.
 
+	Blacklisted guilds are never managed: they aren't listed, and configuring them is refused.
+
 	Args:
 		discord: The Discord client.
 		sessions: The session store, for saving refreshed Discord tokens.
+		blacklist: The blacklist.
 		redis: The cache.
 		ttl: How long a result is cached. A demoted user keeps access this long.
 	"""
 
-	def __init__(self, discord: DiscordClient, sessions: SessionStore, redis: aioredis.Redis, ttl: timedelta) -> None:
+	def __init__(
+		self,
+		discord: DiscordClient,
+		sessions: SessionStore,
+		blacklist: BlacklistStore,
+		redis: aioredis.Redis,
+		ttl: timedelta,
+	) -> None:
 		self._discord = discord
 		self._sessions = sessions
+		self._blacklist = blacklist
 		self._redis = redis
 		self._ttl = ttl
 		self._refresh_locks: weakref.WeakValueDictionary[str, asyncio.Lock] = weakref.WeakValueDictionary()
 
 	async def managed_guilds(self, session: Session) -> list[ManagedGuild]:
-		"""List the guilds the session's user manages, with or without the bot.
+		"""List the guilds the session's user manages, with or without the bot, except blacklisted ones.
 
 		Args:
 			session: The user's dashboard session.
@@ -79,9 +91,12 @@ class GuildAccess:
 			ApiError: ``unauthorized`` if Discord rejects the user's tokens, which also ends the session.
 				``discord_unavailable`` if Discord fails.
 		"""
+		guilds = await self._managed(session)
+		blacklisted = await self._blacklist.blacklisted_guilds(int(guild["id"]) for guild in guilds)
 		return [
 			ManagedGuild(id=guild["id"], name=guild["name"], icon=guild.get("icon"))
-			for guild in await self._managed(session)
+			for guild in guilds
+			if int(guild["id"]) not in blacklisted
 		]
 
 	async def require_manager(self, session: Session, guild_id: int, permission: int = 0) -> None:
@@ -94,14 +109,17 @@ class GuildAccess:
 				Administrators have every permission).
 
 		Raises:
-			ApiError: ``forbidden`` if the user isn't a guild manager of it or lacks ``permission``. ``not_found`` if
-				the bot isn't in it. Also anything `managed_guilds` raises.
+			ApiError: ``forbidden`` if the user isn't a guild manager of it or lacks ``permission``. ``blacklisted``
+				if the guild is blacklisted. ``not_found`` if the bot isn't in it. Also anything `managed_guilds`
+				raises.
 		"""
 		guild = next((guild for guild in await self._managed(session) if int(guild["id"]) == guild_id), None)
 		if guild is None:
 			raise ApiError(ErrorCode.FORBIDDEN, "you are not a manager of this guild")
 		if permission and not has_permission(guild, permission):
 			raise ApiError(ErrorCode.FORBIDDEN, "you lack a permission this setting needs in this guild")
+		if await self._blacklist.is_blacklisted("guild", guild_id):
+			raise ApiError(ErrorCode.BLACKLISTED, "this guild is blacklisted")
 		if not await self._bot_in_guild(guild_id):
 			raise ApiError(ErrorCode.NOT_FOUND, "the bot is not in this guild")
 

@@ -16,6 +16,7 @@ from app.afk.store import AfkStore
 from app.alerts.store import AlertStore
 from app.automod.store import AutoModStore
 from app.bear_trap.store import BearTrapStore
+from app.blacklist.store import BlacklistStore
 from app.config import Settings
 from app.dashboard.access import GuildAccess
 from app.dashboard.discord import DiscordClient
@@ -60,6 +61,7 @@ class AppState:
 		shop: The shop store.
 		giveaways: The giveaway store.
 		alerts: The media alert store.
+		blacklist: The blacklist store.
 		discord: The Discord client.
 		sessions: The dashboard session store.
 		access: The guild manager checks.
@@ -83,6 +85,7 @@ class AppState:
 	shop: ShopStore
 	giveaways: GiveawayStore
 	alerts: AlertStore
+	blacklist: BlacklistStore
 	discord: DiscordClient
 	sessions: SessionStore
 	access: GuildAccess
@@ -132,6 +135,7 @@ def assemble(config: Settings, pool: asyncpg.Pool, redis: aioredis.Redis, http: 
 	)
 	# Without dashboard sign-in no session can be created, so a throwaway key is as good as any.
 	announcer = Announcer(redis)
+	blacklist = BlacklistStore(pool, announcer)
 	sessions = SessionStore(pool, config.session_key or Fernet.generate_key().decode(), config.session_ttl)
 	return AppState(
 		config=config,
@@ -150,9 +154,10 @@ def assemble(config: Settings, pool: asyncpg.Pool, redis: aioredis.Redis, http: 
 		shop=ShopStore(pool),
 		giveaways=GiveawayStore(pool),
 		alerts=AlertStore(pool),
+		blacklist=blacklist,
 		discord=discord,
 		sessions=sessions,
-		access=GuildAccess(discord, sessions, redis, config.permission_ttl),
+		access=GuildAccess(discord, sessions, blacklist, redis, config.permission_ttl),
 		status=StatusStore(pool, redis, config.status_sample_interval),
 		rate_limiter=RateLimiter(redis),
 	)

@@ -26,13 +26,14 @@ app/
 ├── main.py           # create_app(): routers, error handlers, lifespan
 ├── config.py         # Settings.from_env()
 ├── state.py          # AppState: the stores and clients a running app holds
-├── auth.py           # require_internal, CurrentSession, ManagedGuildId, BanManagedGuildId, Origin
+├── auth.py           # require_internal, CurrentSession, AnySession, ManagedGuildId, BanManagedGuildId, Origin
 ├── errors.py         # ApiError(ErrorCode) -> ErrorBody responses
 ├── events.py         # Announcer: INVALIDATE_SETTING on Redis
 ├── openapi.py        # Writes the OpenAPI schema (source of the TS types)
 ├── economy/          # store.py (Ledger), routes.py (Internal API)
 ├── settings/         # store.py (prefix, locale), routes.py (Internal + Dashboard API)
 ├── bear_trap/        # store.py (bear trap), routes.py (Internal + Dashboard API)
+├── blacklist/        # store.py (blacklisted users and guilds), routes.py (Internal API; app/auth.py enforces it)
 ├── starboard/        # store.py (boards, stars, entries), routes.py (Internal + Dashboard API)
 ├── greetings/ automod/ log/ moderation/ tickets/ leveling/   # guild configurations and their records (Internal API)
 ├── afk/ snapshots/ shop/ giveaways/ alerts/                    # member-facing features (Internal API)
@@ -47,7 +48,7 @@ tests/                # One file per area; conftest.py has the database, fake Re
 - **Announce every guild setting write** through `Announcer.setting_changed`, with the key the bot registers (constants in `shared/schemas/api`), passing the caller's origin (Internal API) or `None` (Dashboard API).
 - **Errors** are `ApiError(ErrorCode.X)`. Add a code to `api.ErrorCode` in `shared/schemas/api/errors.py` (and its status in `app/errors.py`) rather than returning ad-hoc bodies. The bot's API client maps codes back to exceptions in `services/bot/core/api.py`.
 - **Snowflakes** use `api.Snowflake`: `int` in Python, string on the wire, in bodies and paths alike.
-- **Dashboard routes** that act on a guild take `ManagedGuildId`, which enforces the guild manager rule (owner, Administrator or Manage Server, from the user's Discord guild list cached for 60 s, and the bot in the guild). Routes whose setting makes the bot remove members (the bear trap) take `BanManagedGuildId`, which also requires Ban Members.
+- **Dashboard routes** take `CurrentSession`, which refuses blacklisted users (`AnySession` only for signing out). Routes that act on a guild take `ManagedGuildId`, which enforces the guild manager rule (owner, Administrator or Manage Server, from the user's Discord guild list cached for 60 s, and the bot in the guild) and refuses blacklisted guilds. Routes whose setting makes the bot remove members (the bear trap) take `BanManagedGuildId`, which also requires Ban Members.
 - **Schema changes** go in `services/migrations/` (see its `AGENTS.md`).
 - **Generated types**: after changing a route or a model, run `just schemas` and commit `shared/schemas/openapi/openapi.json` and `shared/schemas/ts/api.d.ts`. CI fails on drift.
 

@@ -16,6 +16,8 @@ class ErrorCode(StrEnum):
 	FORBIDDEN = "forbidden"
 	"""Valid credentials that don't allow this, e.g. a signed-in user who isn't a guild manager."""
 	NOT_FOUND = "not_found"
+	BLACKLISTED = "blacklisted"
+	"""The signed-in user, or the guild, is on the bot's blacklist."""
 	INSUFFICIENT_FUNDS = "insufficient_funds"
 	"""The wallet doesn't hold enough money for the Ledger operation."""
 	SAME_ACCOUNT = "same_account"

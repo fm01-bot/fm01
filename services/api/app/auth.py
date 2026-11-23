@@ -14,7 +14,15 @@ from app.dashboard.sessions import Session
 from app.errors import ApiError
 from app.state import AppState, get_state
 
-__all__ = ("BanManagedGuildId", "CurrentSession", "ManagedGuildId", "Origin", "State", "require_internal")
+__all__ = (
+	"AnySession",
+	"BanManagedGuildId",
+	"CurrentSession",
+	"ManagedGuildId",
+	"Origin",
+	"State",
+	"require_internal",
+)
 
 State = Annotated[AppState, Depends(get_state)]
 
@@ -62,7 +70,7 @@ Origin = Annotated[
 ]
 
 
-async def current_session(state: State, credentials: Credentials) -> Session:
+async def any_session(state: State, credentials: Credentials) -> Session:
 	"""Get the dashboard session of the bearer token.
 
 	Args:
@@ -81,6 +89,28 @@ async def current_session(state: State, credentials: Credentials) -> Session:
 	return session
 
 
+AnySession = Annotated[Session, Depends(any_session)]
+"""The caller's session, for routes a blacklisted user may still call (signing out)."""
+
+
+async def current_session(state: State, session: AnySession) -> Session:
+	"""Get the dashboard session of the bearer token, unless its user is blacklisted.
+
+	Args:
+		state: The app state.
+		session: The session of the bearer token.
+
+	Returns:
+		The session.
+
+	Raises:
+		ApiError: ``unauthorized`` if the token is missing, unknown or expired. ``blacklisted`` if the user is.
+	"""
+	if await state.blacklist.is_blacklisted("user", session.user.id):
+		raise ApiError(ErrorCode.BLACKLISTED, "you are blacklisted")
+	return session
+
+
 CurrentSession = Annotated[Session, Depends(current_session)]
 
 
@@ -96,7 +126,7 @@ async def managed_guild_id(guild_id: Snowflake, state: State, session: CurrentSe
 		The guild ID.
 
 	Raises:
-		ApiError: ``forbidden`` or ``not_found``. See `GuildAccess.require_manager`.
+		ApiError: ``forbidden``, ``blacklisted`` or ``not_found``. See `GuildAccess.require_manager`.
 	"""
 	await state.access.require_manager(session, guild_id)
 	return guild_id
@@ -119,7 +149,7 @@ async def ban_managed_guild_id(guild_id: Snowflake, state: State, session: Curre
 		The guild ID.
 
 	Raises:
-		ApiError: ``forbidden`` or ``not_found``. See `GuildAccess.require_manager`.
+		ApiError: ``forbidden``, ``blacklisted`` or ``not_found``. See `GuildAccess.require_manager`.
 	"""
 	await state.access.require_manager(session, guild_id, BAN_MEMBERS)
 	return guild_id

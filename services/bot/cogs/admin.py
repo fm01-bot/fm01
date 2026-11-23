@@ -1,15 +1,39 @@
+from io import StringIO
 from logging import getLogger
 from pathlib import Path
 from time import perf_counter
 from typing import Literal
 
 import discord
-from core import Bot, Context, command, update_slash_localizations
+from core import Bot, Context, command, group, update_slash_localizations
 from discord import app_commands
 from discord.ext import commands
 from helpers.custom_response import LOCALIZATION_ROOT, RESPONSES_PATH
 
+from api import BlacklistEntry, BlacklistKind
+
 logger = getLogger(__name__)
+
+KIND_CHOICES = [
+	app_commands.Choice(name="blacklist_add-args-kind-user", value="user"),
+	app_commands.Choice(name="blacklist_add-args-kind-guild", value="guild"),
+]
+
+
+def _format_entry(entry: BlacklistEntry) -> str:
+	"""Render a blacklist entry as one line of the ``blacklist`` listing.
+
+	Args:
+		entry: The entry.
+
+	Returns:
+		The line: kind, ID, reason, who added it and when.
+	"""
+	reason = entry.reason or "no reason"
+	return (
+		f"`{entry.kind}` `{entry.target_id}`: {reason} "
+		f"(by <@{entry.created_by}>, {discord.utils.format_dt(entry.created_at, 'R')})"
+	)
 
 
 class Admin(commands.GroupCog, name="admin"):
@@ -137,6 +161,46 @@ class Admin(commands.GroupCog, name="admin"):
 
 			end = perf_counter() - benchmark
 			await ctx.reply(content=f"Synced the tree to **{guilds_synced}/{len(guilds)}** guilds, took **{end:.2f}s**")
+
+	@group(hidden=True, l10n_key="blacklist", name="blacklist")
+	@commands.is_owner()
+	async def blacklist(self, ctx: Context):
+		entries = await self.client.api.blacklist.entries()
+		if not entries:
+			await ctx.reply(content="Nobody is blacklisted.")
+			return
+		listing = f"**{len(entries)}** blacklisted:\n" + "\n".join(_format_entry(entry) for entry in entries)
+		if len(listing) > 2000:
+			file = discord.File(StringIO(listing), filename="blacklist.txt")  # type: ignore # StringIO is supported
+			await ctx.reply(content=f"**{len(entries)}** blacklisted, listed in the file.", file=file)
+			return
+		await ctx.reply(content=listing, allowed_mentions=discord.AllowedMentions.none())
+
+	@blacklist.command(hidden=True, l10n_key="blacklist_add", name="add")
+	@commands.is_owner()
+	@app_commands.choices(kind=KIND_CHOICES)
+	async def blacklist_add(
+		self, ctx: Context, kind: BlacklistKind, target: discord.Object, *, reason: str | None = None
+	) -> None:
+		if kind == "user" and (target.id in (self.client.owner_ids or ()) or target.id == self.client.owner_id):
+			await ctx.reply(content="Bot owners can't be blacklisted.")
+			return
+		if reason is not None and len(reason) > 500:
+			await ctx.reply(content="The reason can be at most 500 characters long.")
+			return
+		await self.client.blacklist.add(kind, target.id, ctx.author.id, reason)
+		await ctx.reply(content=f"Blacklisted {kind} `{target.id}`.")
+		logger.info(f"{ctx.author.name} blacklisted {kind} {target.id}: {reason}")
+
+	@blacklist.command(hidden=True, l10n_key="blacklist_remove", name="remove")
+	@commands.is_owner()
+	@app_commands.choices(kind=KIND_CHOICES)
+	async def blacklist_remove(self, ctx: Context, kind: BlacklistKind, target: discord.Object) -> None:
+		if not await self.client.blacklist.remove(kind, target.id):
+			await ctx.reply(content=f"{kind.capitalize()} `{target.id}` isn't blacklisted.")
+			return
+		await ctx.reply(content=f"Took {kind} `{target.id}` off the blacklist.")
+		logger.info(f"{ctx.author.name} took {kind} {target.id} off the blacklist")
 
 
 async def setup(client: Bot):

@@ -454,6 +454,90 @@
         "title": "BearTrapState",
         "type": "object"
       },
+      "BlacklistAdd": {
+        "description": "Who blacklists the target, and why.",
+        "properties": {
+          "created_by": {
+            "examples": [
+              "1234567890123456789"
+            ],
+            "pattern": "^[0-9]{1,20}$",
+            "title": "Created By",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "required": [
+          "created_by"
+        ],
+        "title": "BlacklistAdd",
+        "type": "object"
+      },
+      "BlacklistEntry": {
+        "description": "A blacklisted user or guild.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "examples": [
+              "1234567890123456789"
+            ],
+            "pattern": "^[0-9]{1,20}$",
+            "title": "Created By",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "user",
+              "guild"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "target_id": {
+            "examples": [
+              "1234567890123456789"
+            ],
+            "pattern": "^[0-9]{1,20}$",
+            "title": "Target Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "created_by",
+          "kind",
+          "target_id",
+          "created_at"
+        ],
+        "title": "BlacklistEntry",
+        "type": "object"
+      },
       "CaseClosed": {
         "description": "What closing a case did, following the guild's retention.",
         "properties": {
@@ -923,6 +1007,7 @@
           "unauthorized",
           "forbidden",
           "not_found",
+          "blacklisted",
           "insufficient_funds",
           "same_account",
           "invalid_channel",
@@ -3771,7 +3856,7 @@
     },
     "/dashboard/auth/logout": {
       "post": {
-        "description": "Sign out and revoke the user's Discord tokens.",
+        "description": "Sign out and revoke the user's Discord tokens. Blacklisted users may too.",
         "operationId": "logout",
         "responses": {
           "204": {
@@ -5094,6 +5179,211 @@
         "tags": [
           "internal",
           "alerts"
+        ]
+      }
+    },
+    "/internal/blacklist": {
+      "get": {
+        "description": "List every blacklisted user and guild, oldest first.",
+        "operationId": "internal_blacklist",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/BlacklistEntry"
+                  },
+                  "title": "Response Internal Blacklist",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The request failed. `code` says why."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The API or Discord failed."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Internal Blacklist",
+        "tags": [
+          "internal",
+          "blacklist"
+        ]
+      }
+    },
+    "/internal/blacklist/{kind}/{target_id}": {
+      "delete": {
+        "description": "Take a user or guild off the blacklist.",
+        "operationId": "internal_blacklist_remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "enum": [
+                "user",
+                "guild"
+              ],
+              "title": "Kind",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "target_id",
+            "required": true,
+            "schema": {
+              "examples": [
+                "1234567890123456789"
+              ],
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Target Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The request failed. `code` says why."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The API or Discord failed."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Internal Blacklist Remove",
+        "tags": [
+          "internal",
+          "blacklist"
+        ]
+      },
+      "put": {
+        "description": "Blacklist a user or guild. Blacklisting it again replaces the reason and who added it.",
+        "operationId": "internal_blacklist_add",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "enum": [
+                "user",
+                "guild"
+              ],
+              "title": "Kind",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "target_id",
+            "required": true,
+            "schema": {
+              "examples": [
+                "1234567890123456789"
+              ],
+              "pattern": "^[0-9]{1,20}$",
+              "title": "Target Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BlacklistAdd"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlacklistEntry"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The request failed. `code` says why."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The API or Discord failed."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Internal Blacklist Add",
+        "tags": [
+          "internal",
+          "blacklist"
         ]
       }
     },
