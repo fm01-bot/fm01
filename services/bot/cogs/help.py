@@ -6,7 +6,7 @@ from typing import Any
 
 import discord
 import emoji
-from core import Bot, Command, Context, format_aliases, resolve_locale, slash_localization
+from core import Argument, Bot, Command, Context, format_aliases, resolve_locale, slash_localization
 from core.hybrid import FullAliasCommand
 from discord.ext import commands
 from discord.ext.localization import Localization
@@ -83,7 +83,7 @@ class HelpLayoutView(discord.ui.LayoutView):
 
 
 class HelpCommand(commands.HelpCommand):
-	context: Context  # ty: ignore[incompatible-mutable-override]
+	context: Context  # type: ignore
 	custom_response: CustomResponse
 
 	def __init__(self) -> None:
@@ -609,7 +609,56 @@ class HelpCommand(commands.HelpCommand):
 			return await self.send_error_message(string)
 
 		cmd_obj = self.get_command_obj(command)
-		await self.context.send("help.command", command=cmd_obj)
+		await self.context.send("help.command", command=cmd_obj, arguments=await self.format_arguments(command))
+
+	async def format_arguments(self, command: commands.Command[Any, ..., Any]) -> str | None:
+		"""Describe what each of ``command``'s parameters accepts, or None when it takes none."""
+		locale = self.get_context_locale()
+		arguments = [Argument.from_param(param, command, locale) for param in command.clean_params.values()]
+		if not arguments:
+			return None
+		separator = await self.argument_string("separator")
+		blocks = [await self.argument_string("title")]
+		for argument in arguments:
+			if argument.description:
+				line = await self.argument_string("described", name=argument.name, description=argument.description)
+			else:
+				line = await self.argument_string("bare", name=argument.name)
+			details = separator.join(await self.argument_details(argument))
+			blocks += [line, await self.argument_string("details", details=details)]
+		return "\n".join(blocks)
+
+	async def argument_details(self, argument: Argument) -> list[str]:
+		"""The localized facts shown under one argument: whether it is required, its default, choices and bounds."""
+		details = [await self.argument_string("required" if argument.required else "optional")]
+		if argument.default is not None:
+			details.append(await self.argument_string("default", default=argument.default))
+		if argument.choices:
+			choices = [
+				await self.argument_string("choice_labelled", value=choice.value, label=choice.label)
+				if choice.label
+				else await self.argument_string("choice", value=choice.value)
+				for choice in argument.choices
+			]
+			details.append(await self.argument_string("choices", choices=", ".join(choices)))
+		prefix = "length_" if argument.length else ""
+		if argument.minimum is not None and argument.maximum is not None:
+			details.append(
+				await self.argument_string(f"{prefix}range", minimum=argument.minimum, maximum=argument.maximum)
+			)
+		elif argument.minimum is not None:
+			details.append(await self.argument_string(f"{prefix}minimum", minimum=argument.minimum))
+		elif argument.maximum is not None:
+			details.append(await self.argument_string(f"{prefix}maximum", maximum=argument.maximum))
+		if argument.greedy:
+			details.append(await self.argument_string("greedy"))
+		if argument.rest:
+			details.append(await self.argument_string("rest"))
+		return details
+
+	async def argument_string(self, key: str, **kwargs: Any) -> str:
+		"""Format ``help.arguments.<key>`` for the help command's locale."""
+		return str(await self.custom_response(f"help.arguments.{key}", self.context, **kwargs))
 
 	async def send_cog_help(self, cog: commands.Cog) -> None:
 		if cog.qualified_name.lower() == "jishaku":

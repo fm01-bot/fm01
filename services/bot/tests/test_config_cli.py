@@ -5,8 +5,13 @@ from unittest.mock import AsyncMock, MagicMock
 import discord
 import pytest
 from cogs.config import Config
+from core.clustering import LocalEventBus
 from core.settings import GuildSettings
 from helpers.cli_parser import CLIParseError, CLIParser, HelpRequested
+from tests.fake_api import FakeGreetings, FakeLog, FakeLogStore
+
+from api import LevelConfig
+from api import LevelOverrides as StoredOverrides
 
 
 def test_split_args():
@@ -114,11 +119,11 @@ def test_unknown_subcommand_error():
 @pytest.mark.asyncio
 async def test_full_execution_flow():
 	bot = MagicMock()
-	bot.db = AsyncMock()
-	bot.db.fetchrow.return_value = None
 	bot.get_cog.return_value = None
-	bot.event_bus.publish = AsyncMock()
-	bot.settings = GuildSettings(lambda: bot.db, bot.event_bus)
+	bot.settings = GuildSettings(LocalEventBus())
+	logs = FakeLogStore(LocalEventBus())
+	bot.api.log = FakeLog(logs, bot.settings.origin)
+	bot.api.greetings = FakeGreetings()
 	bot.message_logging_guilds = set()
 
 	guild = MagicMock()
@@ -154,47 +159,42 @@ async def test_full_execution_flow():
 	# 1. Execute: log enable --channel #log
 	await config_cog.config_command.callback(config_cog, ctx, flags_and_args="log enable --channel #log")
 	assert ctx.send.called
-	assert bot.db.execute.called
+	assert logs.configs[12345].channel_id == 999
 	check_code_block_response(ctx.send)
 
 	# 2. Execute: log enable #log (positional)
 	ctx.send.reset_mock()
-	bot.db.execute.reset_mock()
 	await config_cog.config_command.callback(config_cog, ctx, flags_and_args="log enable #log")
 	assert ctx.send.called
-	assert bot.db.execute.called
+	assert logs.configs[12345].enabled is True
 	check_code_block_response(ctx.send)
 
 	# 3. Execute: log modules enable on_message_delete on_message_edit
 	ctx.send.reset_mock()
-	bot.db.execute.reset_mock()
 	await config_cog.config_command.callback(
 		config_cog, ctx, flags_and_args="log modules enable on_message_delete on_message_edit"
 	)
 	assert ctx.send.called
-	assert bot.db.execute.called
+	assert "on_message_edit" in logs.configs[12345].modules or "*" in logs.configs[12345].modules
 	assert 12345 in bot.message_logging_guilds
 	check_code_block_response(ctx.send)
 
 	# 4. Execute: log modules disable on_message_delete
 	ctx.send.reset_mock()
-	bot.db.execute.reset_mock()
 	await config_cog.config_command.callback(config_cog, ctx, flags_and_args="log modules disable on_message_delete")
 	assert ctx.send.called
-	assert bot.db.execute.called
+	assert "on_message_delete" not in logs.configs[12345].modules
 	assert 12345 in bot.message_logging_guilds  # on_message_edit still needs the message buffer
 	check_code_block_response(ctx.send)
 
 	# 5. Execute: join enable --channel #join --message "Welcome {user} to the server!"
 	guild.get_channel_or_thread.return_value = join_ch
-	bot.db.fetchrow.return_value = {"message": "Welcome {user} to the server!"}
 	ctx.send.reset_mock()
-	bot.db.execute.reset_mock()
 	await config_cog.config_command.callback(
 		config_cog, ctx, flags_and_args='join enable --channel #join --message "Welcome {user} to the server!"'
 	)
 	assert ctx.send.called
-	assert bot.db.execute.called
+	assert bot.api.greetings.configs[("join", 12345)].message == "Welcome {user} to the server!"
 	check_code_block_response(ctx.send)
 
 	# 6. Execute: config (empty -> shows help)
@@ -213,24 +213,32 @@ async def test_full_execution_flow():
 
 	# 8. Execute: join status
 	ctx.send.reset_mock()
-	bot.db.fetchrow.return_value = {"guild_id": 12345, "is_on": True, "channel": 888, "message": "Hello {user}!"}
 	await config_cog.config_command.callback(config_cog, ctx, flags_and_args="join status")
 	assert ctx.send.called
 	check_code_block_response(ctx.send)
 	status_content = ctx.send.call_args[1].get("content")
-	assert "Hello {user}!" in status_content  # Template is not replaced in preview
+	assert "Welcome {user} to the server!" in status_content  # Template is not replaced in preview
 
 
 @pytest.mark.asyncio
 async def test_config_level_execution():
 	bot = MagicMock()
-	bot.db = MagicMock()
-	bot.db.execute = AsyncMock()
-	bot.db.fetch = AsyncMock(return_value=[])
-	bot.db.fetchrow = AsyncMock(return_value=None)
 	bot.get_cog.return_value = None
-	bot.event_bus.publish = AsyncMock()
-	bot.settings = GuildSettings(lambda: bot.db, bot.event_bus)
+	bot.settings = GuildSettings(bot.event_bus)
+	levels = bot.api.levels
+	levels.config = AsyncMock(return_value=LevelConfig())
+	levels.update_config = AsyncMock(return_value=LevelConfig())
+	levels.rewards = AsyncMock(return_value=[])
+	levels.add_reward = AsyncMock()
+	levels.remove_rewards = AsyncMock()
+	levels.overrides = AsyncMock(return_value=StoredOverrides())
+	levels.update_override = AsyncMock()
+
+	def wrote() -> bool:
+		return any(
+			m.await_count
+			for m in (levels.update_config, levels.add_reward, levels.remove_rewards, levels.update_override)
+		)
 
 	ctx = MagicMock()
 	ctx.bot = bot
@@ -255,6 +263,7 @@ async def test_config_level_execution():
 	guild.get_role.return_value = test_role
 
 	ctx.guild = guild
+	guild.owner_id = ctx.author.id  # the owner may reward any role
 	ctx.channel = test_channel
 
 	config_cog = Config(bot)
@@ -262,25 +271,25 @@ async def test_config_level_execution():
 	# 1. config level enable
 	await config_cog.config_command.callback(config_cog, ctx, flags_and_args="level enable")
 	assert ctx.send.called
-	assert bot.db.execute.called
+	assert wrote()
 	assert "[+] Leveling system enabled" in ctx.send.call_args[1]["content"]
 
 	# 2. config level disable
 	ctx.send.reset_mock()
-	bot.db.execute.reset_mock()
+	levels.reset_mock()
 	await config_cog.config_command.callback(config_cog, ctx, flags_and_args="level disable")
 	assert ctx.send.called
-	assert bot.db.execute.called
+	assert wrote()
 	assert "[-] Leveling system disabled" in ctx.send.call_args[1]["content"]
 
 	# 3. config level xp
 	ctx.send.reset_mock()
-	bot.db.execute.reset_mock()
+	levels.reset_mock()
 	await config_cog.config_command.callback(
 		config_cog, ctx, flags_and_args="level xp --min 20 --max 30 --multiplier 1.5 --cooldown 45"
 	)
 	assert ctx.send.called
-	assert bot.db.execute.called
+	assert wrote()
 	content = ctx.send.call_args[1]["content"]
 	assert "Minimum XP: 20" in content
 	assert "Maximum XP: 30" in content
@@ -289,86 +298,86 @@ async def test_config_level_execution():
 
 	# 4. config level message
 	ctx.send.reset_mock()
-	bot.db.execute.reset_mock()
+	levels.reset_mock()
 	await config_cog.config_command.callback(
 		config_cog, ctx, flags_and_args='level message --mode channel --channel #general --template "Congrats {user}!"'
 	)
 	assert ctx.send.called
-	assert bot.db.execute.called
+	assert wrote()
 	content = ctx.send.call_args[1]["content"]
 	assert "Mode: channel" in content
 	assert "Channel: #general" in content
 
 	# 5. config level rewards add
 	ctx.send.reset_mock()
-	bot.db.execute.reset_mock()
+	levels.reset_mock()
 	await config_cog.config_command.callback(config_cog, ctx, flags_and_args="level rewards add 5 @VIP")
 	assert ctx.send.called
-	assert bot.db.execute.called
+	assert wrote()
 	assert "[+] Added reward: @VIP at Level 5" in ctx.send.call_args[1]["content"]
 
 	# 6. config level rewards remove
 	ctx.send.reset_mock()
-	bot.db.execute.reset_mock()
+	levels.reset_mock()
 	await config_cog.config_command.callback(config_cog, ctx, flags_and_args="level rewards remove 5")
 	assert ctx.send.called
-	assert bot.db.execute.called
+	assert wrote()
 	assert "[-] Removed role reward(s) for Level 5" in ctx.send.call_args[1]["content"]
 
 	# 7. config level rewards stack
 	ctx.send.reset_mock()
-	bot.db.execute.reset_mock()
+	levels.reset_mock()
 	await config_cog.config_command.callback(config_cog, ctx, flags_and_args="level rewards stack false")
 	assert ctx.send.called
-	assert bot.db.execute.called
+	assert wrote()
 	assert "Replace previous" in ctx.send.call_args[1]["content"]
 
 	# 8. config level channel ignore
 	ctx.send.reset_mock()
-	bot.db.execute.reset_mock()
+	levels.reset_mock()
 	await config_cog.config_command.callback(config_cog, ctx, flags_and_args="level channel ignore #general")
 	assert ctx.send.called
-	assert bot.db.execute.called
+	assert wrote()
 	assert "Ignored channel #general" in ctx.send.call_args[1]["content"]
 
 	# 9. config level channel unignore
 	ctx.send.reset_mock()
-	bot.db.execute.reset_mock()
+	levels.reset_mock()
 	await config_cog.config_command.callback(config_cog, ctx, flags_and_args="level channel unignore #general")
 	assert ctx.send.called
-	assert bot.db.execute.called
+	assert wrote()
 	assert "Unignored channel #general" in ctx.send.call_args[1]["content"]
 
 	# 10. config level channel multiplier
 	ctx.send.reset_mock()
-	bot.db.execute.reset_mock()
+	levels.reset_mock()
 	await config_cog.config_command.callback(config_cog, ctx, flags_and_args="level channel multiplier #general 2.0")
 	assert ctx.send.called
-	assert bot.db.execute.called
+	assert wrote()
 	assert "set to 2.0x" in ctx.send.call_args[1]["content"]
 
 	# 11. config level role ignore
 	ctx.send.reset_mock()
-	bot.db.execute.reset_mock()
+	levels.reset_mock()
 	await config_cog.config_command.callback(config_cog, ctx, flags_and_args="level role ignore @VIP")
 	assert ctx.send.called
-	assert bot.db.execute.called
+	assert wrote()
 	assert "Ignored role @VIP" in ctx.send.call_args[1]["content"]
 
 	# 12. config level role unignore
 	ctx.send.reset_mock()
-	bot.db.execute.reset_mock()
+	levels.reset_mock()
 	await config_cog.config_command.callback(config_cog, ctx, flags_and_args="level role unignore @VIP")
 	assert ctx.send.called
-	assert bot.db.execute.called
+	assert wrote()
 	assert "Unignored role @VIP" in ctx.send.call_args[1]["content"]
 
 	# 13. config level role multiplier
 	ctx.send.reset_mock()
-	bot.db.execute.reset_mock()
+	levels.reset_mock()
 	await config_cog.config_command.callback(config_cog, ctx, flags_and_args="level role multiplier @VIP 1.5")
 	assert ctx.send.called
-	assert bot.db.execute.called
+	assert wrote()
 	assert "set to 1.5x" in ctx.send.call_args[1]["content"]
 
 	# 14. config level show

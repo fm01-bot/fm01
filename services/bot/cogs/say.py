@@ -7,6 +7,7 @@ from core import Bot, Context, group
 from discord.ext import commands
 from helpers import CustomResponse
 from helpers.convert import text_to_emoji
+from helpers.permissions import require_channel_permissions
 from helpers.regex import DISCORD_MESSAGE_URL
 
 
@@ -22,6 +23,7 @@ class Say(commands.Cog, name="Says"):
 
 	@say.command(permissions=["manage_messages"], l10n_key="chsay", full_aliases=["chsay", "channelsay"])
 	async def channel_say(self, ctx: Context, channel: discord.TextChannel, *, message: commands.Range[str, 1, 2000]):
+		require_channel_permissions(ctx.author, channel, "manage_messages", "send_messages")
 		await channel.send(message, allowed_mentions=discord.AllowedMentions.none())
 
 	@say.command(permissions=["manage_messages"], l10n_key="editmsg", full_aliases=["editmsg", "editmessage"])
@@ -35,6 +37,7 @@ class Say(commands.Cog, name="Says"):
 				channel = ctx.guild.get_channel(int(channel_id))
 				if not isinstance(channel, (discord.TextChannel, discord.VoiceChannel, discord.Thread)):
 					raise commands.BadArgument("message_link")
+				require_channel_permissions(ctx.author, channel, "manage_messages")
 				message = await channel.fetch_message(int(message_id))
 			else:
 				message = await ctx.channel.fetch_message(int(message_link))

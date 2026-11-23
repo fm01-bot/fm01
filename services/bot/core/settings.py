@@ -1,9 +1,11 @@
 """Guild settings: cached per-guild values that stay in step across bot instances.
 
-Each setting is a `GuildSetting` registered on `GuildSettings` (``Bot.settings``). Callers read with `GuildSetting.get`
-(or `GuildSetting.cache` for synchronous hot paths) and write with `GuildSetting.set`. Writing persists the value,
-updates this instance's cache, and announces an ``INVALIDATE_SETTING`` event on the event bus; every other instance
-reloads that guild's value from the database. Callers never touch caches or the event bus themselves.
+Each setting is a `GuildSetting` registered on `GuildSettings` (``Bot.settings``) with `GuildSettings.add_remote`.
+Callers read with `GuildSetting.get` (or `GuildSetting.cache` for synchronous hot paths) and write with
+`GuildSetting.set`, or through the setting's own API operations followed by `GuildSetting.remember`. Every setting lives
+behind the Internal API: the API persists it and announces every change as an ``INVALIDATE_SETTING`` event on the event
+bus, whoever asked for it (this bot or the dashboard); every other instance reloads that guild's value. Callers never
+touch caches or the event bus themselves.
 """
 
 from __future__ import annotations
@@ -14,25 +16,31 @@ from collections.abc import Awaitable, Callable, Mapping
 from types import MappingProxyType
 from typing import Any
 
-import asyncpg
-
+from api import EVENTS_CHANNEL, INVALIDATE_SETTING, LOCALE_SETTING, PREFIX_SETTING
+from api import Prefix as PrefixModel
+from core.api import ApiClient
 from core.clustering.interfaces import EventBus
 
-__all__ = ("EVENTS_CHANNEL", "INVALIDATE_SETTING", "GuildSetting", "GuildSettings", "Prefix")
+__all__ = (
+	"EVENTS_CHANNEL",
+	"INVALIDATE_SETTING",
+	"GuildSetting",
+	"GuildSettings",
+	"Prefix",
+	"locale_override_setting",
+	"prefix_setting",
+)
 
 logger = logging.getLogger(__name__)
 
-EVENTS_CHANNEL = "fm01:events"
-INVALIDATE_SETTING = "INVALIDATE_SETTING"
-
-type Loader[T] = Callable[[asyncpg.Pool, int], Awaitable[T]]
-type Saver[T] = Callable[[asyncpg.Pool, int, T], Awaitable[None]]
-type BulkLoader[T] = Callable[[asyncpg.Pool], Awaitable[Mapping[int, T]]]
+type RemoteLoader[T] = Callable[[int], Awaitable[T]]
+type RemoteSaver[T] = Callable[[int, T], Awaitable[None]]
+type RemoteBulkLoader[T] = Callable[[], Awaitable[Mapping[int, T]]]
 type ChangeHook[T] = Callable[[int, T | None], None]
 
 
 class GuildSetting[T]:
-	"""One per-guild setting with a cache. Create these through `GuildSettings.add`.
+	"""One per-guild setting with a cache. Create these through `GuildSettings.add_remote`.
 
 	A setting with ``load_all`` is *preloaded*: every guild's value is cached at startup, so `cache` can be read
 	synchronously, and invalidations reload the value immediately. Other settings load lazily on first `get`, and
@@ -46,9 +54,9 @@ class GuildSetting[T]:
 		self,
 		registry: GuildSettings,
 		key: str,
-		load: Loader[T],
-		save: Saver[T] | None,
-		load_all: BulkLoader[T] | None,
+		load: RemoteLoader[T],
+		save: RemoteSaver[T] | None,
+		load_all: RemoteBulkLoader[T] | None,
 		on_change: ChangeHook[T] | None,
 	) -> None:
 		self.key = key
@@ -67,23 +75,19 @@ class GuildSetting[T]:
 		return self._load_all is not None
 
 	async def get(self, guild_id: int) -> T:
-		"""Return the guild's value, loading it from the database if it isn't cached."""
+		"""Return the guild's value, loading it if it isn't cached."""
 		if guild_id not in self._cache:
-			self._store(guild_id, await self._load(self._registry.db, guild_id))
+			self._store(guild_id, await self._load(guild_id))
 		return self._cache[guild_id]
 
 	async def set(self, guild_id: int, value: T) -> None:
-		"""Persist the guild's value and tell the other instances to reload it."""
+		"""Persist the guild's value through the API, which tells the other instances to reload it."""
 		if self._save is None:
-			raise TypeError(f"Guild setting {self.key!r} is written with targeted SQL; call changed() after writing")
-		await self._save(self._registry.db, guild_id, value)
+			raise TypeError(
+				f"Guild setting {self.key!r} has no single value to save; write it through its own operations"
+			)
+		await self._save(guild_id, value)
 		self._store(guild_id, value)
-		await self._registry.announce(self.key, guild_id)
-
-	async def changed(self, guild_id: int) -> None:
-		"""Report that the guild's stored value was changed directly (targeted SQL), here and on other instances."""
-		await self.refresh(guild_id)
-		await self._registry.announce(self.key, guild_id)
 
 	def remember(self, guild_id: int, value: T) -> None:
 		"""Cache a value that is already persisted (e.g. a row just read elsewhere) without announcing it."""
@@ -96,7 +100,7 @@ class GuildSetting[T]:
 	async def refresh(self, guild_id: int) -> None:
 		"""Bring the guild's cached value up to date after another instance changed it."""
 		if self.preloaded:
-			self._store(guild_id, await self._load(self._registry.db, guild_id))
+			self._store(guild_id, await self._load(guild_id))
 		else:
 			self._drop(guild_id)
 
@@ -104,7 +108,7 @@ class GuildSetting[T]:
 		"""Cache every guild's value. Does nothing for lazily loaded settings."""
 		if self._load_all is None:
 			return
-		values = await self._load_all(self._registry.db)
+		values = await self._load_all()
 		for guild_id in self._cache.keys() - values.keys():
 			self._drop(guild_id)
 		for guild_id, value in values.items():
@@ -122,40 +126,35 @@ class GuildSetting[T]:
 
 
 class GuildSettings:
-	"""Registry of `GuildSetting`s, wired to the database pool and the event bus.
+	"""Registry of `GuildSetting`s, kept in step with the API's ``INVALIDATE_SETTING`` events.
 
 	Args:
-		db: Returns the database pool. A callable, because the pool is created after the bot is constructed.
-		event_bus: The bus that carries ``INVALIDATE_SETTING`` events between instances.
+		event_bus: The bus that carries ``INVALIDATE_SETTING`` events from the API.
+		origin: This instance's ID. Events it caused through the API carry it and are skipped here.
 	"""
 
-	def __init__(self, db: Callable[[], asyncpg.Pool], event_bus: EventBus) -> None:
-		self._db = db
+	def __init__(self, event_bus: EventBus, origin: str | None = None) -> None:
 		self._event_bus = event_bus
 		self._settings: dict[str, GuildSetting[Any]] = {}
-		self._origin = uuid.uuid4().hex
+		self.origin = origin or uuid.uuid4().hex
 
-	@property
-	def db(self) -> asyncpg.Pool:
-		return self._db()
-
-	def add[T](
+	def add_remote[T](
 		self,
 		key: str,
-		load: Loader[T],
-		save: Saver[T] | None = None,
+		load: RemoteLoader[T],
+		save: RemoteSaver[T] | None,
 		*,
-		load_all: BulkLoader[T] | None = None,
+		load_all: RemoteBulkLoader[T] | None = None,
 		on_change: ChangeHook[T] | None = None,
 	) -> GuildSetting[T]:
-		"""Register a setting.
+		"""Register a setting stored behind the Internal API. The API announces its changes, so `set` doesn't.
 
 		Args:
-			key: Unique name, used in invalidation events.
-			load: Reads one guild's value. It decides the default for guilds without a row.
-			save: Writes one guild's value. Omit it for settings written with targeted SQL; those writers call
-				`GuildSetting.changed` afterwards instead of `GuildSetting.set`.
-			load_all: Reads every guild's value; makes the setting preloaded.
+			key: Unique name. Must match the key the API announces (constants in the ``api`` package).
+			load: Reads one guild's value through the API client.
+			save: Writes one guild's value through the API client. ``None`` for settings changed through their own
+				API operations (such as starboards, one board at a time); callers `remember` what the API returns.
+			load_all: Reads every guild's value. Makes the setting preloaded.
 			on_change: Called when a cached value changes or is dropped (see `GuildSetting`).
 
 		Returns:
@@ -183,12 +182,6 @@ class GuildSettings:
 		for setting in self._settings.values():
 			setting.forget(guild_id)
 
-	async def announce(self, key: str, guild_id: int) -> None:
-		"""Tell other instances that a guild's setting changed."""
-		await self._event_bus.publish(
-			EVENTS_CHANNEL, {"type": INVALIDATE_SETTING, "key": key, "guild_id": guild_id, "origin": self._origin}
-		)
-
 	async def handle_event(self, event: Mapping[str, Any]) -> bool:
 		"""Apply an ``INVALIDATE_SETTING`` event from another instance.
 
@@ -197,7 +190,7 @@ class GuildSettings:
 		"""
 		if event.get("type") != INVALIDATE_SETTING:
 			return False
-		if event.get("origin") == self._origin:
+		if event.get("origin") == self.origin:
 			return True
 		setting = self._settings.get(str(event.get("key")))
 		guild_id = event.get("guild_id")
@@ -207,58 +200,42 @@ class GuildSettings:
 		return True
 
 
-# Settings owned by the bot core. Feature settings are registered by their cogs.
+# Settings owned by the bot core, stored behind the Internal API. Feature settings are registered by their cogs.
 
 type Prefix = tuple[str, bool]
 """A guild's command prefix and whether mentioning the bot also works as a prefix."""
 
 
-async def load_prefix(db: asyncpg.Pool, guild_id: int) -> Prefix:
-	"""Read a guild's prefix, creating its ``guilds`` row (with the column defaults) if it has none."""
-	row = await db.fetchrow(
-		"INSERT INTO guilds (guild_id) VALUES ($1) "
-		"ON CONFLICT (guild_id) DO UPDATE SET guild_id = EXCLUDED.guild_id RETURNING prefix, mention",
-		guild_id,
+def prefix_setting(settings: GuildSettings, api: ApiClient) -> GuildSetting[Prefix]:
+	"""Register the prefix setting, stored behind the API and preloaded.
+
+	Args:
+		settings: The registry to add it to.
+		api: The API client it loads and saves through.
+	"""
+
+	async def load(guild_id: int) -> Prefix:
+		value = await api.settings.prefix(guild_id)
+		return value.prefix, value.mention
+
+	async def save(guild_id: int, value: Prefix) -> None:
+		await api.settings.set_prefix(guild_id, PrefixModel(prefix=value[0], mention=value[1]))
+
+	async def load_all() -> dict[int, Prefix]:
+		return {entry.guild_id: (entry.prefix, entry.mention) for entry in await api.settings.all_prefixes()}
+
+	return settings.add_remote(PREFIX_SETTING, load, save, load_all=load_all)
+
+
+def locale_override_setting(settings: GuildSettings, api: ApiClient) -> GuildSetting[str | None]:
+	"""Register the locale override setting, stored behind the API and preloaded.
+
+	A ``None`` value means the guild follows Discord locales.
+
+	Args:
+		settings: The registry to add it to.
+		api: The API client it loads and saves through.
+	"""
+	return settings.add_remote(
+		LOCALE_SETTING, api.settings.locale, api.settings.set_locale, load_all=api.settings.all_locales
 	)
-	assert row is not None
-	return row["prefix"], row["mention"]
-
-
-async def save_prefix(db: asyncpg.Pool, guild_id: int, value: Prefix) -> None:
-	"""Write a guild's prefix."""
-	await db.execute(
-		"INSERT INTO guilds (guild_id, prefix, mention) VALUES ($1, $2, $3) "
-		"ON CONFLICT (guild_id) DO UPDATE SET prefix = EXCLUDED.prefix, mention = EXCLUDED.mention",
-		guild_id,
-		*value,
-	)
-
-
-async def load_all_prefixes(db: asyncpg.Pool) -> dict[int, Prefix]:
-	"""Read every guild's prefix."""
-	rows = await db.fetch("SELECT guild_id, prefix, mention FROM guilds")
-	return {int(row["guild_id"]): (row["prefix"], row["mention"]) for row in rows}
-
-
-async def load_locale_override(db: asyncpg.Pool, guild_id: int) -> str | None:
-	"""Read a guild's locale override, or ``None`` if it uses its Discord locale."""
-	return await db.fetchval("SELECT locale FROM guild_locale_overrides WHERE guild_id = $1", guild_id)
-
-
-async def save_locale_override(db: asyncpg.Pool, guild_id: int, value: str | None) -> None:
-	"""Write a guild's locale override; ``None`` removes it."""
-	if value is None:
-		await db.execute("DELETE FROM guild_locale_overrides WHERE guild_id = $1", guild_id)
-	else:
-		await db.execute(
-			"INSERT INTO guild_locale_overrides (guild_id, locale) VALUES ($1, $2) "
-			"ON CONFLICT (guild_id) DO UPDATE SET locale = EXCLUDED.locale",
-			guild_id,
-			value,
-		)
-
-
-async def load_all_locale_overrides(db: asyncpg.Pool) -> dict[int, str | None]:
-	"""Read every guild's locale override."""
-	rows = await db.fetch("SELECT guild_id, locale FROM guild_locale_overrides")
-	return {int(row["guild_id"]): row["locale"] for row in rows}

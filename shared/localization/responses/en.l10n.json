@@ -142,6 +142,49 @@
       }
     ]
   },
+  "bear_trap": {
+    "message": {
+      "allowed_mentions": [
+        "none"
+      ],
+      "components": [
+        {
+          "accent_color": 15105570,
+          "components": [
+            {
+              "content": "# 🐻 Bear trap",
+              "type": "text_display"
+            },
+            {
+              "content": "**Do not post in this channel.** Anyone who sends a message here is kicked from the server at once, and their recent messages are deleted.\n-# Hacked accounts spam every channel they can see. This one catches them.",
+              "type": "text_display"
+            },
+            {
+              "type": "separator"
+            },
+            {
+              "custom_id": "bear_trap:{guild.id}",
+              "disabled": true,
+              "label": "🐻 {kicks} caught",
+              "style": "secondary",
+              "type": "button"
+            }
+          ],
+          "type": "container"
+        }
+      ]
+    },
+    "notify": {
+      "embeds": [
+        {
+          "color": 15548997,
+          "description": "You sent a message in a bear trap channel in **{guild}**. Only spam bots post there, so your account has probably been hacked.\n\n**Change your Discord password now** and turn on two-factor authentication. Then check **Authorized Apps** and **Devices** in your settings for anything you don't recognize.\n\nOnce your account is safe again, you can rejoin: {invite}",
+          "title": "You were kicked from {guild}"
+        }
+      ]
+    },
+    "reason": "Posted in the bear trap channel"
+  },
   "cogs": {
     "afk": "💤 AFK",
     "automod": "🤖 AutoMod",
@@ -157,7 +200,33 @@
     "setup": "🔧 Setup",
     "shop": "🏪 Shop",
     "snapshots": "📸 Snapshots",
+    "utility": "🧰 Utility",
     "voice": "🔊 Voice"
+  },
+  "convert": {
+    "crypto": {
+      "content": "🪙 **{amount:,.8g} {unit}** = **{result:,.8g} {to}**"
+    },
+    "currency": {
+      "content": "💱 **{amount:,.2f} {unit}** = **{result:,.2f} {to}**"
+    },
+    "distance": {
+      "content": "📏 **{amount:,.6g} {unit}** = **{result:,.6g} {to}**"
+    },
+    "errors": {
+      "incompatible": {
+        "content": "`{unit}` can't be converted to `{to}`!"
+      },
+      "unavailable": {
+        "content": "Exchange rates are unavailable right now. Try again later."
+      },
+      "unknown_unit": {
+        "content": "`{unit}` is not a known unit or currency."
+      }
+    },
+    "weight": {
+      "content": "⚖️ **{amount:,.6g} {unit}** = **{result:,.6g} {to}**"
+    }
   },
   "crime": {
     "embeds": [
@@ -191,7 +260,42 @@
       "content": "You have successfully deposited **${amount}** into your bank account!"
     }
   },
+  "download": {
+    "errors": {
+      "content": {
+        "content": "That post couldn't be downloaded. It may be private, deleted or region-locked.",
+        "ephemeral": true
+      },
+      "failed": {
+        "content": "The download failed. Try again later.",
+        "ephemeral": true
+      },
+      "too_large": {
+        "content": "That file is larger than the **{limit:.0f} MB** upload limit here.",
+        "ephemeral": true
+      },
+      "unavailable": {
+        "content": "Downloads are unavailable right now. Try again later.",
+        "ephemeral": true
+      },
+      "unsupported": {
+        "content": "That link isn't supported, or it isn't a valid link.",
+        "ephemeral": true
+      }
+    },
+    "success": {
+      "content": "📥 <{link}>"
+    }
+  },
   "errors": {
+    "api_unavailable": {
+      "embeds": [
+        {
+          "description": "The bot can't reach its data right now. Please try again in a moment.",
+          "title": "Temporarily unavailable"
+        }
+      ]
+    },
     "bad_argument": {
       "embeds": [
         {
@@ -207,6 +311,10 @@
           "title": "Incorrect usage"
         }
       ]
+    },
+    "blacklisted": {
+      "content": "You can't use this bot here.",
+      "ephemeral": true
     },
     "bot_missing_permissions": {
       "embeds": [
@@ -260,6 +368,14 @@
         {
           "description": "The bot got a 403 Forbidden error. Please check for role hierarchy and bot permissions.",
           "title": "Forbidden"
+        }
+      ]
+    },
+    "max_concurrency": {
+      "embeds": [
+        {
+          "description": "Too many people are using this command right now. Try again in a moment.",
+          "title": "Busy"
         }
       ]
     },
@@ -569,6 +685,27 @@
     }
   },
   "help": {
+    "arguments": {
+      "bare": "**`{name}`**",
+      "choice": "`{value}`",
+      "choice_labelled": "`{value}` ({label})",
+      "choices": "One of: {choices}",
+      "default": "Default: `{default}`",
+      "described": "**`{name}`**: {description}",
+      "details": "-# {details}",
+      "greedy": "Accepts several values",
+      "length_maximum": "Up to {maximum} characters",
+      "length_minimum": "At least {minimum} characters",
+      "length_range": "{minimum}–{maximum} characters",
+      "maximum": "At most {maximum}",
+      "minimum": "At least {minimum}",
+      "optional": "Optional",
+      "range": "From {minimum} to {maximum}",
+      "required": "Required",
+      "rest": "Takes the rest of the message",
+      "separator": " · ",
+      "title": "**Arguments**"
+    },
     "bot": {
       "components": [
         {
@@ -611,6 +748,13 @@
           "components": [
             {
               "content": "# 📖 `{command.usage}`\n{command.description}",
+              "type": "text_display"
+            },
+            {
+              "type": "separator"
+            },
+            {
+              "content": "{arguments}",
               "type": "text_display"
             },
             {
@@ -2692,6 +2836,9 @@
         },
         "hierarchy": {
           "content": "You can't ban a user with a higher role than you."
+        },
+        "bot_hierarchy": {
+          "content": "I can't ban a member whose top role is the same as or higher than mine."
         }
       },
       "notify": {
@@ -2826,6 +2973,12 @@
       "errors": {
         "bot": {
           "content": "I'm invincible."
+        },
+        "hierarchy": {
+          "content": "You can't kick a user with a higher role than you."
+        },
+        "bot_hierarchy": {
+          "content": "I can't kick a member whose top role is the same as or higher than mine."
         }
       },
       "notify": {
@@ -2886,6 +3039,12 @@
         },
         "hierarchy": {
           "content": "You can't mute a user with a higher role than you."
+        },
+        "bot_hierarchy": {
+          "content": "I can't mute a member whose top role is the same as or higher than mine."
+        },
+        "administrator": {
+          "content": "I can't mute an administrator."
         }
       },
       "notify": {
@@ -2949,6 +3108,23 @@
         ]
       }
     },
+    "purge": {
+      "none": {
+        "content": "No messages in {channel.mention} matched.",
+        "delete_after": 5
+      },
+      "reason": "Messages purged by {moderator.name}",
+      "response": {
+        "delete_after": 5,
+        "embeds": [
+          {
+            "description": "Deleted **{count}** messages in {channel.mention}.",
+            "timestamp": "{now}",
+            "title": "Messages purged"
+          }
+        ]
+      }
+    },
     "remove": {
       "errors": {
         "not_found": {
@@ -2979,6 +3155,26 @@
           }
         ]
       }
+    },
+    "softban": {
+      "notify": {
+        "embeds": [
+          {
+            "description": "You have been kicked from **{guild}** and your recent messages there were deleted.",
+            "fields": [
+              {
+                "name": "Reason",
+                "value": "{softban.reason}"
+              }
+            ],
+            "footer": {
+              "text": "{softban.id}"
+            },
+            "title": "Kick"
+          }
+        ]
+      },
+      "reason": "Soft-banned by {moderator.name}"
     },
     "unban": {
       "case_reason": "Ban case {case.id} closed",
@@ -3184,8 +3380,23 @@
           },
           {
             "inline": false,
+            "name": "Gateway proxy latency",
+            "value": "`{proxy:.3f}s`"
+          },
+          {
+            "inline": false,
             "name": "Database ping",
             "value": "`{db:.3f}s`"
+          },
+          {
+            "inline": true,
+            "name": "Cluster",
+            "value": "`{cluster}`"
+          },
+          {
+            "inline": true,
+            "name": "Shard",
+            "value": "`{shard}` / `{shard_count}`"
           }
         ],
         "title": "Pong!"
@@ -3419,6 +3630,46 @@
     "strings": {
       "save_load_reason": "Lumin save load - {author.name}",
       "server_snapshot": "Snapshot of {guild.name}"
+    }
+  },
+  "starboard": {
+    "post": {
+      "content": "{emoji} **{count}** | {channel}",
+      "jump": "Jump to message",
+      "message": {
+        "embeds": [
+          {
+            "author": {
+              "icon_url": "{author.avatar}",
+              "name": "{author.display_name}",
+              "url": "{jump}"
+            },
+            "color": "#FFAC33",
+            "description": "{content}",
+            "fields": [
+              {
+                "inline": false,
+                "name": "Attachments",
+                "value": "{attachments}"
+              }
+            ],
+            "timestamp": "{timestamp}"
+          }
+        ]
+      },
+      "reply": {
+        "embeds": [
+          {
+            "author": {
+              "icon_url": "{author.avatar}",
+              "name": "↩️ Replying to {author.display_name}",
+              "url": "{jump}"
+            },
+            "color": "#99AAB5",
+            "description": "{content}"
+          }
+        ]
+      }
     }
   },
   "ticket": {

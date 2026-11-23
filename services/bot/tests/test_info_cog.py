@@ -11,7 +11,7 @@ from discord.ext import commands
 @pytest.fixture
 def cog() -> Info:
 	bot = MagicMock()
-	bot.db = AsyncMock()
+	bot.api.snapshots.get = AsyncMock(return_value=None)
 	return Info(bot)
 
 
@@ -97,17 +97,52 @@ async def test_unicode_emoji_and_garbage(cog, ctx):
 
 async def test_template_falls_back_to_a_snapshot_code(cog, ctx):
 	cog.client.fetch_template = AsyncMock(side_effect=discord.NotFound(MagicMock(status=404), "unknown template"))
-	cog.client.db.fetchrow.return_value = {"code": "abc"}
+	cog.client.api.snapshots.get.return_value = MagicMock()
 	with patch("cogs.info.Template.from_dict", AsyncMock(return_value="t")):
 		await cog.template.callback(cog, ctx, "ABCDEFG")
 	cog.client.fetch_template.assert_awaited_once_with("ABCDEFG")
-	cog.client.db.fetchrow.assert_awaited_once()
-	assert cog.client.db.fetchrow.call_args.args[1] == "abcdefg"
+	cog.client.api.snapshots.get.assert_awaited_once_with("abcdefg")
 	assert sent_key(ctx) == "info.template"
 
 
 async def test_unknown_template_is_a_bad_argument(cog, ctx):
-	cog.client.db.fetchrow.return_value = None
 	with pytest.raises(commands.BadArgument):
 		await cog.template.callback(cog, ctx, "!!")
 	cog.client.fetch_template.assert_not_called()
+
+
+async def test_info_refuses_channels_of_other_guilds(cog, ctx):
+	channel = MagicMock(spec=discord.TextChannel)
+	channel.guild = MagicMock(spec=discord.Guild)
+
+	with pytest.raises(commands.BadArgument):
+		await cog.info.callback(cog, ctx, channel)
+	ctx.send.assert_not_called()
+
+
+async def test_user_from_another_guild_shows_only_user_info(cog, ctx):
+	ctx.guild = None
+	member = MagicMock(spec=discord.Member)
+	member.guild = MagicMock(spec=discord.Guild)
+	user = MagicMock(spec=discord.User)
+	cog.client.get_user.return_value = user
+	with patch("cogs.info.User.from_user", return_value="u") as from_user:
+		await cog.user.callback(cog, ctx, member)
+	from_user.assert_called_once_with(user)
+
+
+async def test_ip_refuses_anything_but_an_address(cog, ctx):
+	cog.client.request = AsyncMock()
+
+	with pytest.raises(commands.BadArgument):
+		await cog.ip.callback(cog, ctx, "../me")
+	cog.client.request.assert_not_called()
+
+
+@pytest.mark.parametrize("ip_addr", ["fe80::1%a#", "fe80::1%a?x=y", "fe80::1%eth0"])
+async def test_ip_refuses_scope_ids(cog, ctx, ip_addr):
+	cog.client.request = AsyncMock()
+
+	with pytest.raises(commands.BadArgument):
+		await cog.ip.callback(cog, ctx, ip_addr)
+	cog.client.request.assert_not_called()

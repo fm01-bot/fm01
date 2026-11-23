@@ -1,0 +1,7 @@
+# Build context for the website image (the root .dockerignore doesn't apply to it).
+node_modules
+.next
+.env*
+*.pem
+.vscode
+Dockerfile

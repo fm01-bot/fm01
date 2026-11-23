@@ -5,13 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 import discord
 import pytest
 from cogs.config import Config
-from core.settings import (
-	INVALIDATE_SETTING,
-	GuildSettings,
-	load_all_locale_overrides,
-	load_locale_override,
-	save_locale_override,
-)
+from core.settings import GuildSettings, locale_override_setting
 from helpers.cli_parser import CLIParseError, CLIParser
 from helpers.custom_response import CustomResponse
 
@@ -23,13 +17,13 @@ def mock_ctx():
 	ctx.guild.id = 12345
 	ctx.guild.preferred_locale = discord.Locale.american_english
 	ctx.bot = MagicMock()
-	ctx.bot.db = AsyncMock()
 	ctx.bot.event_bus = MagicMock()
 	ctx.bot.event_bus.publish = AsyncMock()
-	ctx.bot.settings = GuildSettings(lambda: ctx.bot.db, ctx.bot.event_bus)
-	ctx.bot.locale_override = ctx.bot.settings.add(
-		"locale", load_locale_override, save_locale_override, load_all=load_all_locale_overrides
-	)
+	ctx.bot.api = MagicMock()
+	ctx.bot.api.settings.locale = AsyncMock(return_value=None)
+	ctx.bot.api.settings.set_locale = AsyncMock()
+	ctx.bot.settings = GuildSettings(ctx.bot.event_bus)
+	ctx.bot.locale_override = locale_override_setting(ctx.bot.settings, ctx.bot.api)
 	ctx.bot.locale_cache = ctx.bot.locale_override.cache
 	ctx.send = AsyncMock()
 	return ctx
@@ -38,7 +32,7 @@ def mock_ctx():
 @pytest.mark.asyncio
 async def test_config_locale_view_default_no_override(mock_ctx):
 	config_cog = Config(mock_ctx.bot)
-	mock_ctx.bot.db.fetchval.return_value = None
+	mock_ctx.bot.api.settings.locale.return_value = None
 
 	tokens = CLIParser.split_args("locale")
 	node, opts = config_cog.parser.parse(tokens)
@@ -67,9 +61,9 @@ async def test_config_locale_view_with_cached_override(mock_ctx):
 
 
 @pytest.mark.asyncio
-async def test_config_locale_view_fallback_to_db(mock_ctx):
+async def test_config_locale_view_fallback_to_api(mock_ctx):
 	config_cog = Config(mock_ctx.bot)
-	mock_ctx.bot.db.fetchval.return_value = "hu"
+	mock_ctx.bot.api.settings.locale.return_value = "hu"
 
 	tokens = CLIParser.split_args("locale")
 	node, opts = config_cog.parser.parse(tokens)
@@ -91,19 +85,9 @@ async def test_config_locale_set_option(mock_ctx):
 	assert node.callback is not None
 	await node.callback(mock_ctx, **opts)
 
-	# Verify DB execute called with upsert
-	mock_ctx.bot.db.execute.assert_called_once()
-	sql_args = mock_ctx.bot.db.execute.call_args.args
-	assert "INSERT INTO guild_locale_overrides" in sql_args[0]
-	assert sql_args[1] == 12345
-	assert sql_args[2] == "hu"
-
-	# Verify cache updated
+	mock_ctx.bot.api.settings.set_locale.assert_awaited_once_with(12345, "hu")
 	assert mock_ctx.bot.locale_cache[12345] == "hu"
-
-	# Verify event published
-	event = mock_ctx.bot.event_bus.publish.call_args.args[1]
-	assert (event["type"], event["key"], event["guild_id"]) == (INVALIDATE_SETTING, "locale", 12345)
+	mock_ctx.bot.event_bus.publish.assert_not_called()  # the API announces the change
 
 	# Verify response message
 	mock_ctx.send.assert_called_once()
@@ -135,17 +119,9 @@ async def test_config_locale_clear_default(mock_ctx):
 	assert node.callback is not None
 	await node.callback(mock_ctx, **opts)
 
-	# Verify DB delete
-	mock_ctx.bot.db.execute.assert_called_once()
-	sql_args = mock_ctx.bot.db.execute.call_args.args
-	assert "DELETE FROM guild_locale_overrides WHERE guild_id = $1" in sql_args[0]
-	assert sql_args[1] == 12345
-
-	# Verify the override is gone
+	mock_ctx.bot.api.settings.set_locale.assert_awaited_once_with(12345, None)
 	assert mock_ctx.bot.locale_cache[12345] is None
-
-	event = mock_ctx.bot.event_bus.publish.call_args.args[1]
-	assert (event["type"], event["key"], event["guild_id"]) == (INVALIDATE_SETTING, "locale", 12345)
+	mock_ctx.bot.event_bus.publish.assert_not_called()
 
 	# Verify response message
 	call_content = mock_ctx.send.call_args.kwargs.get("content", "")

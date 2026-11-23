@@ -6,6 +6,10 @@ on:
       - main
     paths:
       - services/bot/**
+      - shared/schemas/**
+
+permissions:
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -43,5 +47,3 @@ jobs:
 
       - name: Run pytest
         run: uv run pytest -v
-        env:
-          REQUIRE_DB_TESTS: "1"

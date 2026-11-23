@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from helpers.regex import DISCORD_INVITE, DISCORD_MESSAGE_URL, DISCORD_TEMPLATE, TIME
+import time
+
+import pytest
+from helpers.regex import DISCORD_INVITE, DISCORD_MESSAGE_URL, DISCORD_TEMPLATE, TIME, URL_REGEX
 
 
 class TestRegexHelpers:
@@ -46,3 +49,14 @@ class TestRegexHelpers:
 		matches = list(TIME.finditer("5d10h30m15s"))
 		assert len(matches) == 4
 		assert [(m.group(1), m.group(2)) for m in matches] == [("5", "d"), ("10", "h"), ("30", "m"), ("15", "s")]
+
+
+@pytest.mark.parametrize("text", ["a." * 2000, "a-" * 2000, "a" * 4000])
+def test_url_regex_stays_fast_on_crafted_messages(text: str):
+	start = time.perf_counter()
+	URL_REGEX.findall(text)
+	assert time.perf_counter() - start < 0.05  # quadratic matching took ~0.18 s on "a." * 2000
+
+
+def test_url_regex_finds_bare_domains():
+	assert URL_REGEX.findall("see sub.domain.co.uk/path and EXAMPLE.ORG") == ["sub.domain.co.uk/path", "EXAMPLE.ORG"]

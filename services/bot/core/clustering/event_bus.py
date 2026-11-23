@@ -75,6 +75,7 @@ class RedisPubSubBus(EventBus):
 			self._handlers.setdefault(channel, []).append(handler)
 			if is_new_channel and self._running:
 				await self.pubsub.subscribe(channel)
+				self._ensure_listener()
 
 	async def start(self) -> None:
 		if self._running:
@@ -85,8 +86,16 @@ class RedisPubSubBus(EventBus):
 			channels = list(self._handlers.keys())
 			if channels:
 				await self.pubsub.subscribe(*channels)
+				self._ensure_listener()
 
-		self._task = asyncio.create_task(self._listen_loop())
+	def _ensure_listener(self) -> None:
+		"""Start the listen loop if it isn't running. Call only once subscribed to a channel.
+
+		redis-py's ``listen()`` ends at once while nothing is subscribed, so a loop started before the first
+		subscription would exit and never read the messages of channels subscribed later.
+		"""
+		if self._task is None or self._task.done():
+			self._task = asyncio.create_task(self._listen_loop())
 
 	async def _listen_loop(self) -> None:
 		logger.debug("Redis PubSub listener started")

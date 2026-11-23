@@ -1,3 +1,5 @@
+# Networks: each service joins only the networks of the services it talks to, so a compromised third-party service
+# (RSSHub, Lavalink, cobalt) can reach the bot but not Postgres, Redis, the API or the Discord proxies.
 services:
   db:
     image: postgres:16
@@ -11,6 +13,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     command: -p ${DB_PORT:-5432}
+    networks: [data]
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-fm01} -p ${DB_PORT:-5432}" ]
       interval: 5s
@@ -29,6 +32,7 @@ services:
       - ./services/lavalink/application.yml:/opt/Lavalink/application.yml:ro
     ports:
       - "127.0.0.1:2333:2333"
+    networks: [lavalink]
     healthcheck:
       test: [ "CMD-SHELL", "wget -qO- --header=\"Authorization: ${LAVALINK_PASSWORD}\" http://localhost:2333/version || exit 1" ]
       interval: 10s
@@ -39,9 +43,25 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    command: redis-server --save "" --appendonly no
+    command: redis-server --save "" --appendonly no --requirepass "${REDIS_PASSWORD:?Please set a Redis password in .env}"
+    environment:
+      REDISCLI_AUTH: ${REDIS_PASSWORD:?Please set a Redis password in .env}  # for the healthcheck's redis-cli
     ports:
       - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    networks: [data]
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # RSSHub's cache, apart from the main Redis: RSSHub is a large third-party scraper, and the main Redis holds the
+  # dashboard's guild manager cache and the event bus.
+  rsshub-redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --save "" --appendonly no
+    networks: [rsshub]
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
@@ -50,17 +70,18 @@ services:
 
   # Self-hosted RSSHub: the TikTok alert feed source (the public rsshub.app blocks bots).
   rsshub:
-    image: diygod/rsshub:latest
+    image: diygod/rsshub:latest@sha256:fa0e93167518e8deffce07136c693ed2f73d117bc9bae92ed204a5cb451dd5bc
     restart: unless-stopped
     depends_on:
-      redis:
+      rsshub-redis:
         condition: service_healthy
     environment:
       NODE_ENV: production
       CACHE_TYPE: redis
-      REDIS_URL: redis://redis:6379/2
+      REDIS_URL: redis://rsshub-redis:6379/0
     ports:
       - "127.0.0.1:1200:1200"
+    networks: [rsshub]
     healthcheck:
       test: [ "CMD", "curl", "-fsS", "-o", "/dev/null", "http://localhost:1200/healthz" ]
       interval: 15s
@@ -68,13 +89,29 @@ services:
       retries: 5
       start_period: 20s
 
+  # Self-hosted cobalt: resolves and downloads media for the download command. No port is published, so only
+  # services on the Compose network (the bot) can reach it. Every request comes from the bot's one address, so the
+  # per-IP rate limits are raised well above cobalt's defaults.
+  cobalt:
+    image: ghcr.io/imputnet/cobalt:11
+    restart: unless-stopped
+    read_only: true
+    environment:
+      # Tunnel links are built from this, so it must be the address the bot reaches cobalt at.
+      API_URL: http://cobalt:9000/
+      RATELIMIT_MAX: ${COBALT_RATELIMIT_MAX:-600}
+      TUNNEL_RATELIMIT_MAX: ${COBALT_RATELIMIT_MAX:-600}
+    networks: [cobalt]
+
+  # Unauthenticated: anything that reaches it acts as the bot, so only the bot shares its network.
   twilight-proxy:
-    image: ghcr.io/twilight-rs/http-proxy:latest
+    image: ghcr.io/twilight-rs/http-proxy:latest@sha256:6052dc81879d3ae00cd1141d210c1b10c2c81fe80b08e9f604e7dc99fb1adf8f
     restart: unless-stopped
     environment:
       DISCORD_TOKEN: ${TOKEN:?Please set a bot token in .env}
     ports:
       - "127.0.0.1:3000:3000"
+    networks: [discord]
     profiles:
       - clustered
 
@@ -89,10 +126,11 @@ services:
       - ./services/gateway-proxy/config.json:/config.json:ro
     ports:
       - "127.0.0.1:7878:7878"
+    networks: [discord]
     profiles:
       - gateway-proxy
 
-  # One-shot: applies pending Alembic migrations, then exits. The bot waits for a successful exit.
+  # One-shot: applies pending Alembic migrations (the API's schema), then exits. The API and bot wait for it.
   migrations:
     build: ./services/migrations/
     restart: "no"
@@ -105,29 +143,65 @@ services:
       DB_USER: ${DB_USER:-fm01}
       DB_HOST: ${DB_HOST:-db}
       DB_NAME: ${DB_NAME:-fm01}
+    networks: [data]
 
-  bot:
-    build: ./services/bot/
+  api:
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    environment:
+      DB_PASSWORD: ${DB_PASSWORD:?Please set a database password in .env}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER:-fm01}
+      DB_HOST: ${DB_HOST:-db}
+      DB_NAME: ${DB_NAME:-fm01}
+      REDIS_URL: ${REDIS_URL:-redis://:${REDIS_PASSWORD}@redis:6379/0}
+      API_INTERNAL_TOKEN: ${API_INTERNAL_TOKEN:?Please set an internal API token in .env}
+      TOKEN: ${TOKEN:?Please set a bot token in .env}
+      # Dashboard sign-in; leave unset to run without the dashboard.
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:-}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:-}
+      SESSION_ENCRYPTION_KEY: ${SESSION_ENCRYPTION_KEY:-}
+    ports:
+      - "127.0.0.1:${API_PORT:-8000}:8000"
+    # default: Discord, and Caddy reaches the API here.
+    networks: [default, data]
+    healthcheck:
+      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  bot:
+    build:
+      context: .
+      dockerfile: services/bot/Dockerfile
+    depends_on:
       lavalink:
         condition: service_healthy
       redis:
         condition: service_healthy
       rsshub:
         condition: service_started
-      migrations:
-        condition: service_completed_successfully
+      cobalt:
+        condition: service_started
+      api:
+        condition: service_healthy
     restart: unless-stopped
     environment:
+      API_URL: ${API_URL:-http://api:8000}
+      API_INTERNAL_TOKEN: ${API_INTERNAL_TOKEN:?Please set an internal API token in .env}
       TOKEN: ${TOKEN:?Please set a bot token in .env}
       DEBUG_TOKEN: ${DEBUG_TOKEN}
-      DB_PASSWORD: ${DB_PASSWORD:?Please set a database password in .env}
-      DB_PORT: ${DB_PORT:-5432}
-      DB_USER: ${DB_USER:-fm01}
-      DB_HOST: ${DB_HOST:-db}
-      DB_NAME: ${DB_NAME:-fm01}
       LAVALINK_URI: ${LAVALINK_URI:-http://lavalink:2333}
       LAVALINK_PASSWORD: ${LAVALINK_PASSWORD}
       SENTRY_DSN: ${SENTRY_DSN:-}
@@ -135,17 +209,21 @@ services:
       SHARD_COUNT: ${SHARD_COUNT:-}
       SHARDS_PER_CLUSTER: ${SHARDS_PER_CLUSTER:-16}
       CLUSTER_ID: ${CLUSTER_ID:-}
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
-      REDIS_MSG_URL: ${REDIS_MSG_URL:-redis://redis:6379/1}
+      REDIS_URL: ${REDIS_URL:-redis://:${REDIS_PASSWORD}@redis:6379/0}
+      REDIS_MSG_URL: ${REDIS_MSG_URL:-redis://:${REDIS_PASSWORD}@redis:6379/1}
       DISCORD_PROXY_URL: ${DISCORD_PROXY_URL:-}
       DISCORD_GATEWAY_URL: ${DISCORD_GATEWAY_URL:-}
       RSSHUB_URL: ${RSSHUB_URL:-http://rsshub:1200}
       TWITCH_CLIENT_ID: ${TWITCH_CLIENT_ID:-}
       TWITCH_CLIENT_SECRET: ${TWITCH_CLIENT_SECRET:-}
+      COBALT_URL: ${COBALT_URL:-http://cobalt:9000}
+      COBALT_API_KEY: ${COBALT_API_KEY:-}
     volumes:
-      - ./services/bot:/bot
-      # The bot resolves localizations to /shared/localization (../../shared from /bot).
-      - ./shared:/shared:ro
+      # Mirrors the repository layout, as the image does: the bot resolves localizations and schemas at ../../shared.
+      # Read-only, so code running in the bot can't change what runs after the next restart.
+      - ./services/bot:/fm01/services/bot:ro
+      - ./shared:/fm01/shared:ro
+    networks: [default, data, rsshub, lavalink, cobalt, discord]
 
   # The public website. Opt-in (COMPOSE_PROFILES=website): self-hosters running only the bot don't need it.
   # Built from the repo root so it can read shared/; text is baked in at build time, so rebuild after locale changes.
@@ -165,3 +243,11 @@ services:
 
 volumes:
   postgres_data:
+
+networks:
+  default:   # the API and the bot: internet access (Discord), and where Caddy reaches the API
+  data:      # Postgres and Redis: the API, the bot and migrations
+  rsshub:    # RSSHub and its cache: the bot
+  lavalink:  # Lavalink: the bot
+  cobalt:    # cobalt: the bot
+  discord:   # twilight-proxy and gateway-proxy, which act as the bot: the bot

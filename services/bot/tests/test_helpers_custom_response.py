@@ -465,19 +465,30 @@ class TestDiscardLinesWithNoneAndCleanup:
 		ctx.guild.preferred_locale = discord.Locale.american_english
 
 		cmd_no_aliases = Command("ping", "Latency check", "?!ping", "?!", None)
-		msg_none = await cr.get_message("help.command", ctx, command=cmd_no_aliases)
+		msg_none = await cr.get_message("help.command", ctx, command=cmd_no_aliases, arguments=None)
 		view_none = msg_none["view"]
 		container_none = view_none.children[0]
 		assert len(container_none.children) == 1
 		assert "Aliases" not in container_none.children[0].content
 
 		cmd_with_aliases = Command("ping", "Latency check", "?!ping", "?!", "p, latency")
-		msg_some = await cr.get_message("help.command", ctx, command=cmd_with_aliases)
+		msg_some = await cr.get_message("help.command", ctx, command=cmd_with_aliases, arguments=None)
 		view_some = msg_some["view"]
 		container_some = view_some.children[0]
 		assert len(container_some.children) == 3
 		assert isinstance(container_some.children[1], discord.ui.Separator)
 		assert "Aliases" in container_some.children[2].content
+
+		msg_args = await cr.get_message("help.command", ctx, command=cmd_with_aliases, arguments="**Arguments**")
+		container_args = msg_args["view"].children[0]
+		assert [type(child) for child in container_args.children] == [
+			discord.ui.TextDisplay,
+			discord.ui.Separator,
+			discord.ui.TextDisplay,
+			discord.ui.Separator,
+			discord.ui.TextDisplay,
+		]
+		assert container_args.children[2].content == "**Arguments**"
 
 
 class TestDeliveryFlags:

@@ -1,0 +1,19 @@
+# Build context for the bot and API images is the repository root.
+.git
+.github
+.env
+**/.venv
+**/.ruff_cache
+**/.pytest_cache
+**/__pycache__
+**/*.py[cod]
+**/node_modules
+**/tests
+**/justfile
+**/*.md
+services/bot/config.yml
+services/website
+services/migrations
+compose.yml
+prek.toml
+crowdin.yml

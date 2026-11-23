@@ -1,2 +1,8 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Collapsed in GitHub diffs and left out of line counts
+shared/schemas/openapi/** linguist-generated=true
+shared/schemas/ts/** linguist-generated=true
+shared/localization/** linguist-generated=true
+services/website/_lib/translations/*.json linguist-generated=true

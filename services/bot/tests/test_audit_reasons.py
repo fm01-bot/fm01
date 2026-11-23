@@ -15,7 +15,15 @@ EN = json.loads(
 
 
 @pytest.mark.parametrize(
-	"path", ["mod.mute.reason", "mod.kick.reason", "mod.ban.reason", "mod.unban.reason", "mod.unmute.reason"]
+	"path",
+	[
+		"mod.mute.reason",
+		"mod.kick.reason",
+		"mod.ban.reason",
+		"mod.unban.reason",
+		"mod.unmute.reason",
+		"mod.purge.reason",
+	],
 )
 def test_moderation_reasons_name_the_moderator(path):
 	node: object = EN

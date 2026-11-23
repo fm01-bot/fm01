@@ -93,6 +93,50 @@
     "name": "ban",
     "usage": "ban [user] (duration) (reason)"
   },
+  "blacklist": {
+    "desc": "List blacklisted users and servers (dev-only)",
+    "fallback": "list",
+    "name": "blacklist",
+    "usage": "blacklist"
+  },
+  "blacklist_add": {
+    "args": {
+      "kind": {
+        "desc": "Whether the target is a user or a server",
+        "guild": "Server",
+        "name": "kind",
+        "user": "User"
+      },
+      "reason": {
+        "desc": "Why they are blacklisted",
+        "name": "reason"
+      },
+      "target": {
+        "desc": "The user's or server's ID",
+        "name": "target"
+      }
+    },
+    "desc": "Bar a user or server from the bot's commands and dashboard (dev-only)",
+    "name": "add",
+    "usage": "blacklist add [kind] [target] (reason)"
+  },
+  "blacklist_remove": {
+    "args": {
+      "kind": {
+        "desc": "Whether the target is a user or a server",
+        "guild": "Server",
+        "name": "kind",
+        "user": "User"
+      },
+      "target": {
+        "desc": "The user's or server's ID",
+        "name": "target"
+      }
+    },
+    "desc": "Take a user or server off the blacklist (dev-only)",
+    "name": "remove",
+    "usage": "blacklist remove [kind] [target]"
+  },
   "botinfo": {
     "desc": "Information about the bot",
     "name": "bot"
@@ -260,6 +304,25 @@
     "name": "config",
     "usage": "config [flags_and_args]"
   },
+  "convert": {
+    "args": {
+      "amount": {
+        "desc": "The amount to convert",
+        "name": "amount"
+      },
+      "to": {
+        "desc": "The unit, currency or cryptocurrency to convert to",
+        "name": "to"
+      },
+      "unit": {
+        "desc": "The unit, currency or cryptocurrency to convert from (ex. km, lb, EUR, BTC)",
+        "name": "unit"
+      }
+    },
+    "desc": "Convert between distances, weights, currencies and cryptocurrencies",
+    "name": "convert",
+    "usage": "convert [amount] [unit] [to]"
+  },
   "crime": {
     "desc": "Earn money by committing crime virtually ($500-$2000)",
     "name": "crime"
@@ -278,6 +341,21 @@
     "desc": "Deposit money into your bank account",
     "name": "deposit",
     "usage": "deposit [amount]"
+  },
+  "download": {
+    "args": {
+      "audio": {
+        "desc": "Download only the audio",
+        "name": "audio"
+      },
+      "link": {
+        "desc": "Link to the post, video or song to download",
+        "name": "link"
+      }
+    },
+    "desc": "Download a video, image or song from a link",
+    "name": "download",
+    "usage": "download [link] (audio)"
   },
   "economy": "economy",
   "edit_message": {
@@ -659,6 +737,34 @@
     "name": "prefix",
     "usage": "prefix [prefix]"
   },
+  "purge": {
+    "args": {
+      "amount": {
+        "desc": "How many matching messages to delete (1-1000; messages older than 14 days are skipped)",
+        "name": "amount"
+      },
+      "contains": {
+        "desc": "Only delete messages containing this text",
+        "name": "contains"
+      },
+      "filter": {
+        "attachments": "attachments",
+        "bots": "bots",
+        "desc": "Only delete messages of this kind",
+        "embeds": "embeds",
+        "humans": "humans",
+        "links": "links",
+        "name": "filter"
+      },
+      "user": {
+        "desc": "Only delete messages from this user",
+        "name": "user"
+      }
+    },
+    "desc": "Bulk delete recent messages in this channel",
+    "name": "purge",
+    "usage": "purge [amount: 1...1000] (user) (filter) (contains...)"
+  },
   "qr_code": {
     "args": {
       "data": {
@@ -942,6 +1048,7 @@
     "name": "user",
     "usage": "info user (user|member)"
   },
+  "utility": "utility",
   "voice": "voice",
   "voice_remove": {
     "args": {

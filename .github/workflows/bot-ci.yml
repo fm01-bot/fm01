@@ -6,6 +6,10 @@ on:
       - main
     paths:
       - services/bot/**
+      - shared/schemas/**
+
+permissions:
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

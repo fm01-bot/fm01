@@ -9,16 +9,16 @@ from cogs.automod import AutoMod, AutoModConfig
 from cogs.config import Config
 from core.settings import GuildSettings
 from helpers.cli_parser import CLIParser
+from tests.fake_api import FakeAutoMod
 
 
 @pytest.fixture
 def mock_bot():
 	bot = MagicMock()
-	bot.db = AsyncMock()
+	bot.api.automod = FakeAutoMod()
 	bot.custom_response = MagicMock()
 	bot.custom_response.get_message = AsyncMock(return_value={"content": "Violation notice"})
-	bot.event_bus.publish = AsyncMock()
-	bot.settings = GuildSettings(lambda: bot.db, bot.event_bus)
+	bot.settings = GuildSettings(bot.event_bus)
 	return bot
 
 

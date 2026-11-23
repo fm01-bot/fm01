@@ -11,7 +11,6 @@ dependencies = [
     "discord-localization>=1.1.5",
     "discord>=2.3.2",
     "pyyaml>=6.0.2",
-    "asyncpg>=0.30.0",
     "python-dotenv>=1.1.0",
     "docutils-stubs>=0.0.22",
     "winuvloop>=0.2.5",
@@ -27,12 +26,12 @@ dependencies = [
     "ty>=0.0.1a33",
     "wavelink>=3.5.2",
     "jishaku>=2.8.1",
-    "alembic>=1.20.0",
-    "greenlet>=3.5.6",
     "sentry-sdk>=2.72.0",
     "chat-exporter>=3.1.0",
     "orjson>=3.10.0",
     "redis>=5.0.0",
+    "fm01-schemas",
+    "pydantic>=2.9",
 ]
 
 [dependency-groups]
@@ -40,13 +39,15 @@ dev = [
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
     "ruff>=0.14.8",
-    "testcontainers[postgres]>=4.8",
 ]
 
 [tool.setuptools]
 packages = ["helpers"]
 
 [tool.uv]
+
+[tool.uv.sources]
+fm01-schemas = { path = "../../shared/schemas", editable = true }
 
 [tool.ruff]
 line-length = 120
@@ -67,6 +68,6 @@ convention = "google"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 pythonpath = ["."]
-markers = ["db: needs a throwaway PostgreSQL database (Docker)"]

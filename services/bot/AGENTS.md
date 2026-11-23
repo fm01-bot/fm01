@@ -9,13 +9,14 @@ This document defines architectural standards, technical conventions, and operat
 - **Runtime**: Python `>=3.12,<3.14`
 - **Package & Environment Manager**: `uv`
 - **Core Framework**: `discord.py >=2.3.2`, `discord-localization >=1.1.5`
-- **Data & Storage**: PostgreSQL 16 (`asyncpg`), schema managed by `services/migrations/` (Alembic), Redis 7 (`redis-py`)
+- **Data & Storage**: the backend API (`services/api/`) through the API client (`core/api.py`), which owns PostgreSQL; the bot has no database connection. Redis 7 (`redis-py`)
+- **Wire models**: package `api` (`shared/schemas/api/`, a uv path dependency), Pydantic v2
 - **Media & Voice**: Lavalink v4 (`wavelink >=3.5.2`), Pillow (`pillow >=11.3.0`)
 - **Code Quality**:
   - Linter & Formatter: `ruff` (indent: tabs `\t`, line-length: 120, quotes: double `"`)
   - Type Checker: `ty` (`uv run ty check`)
   - Test Suite: `pytest` with `pytest-asyncio` (`uv run pytest`)
-- **Task Runner**: `just` (see `justfile`)
+- **Task Runner**: `just` (see the `justfile` in the repo root; it works from any directory)
 
 ---
 
@@ -33,7 +34,6 @@ This document defines architectural standards, technical conventions, and operat
 ├── localization/         # User-facing message templates (JSON format)
 ├── slash_localization/   # Slash command metadata (command names, param descriptions)
 ├── tests/                # Automated pytest test suites and mocking fixtures
-├── justfile              # Automation recipes for development, linting, and testing
 ├── pyproject.toml        # Project dependencies, tool settings, and metadata
 └── main.py               # Bot entry point and runtime initializer
 ```
@@ -42,15 +42,17 @@ This document defines architectural standards, technical conventions, and operat
 
 #### `core/` (Foundational Abstractions)
 
-- `bot.py` (`Bot`): Subclasses `commands.AutoShardedBot`. Manages database connection pool (`self.db`), prefix cache, clustering coordinator, event bus, message logging buffer, and global error handling.
+- `api.py` (`ApiClient`): The API client, the bot's typed wrapper around the Internal API, one attribute per domain (`bot.api.economy`, `settings`, `bear_trap`, `starboard`, `greetings`, `automod`, `log`, `cases`, `tickets`, `levels`, `afk`, `snapshots`, `shop`, `giveaways`, `alerts`, `blacklist`). Methods that look something up return `None` for `not_found`. Maps API error codes back to exceptions (`InsufficientFunds`, `ValueError`) and transport failures to `ApiUnavailable`, which the global error handler answers with `errors.api_unavailable`.
+- `blacklist.py` (`Blacklist`, `Blacklisted`): The blacklist cached from the API (`bot.blacklist`), kept current by `BLACKLIST_CHANGED` events and enforced as a global bot check.
+- `bot.py` (`Bot`): Subclasses `commands.AutoShardedBot`. Manages the API client (`self.api`), prefix cache, clustering coordinator, event bus, message logging buffer, and global error handling.
 - `context.py` (`Context`): Subclasses `commands.Context`. Overrides `send()` to automatically intercept localization keys and format variables via `CustomResponse`.
 - `hybrid.py` (`command`, `group`, `HybridCommand`, `HybridGroup`): Custom command decorators automatically linking commands to the slash command localization tree.
 - `slash_localization.py` (`SlashCommandLocalizer`): Subclasses `app_commands.Translator` to dynamically translate slash command names and descriptions from `slash_localization/`.
 - `argument.py` & `command.py`: Serialization helpers converting Discord contexts/commands for formatted messages.
 - `config.py` (`Config`): Runtime configuration parser loading `config.yml`.
-- `settings.py` (`GuildSettings`, `GuildSetting`): Cached per-guild settings with cross-instance invalidation. Register feature settings here instead of keeping a cog-level cache.
+- `settings.py` (`GuildSettings`, `GuildSetting`): Cached per-guild settings with cross-instance invalidation. Register feature settings here instead of keeping a cog-level cache. Every setting is stored behind the API and registered with `add_remote`; the API announces its changes, so the bot doesn't.
 - `locale.py` (`resolve_locale`): The single rule for which locale a response uses.
-- `clustering/`: Shard coordination (`ShardCoordinator`), gateway proxy connection (`gateway_proxy.py`), distributed state (`StateStore`), event pub/sub (`EventBus`), and audit log buffers (`MessageBuffer`).
+- `clustering/`: Shard coordination (`ShardCoordinator`, which leases whole status blocks), shard health reporting for the status page (`health.py`), gateway proxy connection (`gateway_proxy.py`), distributed state (`StateStore`), event pub/sub (`EventBus`), and audit log buffers (`MessageBuffer`).
 
 #### `args/` (Safe String Formatting Wrappers)
 
@@ -69,24 +71,27 @@ Dataclasses decorated with `@dataclass(slots=True)` that wrap Discord objects (e
 
 #### `cogs/` (Feature Modules)
 
-- `admin.py`: Developer commands (extension reloading, evaluation, synchronization).
+- `admin.py`: Developer commands (extension reloading, evaluation, synchronization, the blacklist).
 - `afk.py`: AFK presence tracking, auto-nicknames, and mention notifications.
 - `automod.py`: Server protection rule engine (invite blocking, links, caps, spam, word filters).
 - `basic.py`: Core utility commands (`ping`, `uptime`).
-- `config.py` & `config_subcommands/`: Hierarchical CLI server settings management (`automod`, `join`, `leave`, `level`, `log`, `prefix`, `ticket`).
-- `economy.py`: Virtual economy system (`EconomyHelper`, `ShopItem`, balances, transactions).
+- `bear_trap.py`: The bear trap: soft-bans members who post in the trap channel and keeps the trap message (with its kick counter) in step with the `bear_trap` setting behind the API (`bot.api.bear_trap`).
+- `config.py` & `config_subcommands/`: Hierarchical CLI server settings management (`automod`, `beartrap`, `join`, `leave`, `level`, `log`, `prefix`, `starboard`, `ticket`).
+- `economy.py`: Virtual economy commands and the shop. Balances go through the Ledger in the API (`bot.api.economy`), the shop's items through `bot.api.shop`.
 - `help.py`: Dynamic help system subclassing `commands.HelpCommand` with paginated views.
 - `info.py`: Server, user, role, and bot diagnostic inspection commands.
 - `join_leave.py`: Welcome/leave announcement handlers and autorole assignment.
 - `level.py`: Message XP awarding, rank card generator (`?!level`), leaderboards (`?!levels`), and level role rewards.
 - `log.py`: Server event audit logger (message edits/deletions, member changes, channel updates). `LogSettings` is the log configuration guild setting; the config commands use it too.
-- `mod/`: Moderation command suite (`ban`, `kick`, `mute`, `warn`, `case`). `mod/cases.py` is the Case module: `CaseStore` owns every query on `cases`, retention, and expiry.
+- `mod/`: Moderation command suite (`ban`, `kick`, `mute`, `warn`, `slowmode`, `purge`, `case`). `mod/cases.py` is the Case module: `CaseStore` opens, closes and expires cases through `bot.api.cases`. `Softban` has no command; the bear trap opens it.
 - `say.py`: Echo and Minecraft achievement message generators.
 - `setup.py`: Interactive first-time server setup helper.
 - `snapshot.py`: Guild structural backup and restoration system.
+- `starboard.py`: Starboards: counts stars through `bot.api.starboard`, posts, updates (debounced) and takes down each board's posts, and reports posts deleted by hand as blocks. Boards are the `starboard` guild setting, written one board at a time through the API.
 - `state_sync.py`: Mirrors guild, channel and role data into the cluster `StateStore`. (Setting caches are invalidated by `core/settings.py`, not here.)
 - `status.py`: Presence and bot activity status cycler.
 - `ticket.py`: Interactive support ticket system with components, modals, and transcript export.
+- `utility.py`: `convert` (units, currencies and crypto through Coinbase) and `download` (media from a link through the self-hosted cobalt instance, `COBALT_URL`).
 - `voice.py`: Lavalink v4 music playback controls via Wavelink.
 
 ---
@@ -124,9 +129,11 @@ Dataclasses decorated with `@dataclass(slots=True)` that wrap Discord objects (e
 - Only place utilities in `helpers/` if they are reused across multiple cogs or core subsystems.
 - Cog-specific models or helper functions must remain within their respective cog file.
 
-### 5. Database Schema & Migrations
+### 5. Data Access, Schema & Migrations
 
-- All database operations use `self.bot.db` (`asyncpg.Pool`).
+- All data is reached through `self.bot.api`. The bot has no database connection; never add one.
+- New data: add its store and Internal API routes in `services/api/` (see its `AGENTS.md`), the wire models in `shared/schemas/`, then the matching methods on the API client.
+- Tests fake the API client (`tests/fake_api.py` holds in-memory fakes that behave like the API); the API's own tests cover the queries against PostgreSQL.
 - The bot never runs migrations. Schema changes go in `services/migrations/` (see its `AGENTS.md`); the `migrations` Compose service applies them before the bot starts.
 - Never assume a schema change exists in the bot itself. Reference only tables and columns that the migrations service has already shipped.
 
@@ -142,7 +149,7 @@ Dataclasses decorated with `@dataclass(slots=True)` that wrap Discord objects (e
 
 ## 4. Mandatory Verification Pipeline
 
-Before completing any task, running checks is mandatory. Execute the following commands in order:
+Before completing any task, running checks is mandatory. Execute the following commands in order (`just check` runs all four, for the API and the bot):
 
 ```bash
 # 1. Check code formatting (must produce zero diffs)

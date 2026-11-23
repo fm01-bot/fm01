@@ -18,6 +18,7 @@ import discord
 from args import Giveaway as GiveawayArg
 from cogs.level import level_config_setting
 from core import Bot, Context, group
+from core.api import ApiError
 from core.context import VALID_SEND_KWARGS
 from discord.ext import commands, tasks
 from helpers import text_to_seconds
@@ -25,11 +26,13 @@ from helpers.leveling import level_from_total_xp
 from helpers.regex import SNOWFLAKE
 from helpers.scheduler import ExpiryScheduler, is_guild_on_shard
 
+from api import MAX_ACTIVE_GIVEAWAYS, ErrorCode, GiveawayCreate, GiveawayRecord
+
 logger = logging.getLogger(__name__)
 
 MIN_DURATION = 10
 MAX_DURATION = 60 * 86400
-MAX_ACTIVE_PER_GUILD = 25
+MAX_ACTIVE_PER_GUILD = MAX_ACTIVE_GIVEAWAYS
 FLUSH_INTERVAL = 5.0
 MESSAGE_COOLDOWN = 5.0
 RETENTION_DAYS = 30
@@ -38,11 +41,17 @@ type GiveawayStatus = Literal["active", "ended", "cancelled"]
 type Requirement = Literal["level", "role", "messages"]
 type GiveawayChannel = discord.TextChannel | discord.Thread | discord.VoiceChannel | discord.StageChannel
 
-UPSERT_COUNTS = """
-	INSERT INTO giveaway_message_counts (giveaway_id, user_id, count)
-	VALUES ($1, $2, $3)
-	ON CONFLICT (giveaway_id, user_id) DO UPDATE SET count = giveaway_message_counts.count + EXCLUDED.count
-"""
+
+def _row(record: GiveawayRecord | None) -> dict[str, Any] | None:
+	"""Turn a giveaway from the API into the mapping the layouts and requirements read (IDs stay ``int``).
+
+	Args:
+		record: The giveaway, or ``None``.
+
+	Returns:
+		Its fields by name, or ``None``.
+	"""
+	return dict(record) if record is not None else None
 
 
 def parse_message_id(raw: str | None) -> int | None:
@@ -222,8 +231,7 @@ class GiveawayScheduler(ExpiryScheduler[int]):
 
 	async def fetch_pending(self) -> list[tuple[int, int, datetime.datetime]]:
 		"""Return every active giveaway."""
-		rows = await self.bot.db.fetch("SELECT id, guild_id, ends_at FROM giveaways WHERE status = 'active'")
-		return [(int(row["id"]), int(row["guild_id"]), row["ends_at"]) for row in rows]
+		return [(g.id, g.guild_id, g.ends_at) for g in await self.bot.api.giveaways.active()]
 
 	async def process_expired(self, key: int, guild_id: int) -> None:
 		"""End the expired giveaway."""
@@ -318,13 +326,9 @@ class Giveaway(commands.Cog, name="Giveaway"):
 
 	async def _load_tracked(self) -> None:
 		await self.bot.wait_until_ready()
-		rows = await self.bot.db.fetch(
-			"SELECT id, guild_id FROM giveaways WHERE status = 'active' AND required_messages IS NOT NULL"
-		)
-		for row in rows:
-			guild_id = int(row["guild_id"])
-			if is_guild_on_shard(self.bot, guild_id):
-				self.counter.track(guild_id, int(row["id"]))
+		for giveaway in await self.bot.api.giveaways.active():
+			if giveaway.required_messages is not None and is_guild_on_shard(self.bot, giveaway.guild_id):
+				self.counter.track(giveaway.guild_id, giveaway.id)
 
 	@tasks.loop(seconds=FLUSH_INTERVAL)
 	async def tick(self) -> None:
@@ -339,15 +343,7 @@ class Giveaway(commands.Cog, name="Giveaway"):
 	@tasks.loop(hours=6)
 	async def purge(self) -> None:
 		"""Delete entries and message counts of giveaways that finished more than 30 days ago."""
-		for table in ("giveaway_entries", "giveaway_message_counts"):
-			await self.bot.db.execute(
-				f"""
-				DELETE FROM {table} t USING giveaways g
-				WHERE t.giveaway_id = g.id AND g.status <> 'active'
-				AND g.ended_at < now() - make_interval(days => $1)
-				""",
-				RETENTION_DAYS,
-			)
+		await self.bot.api.giveaways.purge()
 
 	async def flush_counts(self) -> None:
 		"""Write every buffered message count to the database in one batch."""
@@ -356,7 +352,7 @@ class Giveaway(commands.Cog, name="Giveaway"):
 			if not items:
 				return
 			try:
-				await self.bot.db.executemany(UPSERT_COUNTS, items)
+				await self.bot.api.giveaways.add_message_counts(items)
 			except Exception:
 				self.counter.restore(items)
 				logger.exception("Failed to flush giveaway message counts")
@@ -383,29 +379,20 @@ class Giveaway(commands.Cog, name="Giveaway"):
 		self.counter.record(message.guild.id, message.author.id, time.monotonic())
 
 	async def _fetch(self, giveaway_id: int) -> Mapping[str, Any] | None:
-		return await self.bot.db.fetchrow("SELECT * FROM giveaways WHERE id = $1", giveaway_id)
+		return _row(await self.bot.api.giveaways.get(giveaway_id))
 
 	async def _entry_count(self, giveaway_id: int) -> int:
-		return int(
-			await self.bot.db.fetchval("SELECT count(*) FROM giveaway_entries WHERE giveaway_id = $1", giveaway_id)
-		)
+		return await self.bot.api.giveaways.entry_count(giveaway_id)
 
 	async def _level_enabled(self, guild_id: int) -> bool:
-		return (await level_config_setting(self.bot.settings).get(guild_id)).is_on
+		return (await level_config_setting(self.bot.settings, self.bot.api).get(guild_id)).is_on
 
 	async def _levels(self, guild_id: int, user_ids: Sequence[int]) -> dict[int, int]:
-		rows = await self.bot.db.fetch(
-			"SELECT user_id, xp FROM user_levels WHERE guild_id = $1 AND user_id = ANY($2::numeric[])",
-			guild_id,
-			list(user_ids),
-		)
-		return {int(row["user_id"]): level_from_total_xp(int(row["xp"])).level for row in rows}
+		members = await self.bot.api.levels.members(guild_id, user_ids)
+		return {user_id: level_from_total_xp(member.xp).level for user_id, member in members.items()}
 
 	async def _message_counts(self, giveaway_id: int) -> dict[int, int]:
-		rows = await self.bot.db.fetch(
-			"SELECT user_id, count FROM giveaway_message_counts WHERE giveaway_id = $1", giveaway_id
-		)
-		return {int(row["user_id"]): int(row["count"]) for row in rows}
+		return await self.bot.api.giveaways.message_counts(giveaway_id)
 
 	async def resolve_target(self, ctx: Context, raw: str | None, status: GiveawayStatus) -> Mapping[str, Any] | None:
 		"""Find the giveaway a command targets: the replied-to message, the given ID or link, else the latest one.
@@ -415,22 +402,10 @@ class Giveaway(commands.Cog, name="Giveaway"):
 		reference = ctx.message.reference if ctx.interaction is None else None
 		reference_id = reference.message_id if reference else None
 		for message_id in candidate_message_ids(reference_id, raw):
-			record = await self.bot.db.fetchrow(
-				"SELECT * FROM giveaways WHERE channel_id = $1 AND message_id = $2 AND status = $3",
-				ctx.channel.id,
-				message_id,
-				status,
-			)
+			record = await self.bot.api.giveaways.find(ctx.channel.id, status, message_id)
 			if record is not None:
-				return record
-		return await self.bot.db.fetchrow(
-			"""
-			SELECT * FROM giveaways WHERE channel_id = $1 AND status = $2
-			ORDER BY created_at DESC, id DESC LIMIT 1
-			""",
-			ctx.channel.id,
-			status,
-		)
+				return _row(record)
+		return _row(await self.bot.api.giveaways.find(ctx.channel.id, status))
 
 	@staticmethod
 	def _channel(guild: discord.Guild | None, record: Mapping[str, Any]) -> GiveawayChannel | None:
@@ -528,10 +503,7 @@ class Giveaway(commands.Cog, name="Giveaway"):
 	async def _draw(self, record: Mapping[str, Any], guild: discord.Guild, count: int) -> list[discord.Member]:
 		giveaway_id = int(record["id"])
 		await self.flush_counts()
-		rows = await self.bot.db.fetch(
-			"SELECT user_id FROM giveaway_entries WHERE giveaway_id = $1 AND NOT has_won", giveaway_id
-		)
-		entrants = [int(row["user_id"]) for row in rows]
+		entrants = await self.bot.api.giveaways.entrants(giveaway_id)
 		if not entrants:
 			return []
 
@@ -555,11 +527,7 @@ class Giveaway(commands.Cog, name="Giveaway"):
 
 		winners = await draw_winners(entrants, count, resolve, self.rng)
 		if winners:
-			await self.bot.db.execute(
-				"UPDATE giveaway_entries SET has_won = true WHERE giveaway_id = $1 AND user_id = ANY($2::numeric[])",
-				giveaway_id,
-				[w.id for w in winners],
-			)
+			await self.bot.api.giveaways.mark_winners(giveaway_id, [w.id for w in winners])
 		return winners
 
 	async def _announce(
@@ -618,10 +586,7 @@ class Giveaway(commands.Cog, name="Giveaway"):
 		Returns:
 			The ended giveaway's row, or ``None`` if it wasn't active.
 		"""
-		record = await self.bot.db.fetchrow(
-			"UPDATE giveaways SET status = 'ended', ended_at = now() WHERE id = $1 AND status = 'active' RETURNING *",
-			giveaway_id,
-		)
+		record = _row(await self.bot.api.giveaways.end(giveaway_id))
 		if record is None:
 			return None
 		guild_id = int(record["guild_id"])
@@ -652,10 +617,8 @@ class Giveaway(commands.Cog, name="Giveaway"):
 			return
 		giveaway = GiveawayArg.from_record(record)
 
-		entered = await self.bot.db.fetchval(
-			"SELECT 1 FROM giveaway_entries WHERE giveaway_id = $1 AND user_id = $2", giveaway_id, member.id
-		)
-		if entered:
+		entry = await self.bot.api.giveaways.entry(giveaway_id, member.id)
+		if entry.entered:
 			await self._respond(interaction, "giveaway.message.already_joined", giveaway=giveaway)
 			return
 
@@ -677,22 +640,13 @@ class Giveaway(commands.Cog, name="Giveaway"):
 			await self._respond(interaction, "giveaway.message.requirements.level", level=req.level, current=level)
 			return
 
-		await self.bot.db.execute(
-			"INSERT INTO giveaway_entries (giveaway_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
-			giveaway_id,
-			member.id,
-		)
+		await self.bot.api.giveaways.enter(giveaway_id, member.id)
 		self._dirty.add(giveaway_id)
 
 		if req.messages is None:
 			await self._respond(interaction, "giveaway.message.joined", giveaway=giveaway)
 			return
-		stored = await self.bot.db.fetchval(
-			"SELECT count FROM giveaway_message_counts WHERE giveaway_id = $1 AND user_id = $2",
-			giveaway_id,
-			member.id,
-		)
-		count = int(stored or 0) + self.counter.get(giveaway_id, member.id)
+		count = entry.messages + self.counter.get(giveaway_id, member.id)
 		await self._respond(
 			interaction, "giveaway.message.joined_progress", giveaway=giveaway, count=count, required=req.messages
 		)
@@ -703,11 +657,7 @@ class Giveaway(commands.Cog, name="Giveaway"):
 		if record is None or record["status"] != "active":
 			await self._respond(interaction, "giveaway.message.ended")
 			return
-		removed = await self.bot.db.fetchval(
-			"DELETE FROM giveaway_entries WHERE giveaway_id = $1 AND user_id = $2 RETURNING 1",
-			giveaway_id,
-			interaction.user.id,
-		)
+		removed = await self.bot.api.giveaways.leave(giveaway_id, interaction.user.id)
 		if not removed:
 			await self._respond(interaction, "giveaway.message.not_joined")
 			return
@@ -743,52 +693,46 @@ class Giveaway(commands.Cog, name="Giveaway"):
 			await ctx.send("giveaway.start.errors.send_failed")
 			return
 
-		active = await self.bot.db.fetchval(
-			"SELECT count(*) FROM giveaways WHERE guild_id = $1 AND status = 'active'", ctx.guild.id
-		)
-		if int(active) >= MAX_ACTIVE_PER_GUILD:
-			await ctx.send("giveaway.start.errors.limit", limit=MAX_ACTIVE_PER_GUILD)
-			return
 		if level is not None and not await self._level_enabled(ctx.guild.id):
 			await ctx.send("giveaway.start.errors.level_disabled")
 			return
 
 		await ctx.defer(ephemeral=True)
 		ends_at = datetime.datetime.now(tz=datetime.UTC) + datetime.timedelta(seconds=seconds)
-		record = await self.bot.db.fetchrow(
-			"""
-			INSERT INTO giveaways (guild_id, channel_id, host_id, prize, winner_count, required_level,
-				required_role_id, required_messages, ends_at)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-			RETURNING *
-			""",
-			ctx.guild.id,
-			channel.id,
-			ctx.author.id,
-			prize,
-			winners,
-			level,
-			role.id if role else None,
-			messages,
-			ends_at,
-		)
-		assert record is not None
-		giveaway_id = int(record["id"])
+		try:
+			created = await self.bot.api.giveaways.create(
+				ctx.guild.id,
+				GiveawayCreate(
+					channel_id=channel.id,
+					host_id=ctx.author.id,
+					prize=prize,
+					winner_count=winners,
+					required_level=level,
+					required_role_id=role.id if role else None,
+					required_messages=messages,
+					ends_at=ends_at,
+				),
+			)
+		except ApiError as exc:
+			if exc.code is not ErrorCode.GIVEAWAY_LIMIT:
+				raise
+			await ctx.send("giveaway.start.errors.limit", limit=MAX_ACTIVE_PER_GUILD)
+			return
+		record = dict(created)
+		giveaway_id = created.id
 
 		kwargs = await self._layout(record, ctx.guild)
 		try:
 			message = await channel.send(**kwargs)
 		except discord.HTTPException:
-			await self.bot.db.execute("DELETE FROM giveaways WHERE id = $1", giveaway_id)
+			await self.bot.api.giveaways.delete(giveaway_id)
 			await ctx.send("giveaway.start.errors.send_failed")
 			return
 		finally:
 			_stop_view(kwargs)
 
-		record = await self.bot.db.fetchrow(
-			"UPDATE giveaways SET message_id = $2 WHERE id = $1 RETURNING *", giveaway_id, message.id
-		)
-		assert record is not None
+		posted = await self.bot.api.giveaways.set_message(giveaway_id, message.id)
+		record = dict(posted) if posted else {**record, "message_id": message.id}
 		self.scheduler.schedule_at(giveaway_id, ctx.guild.id, ends_at)
 		if messages is not None:
 			self.counter.track(ctx.guild.id, giveaway_id)
@@ -837,13 +781,7 @@ class Giveaway(commands.Cog, name="Giveaway"):
 		if target is None:
 			await ctx.send("giveaway.not_found.active")
 			return
-		record = await self.bot.db.fetchrow(
-			"""
-			UPDATE giveaways SET status = 'cancelled', ended_at = now()
-			WHERE id = $1 AND status = 'active' RETURNING *
-			""",
-			int(target["id"]),
-		)
+		record = _row(await self.bot.api.giveaways.cancel(int(target["id"])))
 		if record is None:
 			await ctx.send("giveaway.not_found.active")
 			return

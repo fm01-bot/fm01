@@ -8,8 +8,13 @@ import yarl
 from aiohttp import web
 from aiohttp.test_utils import TestServer
 from core.bot import Bot
-from core.clustering import ClusterConfig, configure_gateway_proxy, fetch_proxy_shard_count
-from core.clustering.gateway_proxy import shard_count_url
+from core.clustering import (
+	ClusterConfig,
+	configure_gateway_proxy,
+	fetch_proxy_shard_count,
+	fetch_proxy_shard_latency,
+)
+from core.clustering.gateway_proxy import metrics_url, parse_shard_latency, shard_count_url
 from core.config import Config
 from discord.gateway import DiscordWebSocket
 
@@ -146,3 +151,35 @@ async def test_fetch_proxy_shard_count():
 	async with TestServer(app) as server, aiohttp.ClientSession() as session:
 		gateway_url = f"ws://{server.host}:{server.port}"
 		assert await fetch_proxy_shard_count(session, gateway_url) == 32
+
+
+METRICS = """# TYPE gateway_shard_latency gauge
+gateway_shard_latency{shard="0"} 0.041
+gateway_shard_latency{shard="1"} NaN
+gateway_shard_latency{shard="12"} 0.087
+gateway_shard_latency_histogram_sum{shard="1"} 3.5
+"""
+
+
+def test_metrics_url():
+	assert metrics_url("wss://proxy.example.com/?v=10") == "https://proxy.example.com/metrics"
+
+
+@pytest.mark.parametrize(
+	("shard_id", "expected"),
+	[(0, 0.041), (12, 0.087), (1, None), (2, None)],
+)
+def test_parse_shard_latency(shard_id, expected):
+	assert parse_shard_latency(METRICS, shard_id) == (pytest.approx(expected) if expected is not None else None)
+
+
+@pytest.mark.asyncio
+async def test_fetch_proxy_shard_latency():
+	async def metrics(_request: web.Request) -> web.Response:
+		return web.Response(text=METRICS)
+
+	app = web.Application()
+	app.router.add_get("/metrics", metrics)
+	async with TestServer(app) as server, aiohttp.ClientSession() as session:
+		gateway_url = f"ws://{server.host}:{server.port}"
+		assert await fetch_proxy_shard_latency(session, gateway_url, 12) == pytest.approx(0.087)

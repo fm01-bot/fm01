@@ -9,7 +9,7 @@ WORKDIR /app/services/website
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 
-RUN npm install -g pnpm
+RUN npm install -g pnpm@10.34.9
 
 FROM base AS deps
 

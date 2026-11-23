@@ -3,7 +3,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import discord
+from cogs.join_leave import greeting_setting, update_greeting
 from helpers.cli_parser import CLINode, CLIParseError
+
+from api import GreetingUpdate
 
 from .helpers import resolve_channel
 
@@ -35,41 +38,16 @@ def setup_leave_subcommands(parent_node: CLINode) -> CLINode:
 			if not target_channel or not isinstance(target_channel, discord.abc.Messageable):
 				raise CLIParseError(f"Channel `{ch_raw}` was not found or is not a valid text channel.", enable_node)
 		else:
-			row = await ctx.bot.db.fetchrow("SELECT channel FROM leave_config WHERE guild_id = $1", ctx.guild.id)
-			if row and row["channel"]:
-				target_channel = ctx.guild.get_channel(int(row["channel"]))
+			config = await greeting_setting(ctx.bot.settings, ctx.bot.api, "leave").get(ctx.guild.id)
+			if config and config.channel_id:
+				target_channel = ctx.guild.get_channel(config.channel_id)
 			if not target_channel and isinstance(ctx.channel, (discord.abc.GuildChannel, discord.Thread)):
 				target_channel = ctx.channel
 
 		channel_id = target_channel.id if target_channel else None
 
-		join_leave_cog: Any = ctx.bot.get_cog("JoinLeave")
-		if join_leave_cog:
-			await join_leave_cog.set_leave(ctx.guild.id, channel_id, message)
-		else:
-			if message:
-				await ctx.bot.db.execute(
-					"""
-					INSERT INTO leave_config (guild_id, is_on, channel, message)
-					VALUES ($1, true, $2, $3)
-					ON CONFLICT (guild_id) DO UPDATE
-					SET is_on = true, channel = COALESCE($2, leave_config.channel), message = $3
-					""",
-					ctx.guild.id,
-					channel_id,
-					message,
-				)
-			else:
-				await ctx.bot.db.execute(
-					"""
-					INSERT INTO leave_config (guild_id, is_on, channel)
-					VALUES ($1, true, $2)
-					ON CONFLICT (guild_id) DO UPDATE
-					SET is_on = true, channel = COALESCE($2, leave_config.channel)
-					""",
-					ctx.guild.id,
-					channel_id,
-				)
+		changes = GreetingUpdate(enabled=True, channel_id=channel_id, message=message or None)
+		await update_greeting(ctx.bot, "leave", ctx.guild.id, changes)
 
 		ch_name = f"#{target_channel.name}" if target_channel else "(unknown)"
 		lines = [f"[+] Leave messages enabled in {ch_name}"]
@@ -83,11 +61,7 @@ def setup_leave_subcommands(parent_node: CLINode) -> CLINode:
 
 	async def leave_disable(ctx: Context, **kwargs: Any):
 		assert ctx.guild is not None
-		join_leave_cog: Any = ctx.bot.get_cog("JoinLeave")
-		if join_leave_cog:
-			await join_leave_cog.disable_leave(ctx.guild.id)
-		else:
-			await ctx.bot.db.execute("UPDATE leave_config SET is_on = false WHERE guild_id = $1", ctx.guild.id)
+		await update_greeting(ctx.bot, "leave", ctx.guild.id, GreetingUpdate(enabled=False))
 		return await ctx.send(content="```ansi\n[-] Leave messages disabled\n```")
 
 	disable_node.callback = leave_disable
@@ -104,20 +78,8 @@ def setup_leave_subcommands(parent_node: CLINode) -> CLINode:
 		if not text:
 			raise CLIParseError('Please provide a message template via `--message "..."` or as arguments.', msg_node)
 
-		join_leave_cog: Any = ctx.bot.get_cog("JoinLeave")
-		if join_leave_cog:
-			await join_leave_cog.set_leave_message(ctx.guild.id, ctx.channel.id, text)
-		else:
-			await ctx.bot.db.execute(
-				"""
-				INSERT INTO leave_config (guild_id, is_on, channel, message)
-				VALUES ($1, true, $2, $3)
-				ON CONFLICT (guild_id) DO UPDATE SET message = $3
-				""",
-				ctx.guild.id,
-				ctx.channel.id,
-				text,
-			)
+		changes = GreetingUpdate(message=text, fallback_channel_id=ctx.channel.id)
+		await update_greeting(ctx.bot, "leave", ctx.guild.id, changes)
 
 		return await ctx.send(content=f"```ansi\nLeave message template updated:\n{text}\n```")
 
@@ -127,15 +89,14 @@ def setup_leave_subcommands(parent_node: CLINode) -> CLINode:
 
 	async def leave_status(ctx: Context, **kwargs: Any):
 		assert ctx.guild is not None
-		row = await ctx.bot.db.fetchrow("SELECT * FROM leave_config WHERE guild_id = $1", ctx.guild.id)
+		row = await greeting_setting(ctx.bot.settings, ctx.bot.api, "leave").get(ctx.guild.id)
 		if not row:
 			return await ctx.send(content="```ansi\nLeave messages are not configured for this server.\n```")
 
-		is_on = bool(row["is_on"])
-		ch_id = int(row["channel"]) if row["channel"] else None
-		channel = ctx.guild.get_channel(ch_id) if ch_id else None
+		is_on = row.enabled
+		channel = ctx.guild.get_channel(row.channel_id) if row.channel_id else None
 		ch_str = f"#{channel.name}" if channel else "(None)"
-		msg_template = row["message"] or "(None)"
+		msg_template = row.message or "(None)"
 
 		content = (
 			f"```ansi\n"

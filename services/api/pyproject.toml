@@ -1,0 +1,56 @@
+[project]
+name = "fm01-api"
+version = "0.1.0"
+description = "fm01 backend: the only service that talks to PostgreSQL"
+requires-python = ">=3.12,<3.14"
+license = "MIT"
+
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "asyncpg>=0.30.0",
+    "redis>=5.0.0",
+    "httpx>=0.27",
+    "cryptography>=43",
+    "python-dotenv>=1.1.0",
+    "fm01-schemas",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.14.8",
+    "ty>=0.0.1a33",
+    "testcontainers[postgres]>=4.8",
+    "alembic>=1.20.0",
+    "sqlalchemy[asyncio]>=2.0",
+    "fakeredis>=2.26",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+fm01-schemas = { path = "../../shared/schemas", editable = true }
+
+[tool.ruff]
+line-length = 120
+src = ["app"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.ruff.format]
+docstring-code-format = true
+indent-style = "tab"
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = ["db: needs a throwaway PostgreSQL database (Docker)"]

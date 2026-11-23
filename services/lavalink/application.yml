@@ -16,8 +16,8 @@ lavalink:
       twitch: true
       vimeo: true
       nico: true
-      http: true
-      local: true
+      http: false  # would fetch any URL a user plays, including hosts on the internal network
+      local: false
     filters:
       volume: true
       equalizer: true

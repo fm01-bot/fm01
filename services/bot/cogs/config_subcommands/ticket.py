@@ -7,17 +7,39 @@ import discord
 from cogs.ticket import ticket_config_setting
 from helpers.cli_parser import CLINode, CLIParseError
 
+from api import TicketConfigUpdate
+
 from .helpers import resolve_category, resolve_channel, resolve_role
 
 if TYPE_CHECKING:
 	from core import Context
 
 
-async def _write(ctx: Context, query: str, *args: Any) -> None:
-	"""Run a ticket_config write and report it, so cached ticket configs (here and on other instances) refresh."""
+async def _update(ctx: Context, **changes: Any) -> None:
+	"""Change the guild's ticket configuration through the API and cache what it stored.
+
+	Args:
+		ctx: The command's context.
+		**changes: `TicketConfigUpdate` fields. ``None`` clears a channel or role.
+	"""
 	assert ctx.guild is not None
-	await ctx.bot.db.execute(query, *args)
-	await ticket_config_setting(ctx.bot.settings).changed(ctx.guild.id)
+	stored = await ctx.bot.api.tickets.update_config(ctx.guild.id, TicketConfigUpdate(**changes))
+	ticket_config_setting(ctx.bot.settings, ctx.bot.api).remember(ctx.guild.id, stored)
+
+
+async def _row(ctx: Context) -> dict[str, Any] | None:
+	"""Read the guild's ticket configuration as the columns the commands below print.
+
+	Returns:
+		The configuration, or ``None`` if the guild never configured tickets.
+	"""
+	assert ctx.guild is not None
+	config = await ticket_config_setting(ctx.bot.settings, ctx.bot.api).get(ctx.guild.id)
+	if config is None:
+		return None
+	row = dict(config)
+	row["is_on"] = row.pop("enabled")
+	return row
 
 
 def setup_ticket_subcommands(parent_node: CLINode) -> CLINode:
@@ -28,15 +50,7 @@ def setup_ticket_subcommands(parent_node: CLINode) -> CLINode:
 
 	async def ticket_enable(ctx: Context, **kwargs: Any):
 		assert ctx.guild is not None
-		await _write(
-			ctx,
-			"""
-			INSERT INTO ticket_config (guild_id, is_on)
-			VALUES ($1, true)
-			ON CONFLICT (guild_id) DO UPDATE SET is_on = true
-			""",
-			ctx.guild.id,
-		)
+		await _update(ctx, enabled=True)
 		return await ctx.send(content="```ansi\n[+] Ticket system enabled\n```")
 
 	enable_node.callback = ticket_enable
@@ -46,15 +60,7 @@ def setup_ticket_subcommands(parent_node: CLINode) -> CLINode:
 
 	async def ticket_disable(ctx: Context, **kwargs: Any):
 		assert ctx.guild is not None
-		await _write(
-			ctx,
-			"""
-			INSERT INTO ticket_config (guild_id, is_on)
-			VALUES ($1, false)
-			ON CONFLICT (guild_id) DO UPDATE SET is_on = false
-			""",
-			ctx.guild.id,
-		)
+		await _update(ctx, enabled=False)
 		return await ctx.send(content="```ansi\n[-] Ticket system disabled\n```")
 
 	disable_node.callback = ticket_disable
@@ -200,15 +206,7 @@ def setup_ticket_subcommands(parent_node: CLINode) -> CLINode:
 	):
 		assert ctx.guild is not None
 		if clear:
-			await _write(
-				ctx,
-				"""
-				INSERT INTO ticket_config (guild_id, category_id)
-				VALUES ($1, NULL)
-				ON CONFLICT (guild_id) DO UPDATE SET category_id = NULL
-				""",
-				ctx.guild.id,
-			)
+			await _update(ctx, category_id=None)
 			return await ctx.send(
 				content="```ansi\n[-] Ticket category cleared (will use default 'Tickets' category)\n```"
 			)
@@ -221,16 +219,7 @@ def setup_ticket_subcommands(parent_node: CLINode) -> CLINode:
 		if not resolved:
 			raise CLIParseError(f"Category `{cat_raw}` was not found.", cat_node)
 
-		await _write(
-			ctx,
-			"""
-			INSERT INTO ticket_config (guild_id, category_id)
-			VALUES ($1, $2)
-			ON CONFLICT (guild_id) DO UPDATE SET category_id = $2
-			""",
-			ctx.guild.id,
-			resolved.id,
-		)
+		await _update(ctx, category_id=resolved.id)
 		return await ctx.send(content=f"```ansi\n[+] Ticket category set to '{resolved.name}'\n```")
 
 	cat_node.callback = ticket_category
@@ -250,15 +239,7 @@ def setup_ticket_subcommands(parent_node: CLINode) -> CLINode:
 	):
 		assert ctx.guild is not None
 		if disable:
-			await _write(
-				ctx,
-				"""
-				INSERT INTO ticket_config (guild_id, log_channel_id)
-				VALUES ($1, NULL)
-				ON CONFLICT (guild_id) DO UPDATE SET log_channel_id = NULL
-				""",
-				ctx.guild.id,
-			)
+			await _update(ctx, log_channel_id=None)
 			return await ctx.send(content="```ansi\n[-] Ticket logging disabled\n```")
 
 		ch_raw = channel or channel_pos
@@ -269,16 +250,7 @@ def setup_ticket_subcommands(parent_node: CLINode) -> CLINode:
 		if not resolved or not isinstance(resolved, discord.abc.Messageable):
 			raise CLIParseError(f"Channel `{ch_raw}` was not found or is not a valid text channel.", log_node)
 
-		await _write(
-			ctx,
-			"""
-			INSERT INTO ticket_config (guild_id, log_channel_id)
-			VALUES ($1, $2)
-			ON CONFLICT (guild_id) DO UPDATE SET log_channel_id = $2
-			""",
-			ctx.guild.id,
-			resolved.id,
-		)
+		await _update(ctx, log_channel_id=resolved.id)
 		ch_name = getattr(resolved, "name", str(resolved.id))
 		return await ctx.send(content=f"```ansi\n[+] Ticket log channel set to #{ch_name}\n```")
 
@@ -299,15 +271,7 @@ def setup_ticket_subcommands(parent_node: CLINode) -> CLINode:
 	):
 		assert ctx.guild is not None
 		if clear:
-			await _write(
-				ctx,
-				"""
-				INSERT INTO ticket_config (guild_id, support_role_id)
-				VALUES ($1, NULL)
-				ON CONFLICT (guild_id) DO UPDATE SET support_role_id = NULL
-				""",
-				ctx.guild.id,
-			)
+			await _update(ctx, support_role_id=None)
 			return await ctx.send(content="```ansi\n[-] Support role cleared\n```")
 
 		r_raw = role or role_pos
@@ -318,16 +282,7 @@ def setup_ticket_subcommands(parent_node: CLINode) -> CLINode:
 		if not resolved:
 			raise CLIParseError(f"Role `{r_raw}` was not found.", role_node)
 
-		await _write(
-			ctx,
-			"""
-			INSERT INTO ticket_config (guild_id, support_role_id)
-			VALUES ($1, $2)
-			ON CONFLICT (guild_id) DO UPDATE SET support_role_id = $2
-			""",
-			ctx.guild.id,
-			resolved.id,
-		)
+		await _update(ctx, support_role_id=resolved.id)
 		return await ctx.send(content=f"```ansi\n[+] Support role set to @{resolved.name}\n```")
 
 	role_node.callback = ticket_role
@@ -357,16 +312,7 @@ def setup_ticket_subcommands(parent_node: CLINode) -> CLINode:
 		except ValueError:
 			raise CLIParseError("Maximum tickets must be a non-negative integer (0 for unlimited).", limit_node)
 
-		await _write(
-			ctx,
-			"""
-			INSERT INTO ticket_config (guild_id, max_tickets)
-			VALUES ($1, $2)
-			ON CONFLICT (guild_id) DO UPDATE SET max_tickets = $2
-			""",
-			ctx.guild.id,
-			val,
-		)
+		await _update(ctx, max_tickets=val)
 		limit_str = f"{val} ticket(s) per user" if val > 0 else "Unlimited"
 		return await ctx.send(content=f"```ansi\n[+] Max concurrent tickets set to: {limit_str}\n```")
 
@@ -385,16 +331,7 @@ def setup_ticket_subcommands(parent_node: CLINode) -> CLINode:
 			raise CLIParseError("Please specify `--enable` or `--disable`.", dm_node)
 
 		new_val = bool(enable)
-		await _write(
-			ctx,
-			"""
-			INSERT INTO ticket_config (guild_id, dm_transcript)
-			VALUES ($1, $2)
-			ON CONFLICT (guild_id) DO UPDATE SET dm_transcript = $2
-			""",
-			ctx.guild.id,
-			new_val,
-		)
+		await _update(ctx, dm_transcript=new_val)
 		status_str = "enabled" if new_val else "disabled"
 		return await ctx.send(content=f"```ansi\n[+] DM transcripts {status_str}\n```")
 
@@ -427,11 +364,7 @@ def setup_ticket_subcommands(parent_node: CLINode) -> CLINode:
 	):
 		assert ctx.guild is not None
 		if topic_min is None and topic_max is None and desc_min is None and desc_max is None:
-			row = await ctx.bot.db.fetchrow(
-				"SELECT topic_min_length, topic_max_length, description_min_length, description_max_length "
-				"FROM ticket_config WHERE guild_id = $1",
-				ctx.guild.id,
-			)
+			row = await _row(ctx)
 			t_min = (
 				row["topic_min_length"]
 				if row and "topic_min_length" in row and row["topic_min_length"] is not None
@@ -499,11 +432,7 @@ def setup_ticket_subcommands(parent_node: CLINode) -> CLINode:
 			except ValueError:
 				raise CLIParseError("`--desc-max` must be an integer between 1 and 4000.", length_node)
 
-		row = await ctx.bot.db.fetchrow(
-			"SELECT topic_min_length, topic_max_length, description_min_length, description_max_length "
-			"FROM ticket_config WHERE guild_id = $1",
-			ctx.guild.id,
-		)
+		row = await _row(ctx)
 		cur_t_min = (
 			row["topic_min_length"] if row and "topic_min_length" in row and row["topic_min_length"] is not None else 3
 		)
@@ -539,28 +468,12 @@ def setup_ticket_subcommands(parent_node: CLINode) -> CLINode:
 				length_node,
 			)
 
-		await _write(
+		await _update(
 			ctx,
-			"""
-			INSERT INTO ticket_config (
-				guild_id,
-				topic_min_length,
-				topic_max_length,
-				description_min_length,
-				description_max_length
-			)
-			VALUES ($1, $2, $3, $4, $5)
-			ON CONFLICT (guild_id) DO UPDATE SET
-				topic_min_length = $2,
-				topic_max_length = $3,
-				description_min_length = $4,
-				description_max_length = $5
-			""",
-			ctx.guild.id,
-			final_t_min,
-			final_t_max,
-			final_d_min,
-			final_d_max,
+			topic_min_length=final_t_min,
+			topic_max_length=final_t_max,
+			description_min_length=final_d_min,
+			description_max_length=final_d_max,
 		)
 
 		updates: list[str] = []
@@ -594,10 +507,7 @@ def setup_ticket_subcommands(parent_node: CLINode) -> CLINode:
 		raw_max = max or max_pos
 
 		if raw_min is None and raw_max is None:
-			row = await ctx.bot.db.fetchrow(
-				"SELECT topic_min_length, topic_max_length FROM ticket_config WHERE guild_id = $1",
-				ctx.guild.id,
-			)
+			row = await _row(ctx)
 			t_min = (
 				row["topic_min_length"]
 				if row and "topic_min_length" in row and row["topic_min_length"] is not None
@@ -629,10 +539,7 @@ def setup_ticket_subcommands(parent_node: CLINode) -> CLINode:
 			except ValueError:
 				raise CLIParseError("Maximum length must be an integer between 1 and 4000.", topic_node)
 
-		row = await ctx.bot.db.fetchrow(
-			"SELECT topic_min_length, topic_max_length FROM ticket_config WHERE guild_id = $1",
-			ctx.guild.id,
-		)
+		row = await _row(ctx)
 		cur_min = (
 			row["topic_min_length"] if row and "topic_min_length" in row and row["topic_min_length"] is not None else 3
 		)
@@ -648,19 +555,7 @@ def setup_ticket_subcommands(parent_node: CLINode) -> CLINode:
 		if final_min > final_max:
 			raise CLIParseError(f"Minimum length ({final_min}) cannot exceed maximum length ({final_max}).", topic_node)
 
-		await _write(
-			ctx,
-			"""
-			INSERT INTO ticket_config (guild_id, topic_min_length, topic_max_length)
-			VALUES ($1, $2, $3)
-			ON CONFLICT (guild_id) DO UPDATE SET
-				topic_min_length = $2,
-				topic_max_length = $3
-			""",
-			ctx.guild.id,
-			final_min,
-			final_max,
-		)
+		await _update(ctx, topic_min_length=final_min, topic_max_length=final_max)
 		return await ctx.send(
 			content=f"```ansi\n[+] Ticket topic length set to: Min {final_min} / Max {final_max}\n```"
 		)
@@ -693,10 +588,7 @@ def setup_ticket_subcommands(parent_node: CLINode) -> CLINode:
 		raw_max = max or max_pos
 
 		if raw_min is None and raw_max is None:
-			row = await ctx.bot.db.fetchrow(
-				"SELECT description_min_length, description_max_length FROM ticket_config WHERE guild_id = $1",
-				ctx.guild.id,
-			)
+			row = await _row(ctx)
 			d_min = (
 				row["description_min_length"]
 				if row and "description_min_length" in row and row["description_min_length"] is not None
@@ -728,10 +620,7 @@ def setup_ticket_subcommands(parent_node: CLINode) -> CLINode:
 			except ValueError:
 				raise CLIParseError("Maximum length must be an integer between 1 and 4000.", desc_node)
 
-		row = await ctx.bot.db.fetchrow(
-			"SELECT description_min_length, description_max_length FROM ticket_config WHERE guild_id = $1",
-			ctx.guild.id,
-		)
+		row = await _row(ctx)
 		cur_min = (
 			row["description_min_length"]
 			if row and "description_min_length" in row and row["description_min_length"] is not None
@@ -749,19 +638,7 @@ def setup_ticket_subcommands(parent_node: CLINode) -> CLINode:
 		if final_min > final_max:
 			raise CLIParseError(f"Minimum length ({final_min}) cannot exceed maximum length ({final_max}).", desc_node)
 
-		await _write(
-			ctx,
-			"""
-			INSERT INTO ticket_config (guild_id, description_min_length, description_max_length)
-			VALUES ($1, $2, $3)
-			ON CONFLICT (guild_id) DO UPDATE SET
-				description_min_length = $2,
-				description_max_length = $3
-			""",
-			ctx.guild.id,
-			final_min,
-			final_max,
-		)
+		await _update(ctx, description_min_length=final_min, description_max_length=final_max)
 		return await ctx.send(
 			content=f"```ansi\n[+] Ticket description length set to: Min {final_min} / Max {final_max}\n```"
 		)
@@ -774,7 +651,7 @@ def setup_ticket_subcommands(parent_node: CLINode) -> CLINode:
 
 	async def ticket_status(ctx: Context, **kwargs: Any):
 		assert ctx.guild is not None
-		row = await ctx.bot.db.fetchrow("SELECT * FROM ticket_config WHERE guild_id = $1", ctx.guild.id)
+		row = await _row(ctx)
 		if not row:
 			is_on = True
 			category_str = "(Default 'Tickets')"

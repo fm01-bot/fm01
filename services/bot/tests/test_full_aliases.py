@@ -119,11 +119,13 @@ async def test_help_for_a_full_alias_describes_its_subcommand(bot):
 	help_command.context = MagicMock()
 	help_command.context.send = AsyncMock()
 	help_command.get_command_obj = MagicMock(return_value="described")
+	help_command.format_arguments = AsyncMock(return_value="arguments")
 
 	await help_command.send_command_help(bot.get_command("cl"))
 
 	help_command.get_command_obj.assert_called_once_with(bot.get_command("case list"))
-	help_command.context.send.assert_awaited_once_with("help.command", command="described")
+	help_command.format_arguments.assert_awaited_once_with(bot.get_command("case list"))
+	help_command.context.send.assert_awaited_once_with("help.command", command="described", arguments="arguments")
 
 
 @pytest.mark.asyncio

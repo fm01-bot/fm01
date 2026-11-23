@@ -6,12 +6,13 @@ import discord
 import pytest
 from cogs.config import Config
 from helpers.cli_parser import CLIParseError, CLIParser
+from tests.fake_api import alert
 
 
 @pytest.fixture
 def config_cog():
 	mock_bot = MagicMock()
-	mock_bot.db = AsyncMock()
+	mock_bot.api.alerts = MagicMock()
 	mock_bot.config = MagicMock()
 	mock_bot.get_cog = MagicMock(return_value=None)
 	return Config(mock_bot)
@@ -71,8 +72,8 @@ async def test_alert_add_execution(config_cog):
 	ctx.send = AsyncMock()
 
 	# Under limit (currently 1 alert)
-	ctx.bot.db.fetchval = AsyncMock(return_value=1)
-	ctx.bot.db.fetchrow = AsyncMock(return_value={"id": 7})
+	ctx.bot.api.alerts.for_guild = AsyncMock(return_value=[alert()])
+	ctx.bot.api.alerts.add = AsyncMock(return_value=alert(id=7))
 
 	await config_cog.parser.execute("alert add youtube @CoolGuy #general", ctx=ctx)
 	ctx.send.assert_called_once()
@@ -90,7 +91,7 @@ async def test_alert_add_limit_reached(config_cog):
 	ctx.channel.name = "general"
 
 	# Already at 5 limit
-	ctx.bot.db.fetchval = AsyncMock(return_value=5)
+	ctx.bot.api.alerts.for_guild = AsyncMock(return_value=[alert(id=i) for i in range(5)])
 
 	with pytest.raises(CLIParseError, match="maximum limit of 5"):
 		await config_cog.parser.execute("alert add youtube @CoolGuy", ctx=ctx)
@@ -112,9 +113,10 @@ async def test_alert_remove_execution(config_cog):
 	ctx.guild = MagicMock()
 	ctx.guild.id = 123
 	ctx.send = AsyncMock()
-	ctx.bot.db.execute = AsyncMock(return_value="DELETE 1")
+	ctx.bot.api.alerts.remove = AsyncMock(return_value=True)
 
 	await config_cog.parser.execute("alert remove 10", ctx=ctx)
+	ctx.bot.api.alerts.remove.assert_awaited_once_with(123, 10)
 	ctx.send.assert_called_once()
 	assert "Alert #10 removed" in ctx.send.call_args[1]["content"]
 
@@ -130,24 +132,10 @@ async def test_alert_list_execution(config_cog):
 	ctx.guild.get_channel = MagicMock(return_value=target_channel)
 	ctx.send = AsyncMock()
 
-	ctx.bot.db.fetch = AsyncMock(
+	ctx.bot.api.alerts.for_guild = AsyncMock(
 		return_value=[
-			{
-				"id": 1,
-				"platform": "youtube",
-				"channel_account": "@creator",
-				"account_name": "Creator",
-				"target_channel_id": 999,
-				"is_enabled": True,
-			},
-			{
-				"id": 2,
-				"platform": "twitch",
-				"channel_account": "streamer",
-				"account_name": "Streamer",
-				"target_channel_id": 999,
-				"is_enabled": False,
-			},
+			alert(id=1, platform="youtube", channel_account="@creator", account_name="Creator", enabled=True),
+			alert(id=2, platform="twitch", channel_account="streamer", account_name="Streamer", enabled=False),
 		]
 	)
 
@@ -166,13 +154,15 @@ async def test_alert_enable_disable_execution(config_cog):
 	ctx.guild = MagicMock()
 	ctx.guild.id = 123
 	ctx.send = AsyncMock()
-	ctx.bot.db.execute = AsyncMock(return_value="UPDATE 1")
+	ctx.bot.api.alerts.set_enabled = AsyncMock(return_value=True)
 
 	await config_cog.parser.execute("alert enable 1", ctx=ctx)
 	assert "Alert #1 enabled" in ctx.send.call_args[1]["content"]
+	ctx.bot.api.alerts.set_enabled.assert_awaited_with(123, 1, True)
 
 	await config_cog.parser.execute("alert disable 1", ctx=ctx)
 	assert "Alert #1 disabled" in ctx.send.call_args[1]["content"]
+	ctx.bot.api.alerts.set_enabled.assert_awaited_with(123, 1, False)
 
 
 @pytest.mark.asyncio
@@ -184,9 +174,9 @@ async def test_alert_add_twitch_without_credentials_fails(config_cog, monkeypatc
 	ctx.guild = MagicMock()
 	ctx.guild.id = 123
 	ctx.channel = MagicMock(spec=discord.TextChannel)
-	ctx.bot.db.fetchval = AsyncMock(return_value=0)
-	ctx.bot.db.fetchrow = AsyncMock()
+	ctx.bot.api.alerts.for_guild = AsyncMock(return_value=[])
+	ctx.bot.api.alerts.add = AsyncMock()
 
 	with pytest.raises(CLIParseError, match="Twitch alerts are not configured"):
 		await config_cog.parser.execute("alert add twitch playhubstreams", ctx=ctx)
-	ctx.bot.db.fetchrow.assert_not_called()
+	ctx.bot.api.alerts.add.assert_not_called()

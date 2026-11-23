@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import discord
 import pytest
-from cogs.mod import Cases, CaseStore, CaseType, Moderation, Mute, Warn
+from cogs.mod import Cases, CaseStore, CaseType, Moderation, Mute, Warn, _purge_check
 from discord.ext import commands
 
 
@@ -195,3 +195,209 @@ async def test_unmute(mod_cog, store, mock_ctx, has_case, timed_out, key):
 	# Without a case the command lifts the timeout itself; with one, Mute.before_deletion does it.
 	assert member.edit.await_count == (1 if timed_out and not has_case else 0)
 	mock_ctx.send.assert_awaited_once_with(key, member=member, user=member)
+
+
+def make_message(
+	author_id: int = 1,
+	bot: bool = False,
+	content: str = "",
+	pinned: bool = False,
+	attachments: bool = False,
+	embeds: bool = False,
+	components_v2: bool = False,
+) -> MagicMock:
+	message = MagicMock(spec=discord.Message)
+	message.author.id = author_id
+	message.author.bot = bot
+	message.content = content
+	message.pinned = pinned
+	message.attachments = [MagicMock()] if attachments else []
+	message.embeds = [MagicMock()] if embeds else []
+	message.flags.components_v2 = components_v2
+	return message
+
+
+@pytest.mark.parametrize(
+	("filter", "message", "deleted"),
+	[
+		(None, make_message(), True),
+		(None, make_message(pinned=True), False),
+		("bots", make_message(bot=True), True),
+		("bots", make_message(), False),
+		("humans", make_message(), True),
+		("humans", make_message(bot=True), False),
+		("links", make_message(content="see https://example.com"), True),
+		("links", make_message(content="no link here"), False),
+		("attachments", make_message(attachments=True), True),
+		("attachments", make_message(), False),
+		("embeds", make_message(embeds=True), True),
+		("embeds", make_message(components_v2=True), True),
+		("embeds", make_message(), False),
+	],
+)
+def test_purge_check_filters(filter, message, deleted):
+	assert _purge_check(None, filter, None)(message) is deleted
+
+
+def test_purge_check_user_and_contains():
+	check = _purge_check(MagicMock(id=7), None, "SPAM")
+
+	assert check(make_message(author_id=7, content="buy spam now"))
+	assert not check(make_message(author_id=8, content="buy spam now"))
+	assert not check(make_message(author_id=7, content="hello"))
+
+
+def make_purge_ctx(mock_ctx, history: list[MagicMock], interaction: bool) -> MagicMock:
+	async def scan(**kwargs):
+		for message in history:
+			yield message
+
+	mock_ctx.channel = MagicMock(spec=discord.TextChannel)
+	mock_ctx.channel.history = MagicMock(side_effect=scan)
+	mock_ctx.channel.delete_messages = AsyncMock()
+	mock_ctx.defer = AsyncMock()
+	mock_ctx.interaction = MagicMock(id=555) if interaction else None
+	mock_ctx.message.delete = AsyncMock()
+	return mock_ctx
+
+
+async def test_purge_deletes_amount_matching_messages_not_amount_scanned(mod_cog, mock_ctx):
+	mod_cog.custom_response = AsyncMock(return_value="reason")
+	mine = [make_message(author_id=7) for _ in range(3)]
+	history = [make_message(author_id=8), mine[0], make_message(author_id=8), mine[1], mine[2]]
+	ctx = make_purge_ctx(mock_ctx, history, interaction=False)
+
+	await mod_cog.purge.callback(mod_cog, ctx, 2, MagicMock(id=7))
+
+	ctx.channel.delete_messages.assert_awaited_once_with(mine[:2], reason="reason")
+	assert ctx.channel.history.call_args.kwargs["before"] is ctx.message
+	assert ctx.channel.history.call_args.kwargs["oldest_first"] is False
+	ctx.message.delete.assert_awaited_once()
+	ctx.send.assert_awaited_once_with("mod.purge.response", channel=ctx.channel, count=2)
+
+
+async def test_purge_bulk_deletes_in_chunks_of_100(mod_cog, mock_ctx):
+	mod_cog.custom_response = AsyncMock(return_value="reason")
+	ctx = make_purge_ctx(mock_ctx, [make_message() for _ in range(250)], interaction=False)
+
+	await mod_cog.purge.callback(mod_cog, ctx, 250)
+
+	assert [len(call.args[0]) for call in ctx.channel.delete_messages.await_args_list] == [100, 100, 50]
+
+
+async def test_purge_slash_scans_from_before_the_interaction(mod_cog, mock_ctx):
+	mod_cog.custom_response = AsyncMock(return_value="reason")
+	ctx = make_purge_ctx(mock_ctx, [make_message(pinned=True)], interaction=True)
+
+	await mod_cog.purge.callback(mod_cog, ctx, 10)
+
+	ctx.defer.assert_awaited_once()
+	assert ctx.channel.history.call_args.kwargs["before"].id == 555
+	ctx.channel.delete_messages.assert_not_awaited()
+	ctx.message.delete.assert_not_awaited()
+	ctx.send.assert_awaited_once_with("mod.purge.none", channel=ctx.channel)
+
+
+async def test_purge_rejects_unpurgeable_channels(mod_cog, mock_ctx):
+	mock_ctx.channel = MagicMock(spec=discord.DMChannel)
+
+	with pytest.raises(commands.BadArgument):
+		await mod_cog.purge.callback(mod_cog, mock_ctx, 10)
+
+
+def _hierarchy_ctx(mock_ctx, *, author_role: int, bot_role: int, owner_id: int = 1) -> MagicMock:
+	mock_ctx.guild.owner_id = owner_id
+	mock_ctx.author.top_role = author_role
+	mock_ctx.me = MagicMock(spec=discord.Member)
+	mock_ctx.guild.me = mock_ctx.me
+	mock_ctx.me.top_role = bot_role
+	return mock_ctx
+
+
+def _target(mock_ctx, role: int, *, administrator: bool = False) -> MagicMock:
+	member = MagicMock(spec=discord.Member)
+	member.id = 42
+	member.guild = mock_ctx.guild
+	member.top_role = role
+	member.guild_permissions.administrator = administrator
+	return member
+
+
+@pytest.mark.parametrize(
+	("author_role", "target_role", "bot_role", "owner_id", "key"),
+	[
+		(5, 5, 10, 1, "mod.kick.errors.hierarchy"),
+		(5, 7, 10, 1, "mod.kick.errors.hierarchy"),
+		(9, 5, 3, 1, "mod.kick.errors.bot_hierarchy"),
+		(1, 5, 10, 999, None),  # the owner may kick anyone below the bot
+		(9, 5, 10, 42, "mod.kick.errors.hierarchy"),  # nobody kicks the owner
+	],
+)
+async def test_kick_checks_the_role_hierarchy(
+	mod_cog, store, mock_ctx, author_role, target_role, bot_role, owner_id, key
+):
+	ctx = _hierarchy_ctx(mock_ctx, author_role=author_role, bot_role=bot_role, owner_id=owner_id)
+	member = _target(ctx, target_role)
+
+	await mod_cog.kick.callback(mod_cog, ctx, member, reason="r")
+
+	if key is None:
+		store.open.assert_awaited_once()
+	else:
+		store.open.assert_not_awaited()
+		ctx.send.assert_awaited_once_with(key)
+
+
+async def test_ban_checks_the_hierarchy_of_members(mod_cog, store, mock_ctx):
+	ctx = _hierarchy_ctx(mock_ctx, author_role=5, bot_role=10)
+	member = _target(ctx, 7)
+	ctx.guild.get_member.return_value = member
+	user = MagicMock(spec=discord.User)
+	user.id = member.id
+
+	await mod_cog.ban.callback(mod_cog, ctx, user, None, reason="r")
+
+	store.open.assert_not_awaited()
+	ctx.send.assert_awaited_once_with("mod.ban.errors.hierarchy")
+
+
+async def test_ban_fetches_uncached_members_to_check_the_hierarchy(mod_cog, store, mock_ctx):
+	ctx = _hierarchy_ctx(mock_ctx, author_role=5, bot_role=10)
+	member = _target(ctx, 7)
+	ctx.guild.get_member.return_value = None
+	ctx.guild.fetch_member = AsyncMock(return_value=member)
+	user = MagicMock(spec=discord.User)
+	user.id = member.id
+
+	await mod_cog.ban.callback(mod_cog, ctx, user, None, reason="r")
+
+	ctx.guild.fetch_member.assert_awaited_once_with(member.id)
+	store.open.assert_not_awaited()
+	ctx.send.assert_awaited_once_with("mod.ban.errors.hierarchy")
+
+
+async def test_mute_refuses_administrators(mod_cog, store, mock_ctx):
+	ctx = _hierarchy_ctx(mock_ctx, author_role=9, bot_role=10)
+	member = _target(ctx, 5, administrator=True)
+
+	await mod_cog.mute.callback(mod_cog, ctx, member, "1h")
+
+	store.open.assert_not_awaited()
+	ctx.send.assert_awaited_once_with("mod.mute.errors.administrator")
+
+
+@pytest.mark.parametrize("command", ["remove", "delete", "edit"])
+async def test_closing_a_ban_case_needs_ban_members(cases_cog, store, mock_bot, mock_ctx, command):
+	mock_ctx.author.guild_permissions.ban_members = False
+	case = make_warn(mock_bot, mock_ctx)
+	case.type = CaseType.BAN
+	store.get.return_value = case
+	args = ("123", "expires") if command == "edit" else ("123",)
+	kwargs = {"new_value": "1s"} if command == "edit" else {}
+
+	with pytest.raises(commands.MissingPermissions):
+		await getattr(cases_cog, command).callback(cases_cog, mock_ctx, *args, **kwargs)
+
+	store.close.assert_not_awaited()
+	store.delete.assert_not_awaited()
+	store.edit.assert_not_awaited()

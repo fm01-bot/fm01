@@ -1,0 +1,72 @@
+name: API checks
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - services/api/**
+      - services/migrations/**
+      - shared/schemas/**
+      - .github/workflows/api-ci.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lint, types, tests & schema drift
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/api
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e
+        with:
+          enable-cache: true
+          working-directory: services/api
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run Ruff linter
+        run: uv run ruff check .
+
+      - name: Verify Ruff formatting
+        run: uv run ruff format --check .
+
+      - name: Type check
+        run: uv run ty check
+
+      - name: Run pytest
+        run: uv run pytest -v
+        env:
+          REQUIRE_DB_TESTS: "1"
+
+      - name: Verify generated schemas are up to date
+        run: |
+          uv run python -m app.openapi ../../shared/schemas/openapi/openapi.json
+          npx --yes openapi-typescript@7.13.0 ../../shared/schemas/openapi/openapi.json -o ../../shared/schemas/ts/api.d.ts
+          git diff --exit-code -- ../../shared/schemas || {
+            echo "::error::shared/schemas is out of date; run 'just schemas' and commit the result"
+            exit 1
+          }

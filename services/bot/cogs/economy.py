@@ -1,17 +1,18 @@
 import logging
 import random
-from collections.abc import AsyncGenerator
-from contextlib import asynccontextmanager
-from dataclasses import dataclass
 from typing import Literal
 
-import asyncpg
 import discord
 from args import Role, User
 from core import Bot, Context, command, group
+from core.api import ApiError, InsufficientFunds
+from core.cooldowns import shared_cooldown
 from discord import app_commands
 from discord.ext import commands
 from helpers import custom_response, random_helper
+
+from api import ErrorCode
+from api import ShopItem as StoredShopItem
 
 logger = logging.getLogger(__name__)
 
@@ -65,171 +66,56 @@ class ShopItem:
 		return self.price
 
 
-type Wallet = Literal["cash", "bank"]
-
-
-class InsufficientFunds(Exception):
-	"""The wallet doesn't hold enough money for the operation."""
-
-
-@dataclass(frozen=True, slots=True)
-class Balance:
-	"""A member's money in one guild. ``bank`` is negative while the member is in debt."""
-
-	cash: int = 0
-	bank: int = 0
-
-	@property
-	def in_debt(self) -> bool:
-		return self.bank < 0
-
-	def __getitem__(self, wallet: Wallet) -> int:
-		return self.cash if wallet == "cash" else self.bank
-
-
-class Ledger:
-	"""Every change to ``economy`` balances. Each operation is one transaction over row-locked accounts.
-
-	Rules:
-		- Cash never goes negative; spending more cash than you have raises `InsufficientFunds`.
-		- The bank may be negative (debt) only through `debit(..., wallet="bank")`, which admins use.
-		- Money credited while in debt pays the debt off first.
-	"""
-
-	def __init__(self, db: asyncpg.Pool) -> None:
-		self._db = db
-
-	async def balance(self, guild_id: int, user_id: int) -> Balance:
-		"""The member's balance; members without an account have nothing."""
-		row = await self._db.fetchrow(
-			"SELECT cash, bank FROM economy WHERE guild_id = $1 AND user_id = $2", guild_id, user_id
-		)
-		return Balance(int(row["cash"]), int(row["bank"])) if row else Balance()
-
-	async def credit(self, guild_id: int, user_id: int, amount: int, wallet: Wallet = "cash") -> Balance:
-		"""Add money; it pays off any debt before reaching the wallet."""
-		async with self._accounts(guild_id, user_id) as (conn, (bal,)):
-			return await self._write(conn, guild_id, user_id, _credited(bal, amount, wallet))
-
-	async def debit(self, guild_id: int, user_id: int, amount: int, wallet: Wallet = "cash") -> Balance:
-		"""Remove money. Cash can't go negative (`InsufficientFunds`); the bank can, which records debt."""
-		async with self._accounts(guild_id, user_id) as (conn, (bal,)):
-			if wallet == "cash" and bal.cash < amount:
-				raise InsufficientFunds
-			return await self._write(conn, guild_id, user_id, _debited(bal, amount, wallet))
-
-	async def move(self, guild_id: int, user_id: int, amount: int, source: Wallet, target: Wallet) -> Balance:
-		"""Move money between the member's own wallets (deposit/withdraw). The source must hold ``amount``."""
-		async with self._accounts(guild_id, user_id) as (conn, (bal,)):
-			if bal[source] < amount:
-				raise InsufficientFunds
-			return await self._write(conn, guild_id, user_id, _credited(_debited(bal, amount, source), amount, target))
-
-	async def transfer(self, guild_id: int, sender_id: int, recipient_id: int, amount: int) -> None:
-		"""Move cash from one member to another, all or nothing."""
-		if sender_id == recipient_id:
-			raise ValueError("cannot transfer to the same account")
-		async with self._accounts(guild_id, sender_id, recipient_id) as (conn, (sender, recipient)):
-			if sender.cash < amount:
-				raise InsufficientFunds
-			await self._write(conn, guild_id, sender_id, _debited(sender, amount, "cash"))
-			await self._write(conn, guild_id, recipient_id, _credited(recipient, amount, "cash"))
-
-	@asynccontextmanager
-	async def _accounts(
-		self, guild_id: int, *user_ids: int
-	) -> AsyncGenerator[tuple[asyncpg.Connection, list[Balance]], None]:
-		"""Open a transaction with the members' accounts created and locked (in ID order, to avoid deadlocks)."""
-		async with self._db.acquire() as conn, conn.transaction():
-			for user_id in sorted(user_ids):
-				await conn.execute(
-					"INSERT INTO economy (guild_id, user_id) VALUES ($1, $2) ON CONFLICT (guild_id, user_id) DO NOTHING",
-					guild_id,
-					user_id,
-				)
-			rows = await conn.fetch(
-				"SELECT user_id, cash, bank FROM economy WHERE guild_id = $1 AND user_id = ANY($2::numeric[]) "
-				"ORDER BY user_id FOR UPDATE",
-				guild_id,
-				list(user_ids),
-			)
-			by_user = {int(r["user_id"]): Balance(int(r["cash"]), int(r["bank"])) for r in rows}
-			yield conn, [by_user[user_id] for user_id in user_ids]
-
-	@staticmethod
-	async def _write(conn: asyncpg.Connection, guild_id: int, user_id: int, bal: Balance) -> Balance:
-		await conn.execute(
-			"UPDATE economy SET cash = $1, bank = $2 WHERE guild_id = $3 AND user_id = $4",
-			bal.cash,
-			bal.bank,
-			guild_id,
-			user_id,
-		)
-		return bal
-
-
-def _credited(bal: Balance, amount: int, wallet: Wallet) -> Balance:
-	repaid = min(amount, -bal.bank) if bal.in_debt else 0
-	bank, rest = bal.bank + repaid, amount - repaid
-	return Balance(bal.cash + rest, bank) if wallet == "cash" else Balance(bal.cash, bank + rest)
-
-
-def _debited(bal: Balance, amount: int, wallet: Wallet) -> Balance:
-	return Balance(bal.cash - amount, bal.bank) if wallet == "cash" else Balance(bal.cash, bal.bank - amount)
-
-
 @app_commands.guild_only()
 @commands.guild_only()
 class Economy(commands.GroupCog, name="Economy", group_name="economy"):
 	def __init__(self, client: Bot):
 		self.client = client
-		self.ledger = Ledger(client.db)
+		self.ledger = client.api.economy
 		self.custom_response = client.custom_response
 
 	@command(user=False)
 	async def leaderboard(self, ctx: commands.Context):
 		assert ctx.guild is not None
-		rows = await self.client.db.fetch(
-			"SELECT * FROM economy WHERE guild_id = $1 ORDER BY cash+bank DESC LIMIT 10",
-			ctx.guild.id,  # user = False on this command, so ctx.guild is always available
-		)
+		entries = await self.ledger.leaderboard(ctx.guild.id, limit=10)
 		leaderboard = []
-		for number, row in enumerate(rows, start=1):
-			cached_user = self.client.get_user(int(row["user_id"]))
+		for number, entry in enumerate(entries, start=1):
+			cached_user = self.client.get_user(entry.user_id)
 			leaderboard.append(
 				{
 					"user": User.from_user(cached_user) if cached_user else None,
 					"number": number,
-					"cash": int(row["cash"]),
-					"bank": int(row["bank"]),
+					"cash": entry.cash,
+					"bank": entry.bank,
 				}
 			)
 		(message,) = await self.custom_response.get_list("leaderboard", ctx, leaderboard)
 		await ctx.send(**message)
 
 	@command(user=False)
-	@commands.cooldown(1, 3600, commands.BucketType.user)
+	@shared_cooldown(3600)
 	async def work(self, ctx: Context):
 		assert ctx.guild is not None
 		amount: int = random.randint(300, 1500)
-		await self.ledger.credit(ctx.guild.id, ctx.author.id, amount)
+		await self.ledger.add_money(ctx.guild.id, ctx.author.id, amount)
 
 		await ctx.send("work", amount=amount)
 
 	@command(user=False)
+	@shared_cooldown(3600)
 	async def crime(self, ctx: Context):
 		assert ctx.guild is not None
 		amount = random.randint(500, 2000)
-		await self.ledger.credit(ctx.guild.id, ctx.author.id, amount)
+		await self.ledger.add_money(ctx.guild.id, ctx.author.id, amount)
 
 		await ctx.send("crime", amount=amount)
 
 	@command(user=False)
-	@commands.cooldown(1, 86400, commands.BucketType.user)
+	@shared_cooldown(86400)
 	async def daily(self, ctx: Context):
 		assert ctx.guild is not None
 		amount = 5000
-		await self.ledger.credit(ctx.guild.id, ctx.author.id, amount)
+		await self.ledger.add_money(ctx.guild.id, ctx.author.id, amount)
 
 		await ctx.send("allowance", amount=amount)
 
@@ -250,7 +136,7 @@ class Economy(commands.GroupCog, name="Economy", group_name="economy"):
 		account: Literal["cash", "bank"] = "cash",
 	):
 		assert ctx.guild is not None
-		await self.ledger.credit(ctx.guild.id, member.id, amount, account)
+		await self.ledger.add_money(ctx.guild.id, member.id, amount, account)
 		await ctx.send("addmoney.success", amount=amount, member=member)
 
 	@command(user=False)
@@ -271,14 +157,14 @@ class Economy(commands.GroupCog, name="Economy", group_name="economy"):
 	):
 		assert ctx.guild is not None
 		try:
-			await self.ledger.debit(ctx.guild.id, member.id, amount, account)
+			await self.ledger.remove_money(ctx.guild.id, member.id, amount, account)
 		except InsufficientFunds:
 			await ctx.send("removemoney.errors.balance")
 			return
 		await ctx.send("removemoney.success", amount=amount, member=member)
 
 	@command(user=False)
-	@commands.cooldown(1, 3600, commands.BucketType.user)
+	@shared_cooldown(3600)
 	async def luck(self, ctx: Context):
 		assert ctx.guild is not None
 		minimum_balance = 1000
@@ -288,11 +174,11 @@ class Economy(commands.GroupCog, name="Economy", group_name="economy"):
 
 		amount = random.randint(200, 1000)
 		if random_helper.randbool():
-			await self.ledger.credit(ctx.guild.id, ctx.author.id, amount)
+			await self.ledger.add_money(ctx.guild.id, ctx.author.id, amount)
 			await ctx.send("luck.win", amount=amount)
 			return
 		try:
-			await self.ledger.debit(ctx.guild.id, ctx.author.id, amount)
+			await self.ledger.remove_money(ctx.guild.id, ctx.author.id, amount)
 		except InsufficientFunds:
 			await ctx.send("luck.errors.balance", amount=minimum_balance)
 			return
@@ -325,7 +211,7 @@ class Economy(commands.GroupCog, name="Economy", group_name="economy"):
 		)
 
 	@command(user=False)
-	@commands.cooldown(1, 3600, commands.BucketType.user)
+	@shared_cooldown(3600)
 	async def slots(self, ctx: Context, bet: int):
 		assert ctx.guild is not None
 		if bet <= 0:
@@ -333,7 +219,7 @@ class Economy(commands.GroupCog, name="Economy", group_name="economy"):
 			return
 
 		try:
-			await self.ledger.debit(ctx.guild.id, ctx.author.id, bet)
+			await self.ledger.remove_money(ctx.guild.id, ctx.author.id, bet)
 		except InsufficientFunds:
 			await ctx.send("slots.errors.balance")
 			return
@@ -343,7 +229,7 @@ class Economy(commands.GroupCog, name="Economy", group_name="economy"):
 
 		if results.count(results[0]) == len(results):
 			payout = bet * 2
-			await self.ledger.credit(ctx.guild.id, ctx.author.id, payout)
+			await self.ledger.add_money(ctx.guild.id, ctx.author.id, payout)
 			await ctx.send("slots.win", results=" ".join(results), amount=payout)
 		else:
 			bal = await self.ledger.balance(ctx.guild.id, ctx.author.id)
@@ -385,21 +271,22 @@ class Economy(commands.GroupCog, name="Economy", group_name="economy"):
 class Shop(commands.Cog, name="Shop"):
 	def __init__(self, client):
 		self.client: Bot = client
-		self.ledger = Ledger(client.db)
+		self.ledger = client.api.economy
+		self.store = client.api.shop
 		self.custom_response = custom_response.CustomResponse(client, name="shop")
 
 	@group(user=False)
 	async def shop(self, ctx: Context):
 		assert ctx.guild is not None
-		row = await self.client.db.fetch("SELECT * FROM shop WHERE guild_id = $1", ctx.guild.id)
-		if not row:
+		stored = await self.store.items(ctx.guild.id)
+		if not stored:
 			await ctx.send("shop.list.empty")
 			return
 
 		items = [
-			{"item": ShopItem(i["item_name"], i["item_price"], i["item_description"], role)}
-			for i in row
-			if (role := ctx.guild.get_role(i["role"]))
+			{"item": ShopItem(i.name, i.price, i.description, role)}
+			for i in stored
+			if (role := ctx.guild.get_role(i.role_id))
 		]
 		(message,) = await self.custom_response.get_list("shop.list.show", ctx, items)
 		await ctx.send(**message)
@@ -408,21 +295,19 @@ class Shop(commands.Cog, name="Shop"):
 	async def buy(self, ctx: Context, item_name: str):
 		assert ctx.guild is not None
 		assert isinstance(ctx.author, discord.Member)
-		row = await self.client.db.fetchrow(
-			"SELECT * FROM shop WHERE guild_id = $1 AND LOWER(item_name) = $2", ctx.guild.id, item_name.lower()
-		)
-		if not row:
+		stored = await self.store.get(ctx.guild.id, item_name)
+		if not stored:
 			await ctx.send("shop.buy.errors.not_found")
 			return
 
-		role = ctx.guild.get_role(row["role"])
-		item = ShopItem(row["item_name"], row["item_price"], row["item_description"], role)
+		role = ctx.guild.get_role(stored.role_id)
+		item = ShopItem(stored.name, stored.price, stored.description, role)
 		if not item.raw_role:
 			await ctx.send("shop.buy.errors.role_not_found")
 			return
 
 		try:
-			await self.ledger.debit(ctx.guild.id, ctx.author.id, item.price)
+			await self.ledger.remove_money(ctx.guild.id, ctx.author.id, item.price)
 		except InsufficientFunds:
 			await ctx.send("shop.buy.errors.balance")
 			return
@@ -431,7 +316,7 @@ class Shop(commands.Cog, name="Shop"):
 			await ctx.author.add_roles(item.raw_role)
 		except discord.HTTPException:
 			try:
-				await self.ledger.credit(ctx.guild.id, ctx.author.id, item.price)
+				await self.ledger.add_money(ctx.guild.id, ctx.author.id, item.price)
 			except Exception:
 				logger.exception(f"Refund of {item.price} to {ctx.author.id} in {ctx.guild.id} failed")
 			await ctx.send("shop.buy.errors.role_failed", item=item)
@@ -445,56 +330,47 @@ class Shop(commands.Cog, name="Shop"):
 	async def set_item(self, ctx: Context, item_name: str, price: int, description: str, role: discord.Role):
 		assert ctx.guild is not None
 		assert isinstance(ctx.author, discord.Member)
-		row = await self.client.db.fetchrow(
-			"SELECT * FROM shop WHERE guild_id = $1 AND LOWER(item_name) = $2", ctx.guild.id, item_name.lower()
-		)
-		if row:
-			await ctx.send("shop.set.errors.already_item")
-			return
-
-		items = await self.client.db.fetch("SELECT * FROM shop WHERE guild_id = $1", ctx.guild.id)
-		if len(items) + 1 >= 10:
-			await ctx.send("shop.set.errors.limit")
-			return
-
 		if ctx.author.top_role.position <= role.position:
 			await ctx.send("shop.set.errors.role_higher")
 			return
 
-		await self.client.db.execute(
-			"INSERT INTO shop(item_name, item_description, item_price, role, guild_id, creator_id) VALUES($1, $2, $3, $4, $5, $6)",
-			item_name,
-			description,
-			price,
-			role.id,
-			ctx.guild.id,
-			ctx.author.id,
-		)
+		try:
+			await self.store.add(
+				ctx.guild.id,
+				StoredShopItem(
+					name=item_name, description=description, price=price, role_id=role.id, creator_id=ctx.author.id
+				),
+			)
+		except ApiError as exc:
+			if exc.code is ErrorCode.SHOP_ITEM_TAKEN:
+				await ctx.send("shop.set.errors.already_item")
+				return
+			if exc.code is ErrorCode.SHOP_LIMIT:
+				await ctx.send("shop.set.errors.limit")
+				return
+			raise
 
 		item = ShopItem(item_name, price, description, role)
 		await ctx.send("shop.set.success", item=item)
 
 	@shop.command()
 	@app_commands.checks.has_permissions(manage_guild=True)
+	@commands.has_permissions(manage_guild=True)
 	async def remove_item(self, ctx: Context, item_name: str):
 		assert ctx.guild is not None
 		assert isinstance(ctx.author, discord.Member)
-		row = await self.client.db.fetchrow(
-			"SELECT * FROM shop WHERE guild_id = $1 AND LOWER(item_name) = $2", ctx.guild.id, item_name.lower()
-		)
-		if not row:
+		stored = await self.store.get(ctx.guild.id, item_name)
+		if not stored:
 			await ctx.send("shop.remove.errors.not_found")
 			return
 
-		role = ctx.guild.get_role(row["role"])
-		item = ShopItem(row["item_name"], row["item_price"], row["item_description"], role)
+		role = ctx.guild.get_role(stored.role_id)
+		item = ShopItem(stored.name, stored.price, stored.description, role)
 		if item.raw_role and ctx.author.top_role.position <= item.raw_role.position:
 			await ctx.send("shop.remove.errors.role_higher")
 			return
 
-		await self.client.db.execute(
-			"DELETE FROM shop WHERE guild_id = $1 AND LOWER(item_name) = $2", ctx.guild.id, item.name.lower()
-		)
+		await self.store.remove(ctx.guild.id, item.name)
 		await ctx.send("shop.remove.success", item=item)
 
 

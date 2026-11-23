@@ -25,6 +25,9 @@ const LEGAL_DATA: Record<string, { key: DocKey; mdx: string }> = {
     "web/cookies": { key: "web-cookies", mdx: "web-cookies.mdx" },
 };
 
+/** The document at a URL path. Own keys only, so `__proto__` or `constructor` is no document. */
+const legalDoc = (current: string) => (Object.hasOwn(LEGAL_DATA, current) ? LEGAL_DATA[current] : undefined);
+
 /** `label` is a key in `legal.groups`; a group without one has no heading. */
 const NAV_GROUPS: { label?: keyof LegalLang["groups"]; items: string[] }[] = [
     { items: ["providers"] },
@@ -52,7 +55,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         });
     }
 
-    const data = LEGAL_DATA[current];
+    const data = legalDoc(current);
     if (!data) return {};
 
     const title = t.documents[data.key].title;
@@ -79,7 +82,7 @@ export default async function Page({ params }: PageProps) {
     }
 
     const current = doc.join("/");
-    const data = LEGAL_DATA[current];
+    const data = legalDoc(current);
     if (!data) {
         notFound();
     }
@@ -104,7 +107,10 @@ export default async function Page({ params }: PageProps) {
         scope: {
             currentYear: new Date().getFullYear(),
         },
+        // Expressions like {currentYear} need JS; dangerous ones (eval, require, process, ...) stay blocked. The
+        // files may come from translators, so never turn blockDangerousJS off.
         blockJS: false,
+        blockDangerousJS: true,
     };
 
     const title = t.documents[data.key].title;

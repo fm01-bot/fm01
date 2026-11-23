@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { ogSignature } from './ogSignature';
 
 export const SITE_URL = 'https://fm01.bot';
 export const SITE_NAME = 'fm01bot';
@@ -29,8 +30,9 @@ export function pageMetadata({ lang, path, title: pageTitle, description, imageT
     // Same full title everywhere (<title>, og:title, twitter:title) so link
     // previews get a descriptive title, not just "Features".
     const title = `${pageTitle} | ${SITE_NAME}`;
+    const ogTitle = imageTitle ?? pageTitle;
     const image = {
-        url: `/api/og?${new URLSearchParams({ title: imageTitle ?? pageTitle, description })}`,
+        url: `/api/og?${new URLSearchParams({ title: ogTitle, description, sig: ogSignature(ogTitle, description) })}`,
         width: 1200,
         height: 630,
         alt: title,

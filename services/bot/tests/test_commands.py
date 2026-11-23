@@ -2,20 +2,34 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import aiohttp
 import discord
 import pytest
 from cogs.afk import AFK
 from cogs.basic import Basic
 from cogs.config_subcommands.leave import setup_leave_subcommands
 from cogs.status import Status
+from core.clustering import ClusterConfig
+from core.settings import GuildSettings
+from discord.ext import commands
 from helpers.cli_parser import CLINode, CLIParseError
+from tests.fake_api import FakeGreetings
+
+from api import AfkToggled, GreetingConfig
 
 
 @pytest.fixture
 def mock_bot():
 	bot = MagicMock()
-	bot.db = AsyncMock()
+	bot.api.ping = AsyncMock()
+	bot.api.afk.toggle = AsyncMock(return_value=AfkToggled(away=True, previous_nick="Alice"))
+	bot.api.afk.back = AsyncMock()
+	bot.api.greetings = FakeGreetings()
+	bot.settings = GuildSettings(bot.event_bus)
 	bot.latency = 0.042
+	bot.get_shard = MagicMock(return_value=None)
+	bot.shard_count = 1
+	bot.cluster_config = ClusterConfig()
 	bot.commands = []
 	bot.guilds = [MagicMock(), MagicMock()]
 	bot.custom_response = AsyncMock()
@@ -35,13 +49,92 @@ class TestBasicCommands:
 		# Run the ping command callback
 		await cog.ping.callback(cog, ctx)
 
-		mock_bot.db.execute.assert_called_once_with("SELECT 1")
+		mock_bot.api.ping.assert_awaited_once()
 		ctx.send.assert_called_once()
 		args, kwargs = ctx.send.call_args
 		assert args[0] == "ping"
 		assert kwargs["latency"] == pytest.approx(0.042)
+		assert kwargs["proxy"] is None
 		assert "db" in kwargs
 		assert isinstance(kwargs["db"], float)
+
+	@pytest.mark.asyncio
+	async def test_ping_hides_cluster_and_shard_on_single_shard(self, mock_bot):
+		cog = Basic(mock_bot)
+		ctx = MagicMock()
+		ctx.guild.shard_id = 0
+		ctx.send = AsyncMock()
+
+		await cog.ping.callback(cog, ctx)
+
+		_, kwargs = ctx.send.call_args
+		assert kwargs["cluster"] is None
+		assert kwargs["shard"] is None
+
+	@pytest.mark.asyncio
+	async def test_ping_shows_cluster_and_shard(self, mock_bot):
+		mock_bot.cluster_config = ClusterConfig(mode="clustered", cluster_id="cluster-a")
+		mock_bot.shard_count = 4
+		cog = Basic(mock_bot)
+		ctx = MagicMock()
+		ctx.guild.shard_id = 0
+		ctx.send = AsyncMock()
+
+		await cog.ping.callback(cog, ctx)
+
+		_, kwargs = ctx.send.call_args
+		assert kwargs["cluster"] == "cluster-a"
+		assert kwargs["shard"] == 0
+		assert kwargs["shard_count"] == 4
+
+	@pytest.mark.asyncio
+	async def test_ping_hides_shard_in_dms(self, mock_bot):
+		mock_bot.shard_count = 4
+		cog = Basic(mock_bot)
+		ctx = MagicMock()
+		ctx.guild = None
+		ctx.send = AsyncMock()
+
+		await cog.ping.callback(cog, ctx)
+
+		_, kwargs = ctx.send.call_args
+		assert kwargs["shard"] is None
+
+	@pytest.mark.asyncio
+	async def test_ping_reports_proxy_latency_to_discord(self, mock_bot):
+		mock_bot.cluster_config = ClusterConfig(gateway_url="ws://gateway-proxy:7878")
+		mock_bot.session = MagicMock()
+		mock_bot.get_shard.return_value = MagicMock(latency=0.001)
+		cog = Basic(mock_bot)
+		ctx = MagicMock()
+		ctx.guild.shard_id = 3
+		ctx.send = AsyncMock()
+
+		with patch("cogs.basic.fetch_proxy_shard_latency", new=AsyncMock(return_value=0.05)) as fetch:
+			await cog.ping.callback(cog, ctx)
+
+		fetch.assert_awaited_once_with(mock_bot.session, "ws://gateway-proxy:7878", 3)
+		mock_bot.get_shard.assert_called_with(3)
+		_, kwargs = ctx.send.call_args
+		assert kwargs["latency"] == pytest.approx(0.05)
+		assert kwargs["proxy"] == pytest.approx(0.001)
+
+	@pytest.mark.asyncio
+	async def test_ping_falls_back_when_proxy_metrics_fail(self, mock_bot):
+		mock_bot.cluster_config = ClusterConfig(gateway_url="ws://gateway-proxy:7878")
+		mock_bot.session = MagicMock()
+		mock_bot.get_shard.return_value = MagicMock(latency=0.001)
+		cog = Basic(mock_bot)
+		ctx = MagicMock()
+		ctx.guild.shard_id = 0
+		ctx.send = AsyncMock()
+
+		with patch("cogs.basic.fetch_proxy_shard_latency", new=AsyncMock(side_effect=aiohttp.ClientError)):
+			await cog.ping.callback(cog, ctx)
+
+		_, kwargs = ctx.send.call_args
+		assert kwargs["latency"] == pytest.approx(0.001)
+		assert kwargs["proxy"] is None
 
 
 class TestStatusCog:
@@ -100,11 +193,9 @@ class TestAFKCog:
 		ctx.author.edit = AsyncMock()
 		ctx.send = AsyncMock()
 
-		mock_bot.db.fetchrow.return_value = None
-
 		await cog.afk.callback(cog, ctx, reason="Studying for exams")
 
-		mock_bot.db.execute.assert_called()
+		mock_bot.api.afk.toggle.assert_awaited_once_with(123, 456, "Studying for exams", "Alice")
 		ctx.send.assert_called_once_with("afk.on")
 		assert (123, 456) in cog.afk_cache
 		assert cog.afk_cache[(123, 456)]["message"] == "Studying for exams"
@@ -120,7 +211,7 @@ class TestAFKCog:
 		await cog.afk.callback(cog, ctx, reason="Join my server discord.gg/malicious")
 
 		ctx.send.assert_called_once_with("afk.link")
-		mock_bot.db.execute.assert_not_called()
+		mock_bot.api.afk.toggle.assert_not_called()
 		assert (123, 456) not in cog.afk_cache
 
 	@pytest.mark.asyncio
@@ -143,7 +234,7 @@ class TestAFKCog:
 		await cog.check_afk(message)
 
 		assert (123, 456) not in cog.afk_cache
-		mock_bot.db.execute.assert_called_once()
+		mock_bot.api.afk.back.assert_awaited_once_with(123, 456)
 		message.author.edit.assert_called_once_with(nick="OldNick")
 		ctx.reply.assert_called_once_with("afk.off")
 
@@ -195,16 +286,17 @@ class TestLeaveConfigCommands:
 		enable_action = parser_action._subparsers_action.choices["enable"]
 		await enable_action.callback(ctx, channel="#goodbye", message="{user} has left!")
 
-		mock_bot.db.execute.assert_called_once()
+		assert mock_bot.api.greetings.configs[("leave", 123)] == GreetingConfig(
+			enabled=True, channel_id=999, message="{user} has left!"
+		)
 		assert "Leave messages enabled in #goodbye" in ctx.send.call_args[1]["content"]
 
 		# Execute disable
 		ctx.send.reset_mock()
-		mock_bot.db.execute.reset_mock()
 		disable_action = parser_action._subparsers_action.choices["disable"]
 		await disable_action.callback(ctx)
 
-		mock_bot.db.execute.assert_called_once()
+		assert mock_bot.api.greetings.configs[("leave", 123)].enabled is False
 		assert "Leave messages disabled" in ctx.send.call_args[1]["content"]
 
 	@pytest.mark.asyncio
@@ -230,17 +322,13 @@ class TestLeaveConfigCommands:
 
 		# Test setting message
 		await msg_action.callback(ctx, message="Bye bye {user}!")
-		mock_bot.db.execute.assert_called_once()
+		assert mock_bot.api.greetings.configs[("leave", 123)] == GreetingConfig(
+			enabled=True, channel_id=888, message="Bye bye {user}!"
+		)
 		assert "Leave message template updated" in ctx.send.call_args[1]["content"]
 
 		# Test status
 		ctx.send.reset_mock()
-		mock_bot.db.fetchrow.return_value = {
-			"guild_id": 123,
-			"is_on": True,
-			"channel": 888,
-			"message": "Bye bye {user}!",
-		}
 		status_action = parser_action._subparsers_action.choices["status"]
 		await status_action.callback(ctx)
 
@@ -274,7 +362,9 @@ class TestSayCog:
 
 		cog = Say(mock_bot)
 		ctx = MagicMock()
+		ctx.author = MagicMock(spec=discord.Member)
 		channel = MagicMock(spec=discord.TextChannel)
+		channel.guild = ctx.author.guild
 		channel.send = AsyncMock()
 
 		await cog.channel_say.callback(cog, ctx, channel=channel, message="Channel message")
@@ -283,6 +373,22 @@ class TestSayCog:
 		assert args[0] == "Channel message"
 		assert isinstance(kwargs["allowed_mentions"], discord.AllowedMentions)
 		assert kwargs["allowed_mentions"].everyone is False
+
+	@pytest.mark.asyncio
+	async def test_channel_say_needs_manage_messages_in_the_target_channel(self, mock_bot):
+		from cogs.say import Say
+
+		cog = Say(mock_bot)
+		ctx = MagicMock()
+		ctx.author = MagicMock(spec=discord.Member)
+		channel = MagicMock(spec=discord.TextChannel)
+		channel.guild = ctx.author.guild
+		channel.permissions_for.return_value = discord.Permissions(send_messages=True)
+		channel.send = AsyncMock()
+
+		with pytest.raises(commands.MissingPermissions):
+			await cog.channel_say.callback(cog, ctx, channel=channel, message="Channel message")
+		channel.send.assert_not_called()
 
 	@pytest.mark.asyncio
 	async def test_reverse_say_command(self, mock_bot):
@@ -334,6 +440,8 @@ class TestBanCommand:
 		target_user = MagicMock(spec=discord.User)
 		target_user.id = 999
 		ctx.guild.id = 123
+		ctx.guild.get_member.return_value = None  # not a member, so no role hierarchy applies
+		ctx.guild.fetch_member = AsyncMock(side_effect=discord.NotFound(MagicMock(status=404), "Unknown Member"))
 		ctx.author.id = 456
 		ctx.message.id = 789
 		ctx.message.reference = None
@@ -359,6 +467,8 @@ class TestBanCommand:
 		target_user = MagicMock(spec=discord.User)
 		target_user.id = 999
 		ctx.guild.id = 123
+		ctx.guild.get_member.return_value = None  # not a member, so no role hierarchy applies
+		ctx.guild.fetch_member = AsyncMock(side_effect=discord.NotFound(MagicMock(status=404), "Unknown Member"))
 		ctx.author.id = 456
 		ctx.message.id = 789
 		ctx.message.reference = None
@@ -383,6 +493,8 @@ class TestBanCommand:
 		target_user = MagicMock(spec=discord.User)
 		target_user.id = 999
 		ctx.guild.id = 123
+		ctx.guild.get_member.return_value = None  # not a member, so no role hierarchy applies
+		ctx.guild.fetch_member = AsyncMock(side_effect=discord.NotFound(MagicMock(status=404), "Unknown Member"))
 		ctx.author.id = 456
 		ctx.message.id = 789
 		ctx.message.reference = None
@@ -407,6 +519,8 @@ class TestBanCommand:
 		target_user = MagicMock(spec=discord.User)
 		target_user.id = 999
 		ctx.guild.id = 123
+		ctx.guild.get_member.return_value = None  # not a member, so no role hierarchy applies
+		ctx.guild.fetch_member = AsyncMock(side_effect=discord.NotFound(MagicMock(status=404), "Unknown Member"))
 		ctx.author.id = 456
 		ctx.message.id = 789
 		ctx.message.reference = None

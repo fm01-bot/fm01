@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+import html
 import io
 import logging
 import re
@@ -9,22 +11,30 @@ import chat_exporter
 import discord
 from discord.ext import commands
 
+from api import TICKET_SETTING, TicketConfig, TicketOpen
+from api import Ticket as TicketRecord
+
 if TYPE_CHECKING:
-	import asyncpg
 	from core import Bot
+	from core.api import ApiClient
 	from core.settings import GuildSetting, GuildSettings
 
 logger = logging.getLogger(__name__)
 
 
-async def _load_ticket_config(db: asyncpg.Pool, guild_id: int) -> dict[str, Any] | None:
-	row = await db.fetchrow("SELECT * FROM ticket_config WHERE guild_id = $1", guild_id)
-	return dict(row) if row else None
+def ticket_config_setting(settings: GuildSettings, api: ApiClient) -> GuildSetting[TicketConfig | None]:
+	"""Register the guild's ticket configuration, stored behind the API (usable without the cog loaded).
 
+	Writers change it through ``api.tickets.update_config`` and `GuildSetting.remember` what the API returns.
 
-def ticket_config_setting(settings: GuildSettings) -> GuildSetting[dict[str, Any] | None]:
-	"""The guild's ticket configuration (a ``ticket_config`` row, or ``None``). Writers call ``changed()`` after."""
-	return settings.add("ticket", _load_ticket_config)
+	Args:
+		settings: The registry to add it to.
+		api: The API client it loads through.
+
+	Returns:
+		The setting. ``None`` for guilds that never configured tickets.
+	"""
+	return settings.add_remote(TICKET_SETTING, api.tickets.config, None)
 
 
 TICKET_OPEN_ID = "ticket:open"
@@ -203,7 +213,9 @@ class ArchivedTicketControlsView(discord.ui.View):
 class Ticket(commands.Cog, name="Ticket"):
 	def __init__(self, bot: Bot):
 		self.bot = bot
-		self.config = ticket_config_setting(bot.settings)
+		self.config = ticket_config_setting(bot.settings, bot.api)
+		self._create_locks: dict[tuple[int, int], asyncio.Lock] = {}
+		self._create_users: dict[tuple[int, int], int] = {}
 
 	async def cog_load(self):
 		self.bot.add_view(TicketLauncherView())
@@ -297,37 +309,25 @@ class Ticket(commands.Cog, name="Ticket"):
 		text = await self.bot.custom_response.get_message(f"ticket.strings.{key}", guild, **kwargs)
 		return text if isinstance(text, str) else key
 
-	async def get_ticket_config(self, guild_id: int) -> dict | None:
+	async def get_ticket_config(self, guild_id: int) -> TicketConfig | None:
 		return await self.config.get(guild_id)
 
-	async def get_ticket(self, channel_id: int) -> dict | None:
-		if not self.bot.db:
-			return None
-		row = await self.bot.db.fetchrow(
-			"SELECT * FROM tickets WHERE channel_id = $1 AND is_closed = false", channel_id
-		)
-		return dict(row) if row else None
+	async def get_ticket(self, channel_id: int) -> TicketRecord | None:
+		return await self.bot.api.tickets.in_channel(channel_id)
 
 	async def get_active_ticket_count(self, guild_id: int, user_id: int) -> int:
-		if not self.bot.db:
-			return 0
-		val = await self.bot.db.fetchval(
-			"SELECT count(*) FROM tickets WHERE guild_id = $1 AND user_id = $2 AND is_closed = false",
-			guild_id,
-			user_id,
-		)
-		return int(val) if val is not None else 0
+		return await self.bot.api.tickets.open_count(guild_id, user_id)
 
-	async def can_manage_ticket(self, interaction: discord.Interaction, ticket_row: dict) -> bool:
+	async def can_manage_ticket(self, interaction: discord.Interaction, ticket_row: TicketRecord) -> bool:
 		if not interaction.guild or not isinstance(interaction.user, discord.Member):
 			return False
-		if interaction.user.id == int(ticket_row["user_id"]):
+		if interaction.user.id == ticket_row.user_id:
 			return True
 		if interaction.user.guild_permissions.administrator or interaction.user.guild_permissions.manage_channels:
 			return True
 		cfg = await self.get_ticket_config(interaction.guild.id)
-		if cfg and cfg.get("support_role_id"):
-			role_id = int(cfg["support_role_id"])
+		if cfg and cfg.support_role_id:
+			role_id = cfg.support_role_id
 			if any(r.id == role_id for r in interaction.user.roles):
 				return True
 		return False
@@ -347,14 +347,8 @@ class Ticket(commands.Cog, name="Ticket"):
 		desc_max = 1800
 
 		if cfg:
-			if cfg.get("topic_min_length") is not None:
-				topic_min = int(cfg["topic_min_length"])
-			if cfg.get("topic_max_length") is not None:
-				topic_max = int(cfg["topic_max_length"])
-			if cfg.get("description_min_length") is not None:
-				desc_min = int(cfg["description_min_length"])
-			if cfg.get("description_max_length") is not None:
-				desc_max = int(cfg["description_max_length"])
+			topic_min, topic_max = cfg.topic_min_length, cfg.topic_max_length
+			desc_min, desc_max = cfg.description_min_length, cfg.description_max_length
 
 		return TicketModal(
 			cog=self,
@@ -392,14 +386,14 @@ class Ticket(commands.Cog, name="Ticket"):
 		if not transcript_str:
 			lines = [
 				f"<!DOCTYPE html><html><head><meta charset='utf-8'><title>Ticket #{ticket_id}</title></head>",
-				f"<body><h1>Ticket #{ticket_id} - #{getattr(channel, 'name', 'ticket')}</h1><ul>",
+				f"<body><h1>Ticket #{ticket_id} - #{html.escape(getattr(channel, 'name', 'ticket'))}</h1><ul>",
 			]
 			if isinstance(channel, discord.TextChannel):
 				try:
 					async for msg in channel.history(limit=500, oldest_first=True):
-						author_str = f"{msg.author.display_name} ({msg.author.id})"
-						content_str = msg.clean_content.replace("<", "&lt;").replace(">", "&gt;")
-						att_parts: list[str] = [f"<br>[Attachment: {att.filename}]" for att in msg.attachments]
+						author_str = html.escape(f"{msg.author.display_name} ({msg.author.id})")
+						content_str = html.escape(msg.clean_content)
+						att_parts = [f"<br>[Attachment: {html.escape(att.filename)}]" for att in msg.attachments]
 						att_str = "".join(att_parts)
 						lines.append(
 							f"<li><strong>{author_str}</strong> [{msg.created_at.strftime('%Y-%m-%d %H:%M:%S UTC')}]: {content_str}{att_str}</li>"
@@ -415,12 +409,29 @@ class Ticket(commands.Cog, name="Ticket"):
 		assert interaction.guild is not None
 		assert isinstance(interaction.user, discord.Member)
 		await interaction.response.defer(thinking=True, ephemeral=True)
+		# One creation per member at a time, so quick double submits can't pass the open ticket limit together.
+		key = (interaction.guild.id, interaction.user.id)
+		lock = self._create_locks.setdefault(key, asyncio.Lock())
+		# Counts the holder and every waiter: `lock.locked()` is False while a woken waiter has yet to take the lock,
+		# so dropping the lock then would let a later submit make a new one and run alongside that waiter.
+		self._create_users[key] = self._create_users.get(key, 0) + 1
+		try:
+			async with lock:
+				return await self._create_ticket(interaction, topic, description)
+		finally:
+			self._create_users[key] -= 1
+			if not self._create_users[key]:
+				del self._create_users[key], self._create_locks[key]
+
+	async def _create_ticket(self, interaction: discord.Interaction, topic: str, description: str):
+		assert interaction.guild is not None
+		assert isinstance(interaction.user, discord.Member)
 
 		cfg = await self.get_ticket_config(interaction.guild.id)
-		if cfg and not cfg.get("is_on", True):
+		if cfg and not cfg.enabled:
 			return await self.send_response("ticket.errors.disabled", interaction, ephemeral=True)
 
-		max_tickets = cfg.get("max_tickets", 1) if cfg else 1
+		max_tickets = cfg.max_tickets if cfg else 1
 		if max_tickets > 0:
 			count = await self.get_active_ticket_count(interaction.guild.id, interaction.user.id)
 			if count >= max_tickets:
@@ -430,8 +441,8 @@ class Ticket(commands.Cog, name="Ticket"):
 
 		# Determine category
 		category: discord.CategoryChannel | None = None
-		if cfg and cfg.get("category_id"):
-			cat = interaction.guild.get_channel(int(cfg["category_id"]))
+		if cfg and cfg.category_id:
+			cat = interaction.guild.get_channel(cfg.category_id)
 			if isinstance(cat, discord.CategoryChannel):
 				category = cat
 
@@ -488,8 +499,8 @@ class Ticket(commands.Cog, name="Ticket"):
 				embed_links=True,
 			)
 
-		if cfg and cfg.get("support_role_id"):
-			support_role = interaction.guild.get_role(int(cfg["support_role_id"]))
+		if cfg and cfg.support_role_id:
+			support_role = interaction.guild.get_role(cfg.support_role_id)
 			if support_role:
 				ch_overwrites[support_role] = discord.PermissionOverwrite(
 					view_channel=True,
@@ -509,18 +520,11 @@ class Ticket(commands.Cog, name="Ticket"):
 		except discord.Forbidden:
 			return await self.send_response("ticket.errors.bot_perms", interaction, ephemeral=True)
 
-		ticket_id = await self.bot.db.fetchval(
-			"""
-			INSERT INTO tickets (guild_id, channel_id, user_id, title, description)
-			VALUES ($1, $2, $3, $4, $5)
-			RETURNING id
-			""",
+		opened = await self.bot.api.tickets.open(
 			interaction.guild.id,
-			ticket_channel.id,
-			interaction.user.id,
-			topic,
-			description,
+			TicketOpen(channel_id=ticket_channel.id, user_id=interaction.user.id, title=topic, description=description),
 		)
+		ticket_id = opened.id
 
 		controls_view = await self.create_controls_view(interaction.guild, is_archived=False)
 		await self.send_response(
@@ -534,8 +538,8 @@ class Ticket(commands.Cog, name="Ticket"):
 			view=controls_view,
 		)
 
-		if cfg and cfg.get("log_channel_id"):
-			log_ch = interaction.guild.get_channel(int(cfg["log_channel_id"]))
+		if cfg and cfg.log_channel_id:
+			log_ch = interaction.guild.get_channel(cfg.log_channel_id)
 			if log_ch and isinstance(log_ch, discord.abc.Messageable):
 				try:
 					await self.send_response(
@@ -581,10 +585,10 @@ class Ticket(commands.Cog, name="Ticket"):
 			except (discord.HTTPException, TypeError, ValueError, AttributeError) as e:
 				logger.debug("Failed to disable buttons on archive message: %s", e)
 
-		opener = interaction.guild.get_member(int(ticket["user_id"]))
+		opener = interaction.guild.get_member(ticket.user_id)
 		if not opener:
 			try:
-				opener = await interaction.guild.fetch_member(int(ticket["user_id"]))
+				opener = await interaction.guild.fetch_member(ticket.user_id)
 			except discord.HTTPException:
 				opener = None
 		if opener and isinstance(interaction.channel, discord.TextChannel):
@@ -595,7 +599,7 @@ class Ticket(commands.Cog, name="Ticket"):
 			except discord.HTTPException as e:
 				logger.warning(f"Failed to set opener permissions on archive: {e}")
 
-		await self.bot.db.execute("UPDATE tickets SET is_archived = true WHERE id = $1", ticket["id"])
+		await self.bot.api.tickets.archive(interaction.guild.id, ticket.id)
 
 		if isinstance(interaction.channel, discord.abc.Messageable):
 			controls_view = await self.create_controls_view(interaction.guild, is_archived=True)
@@ -603,22 +607,22 @@ class Ticket(commands.Cog, name="Ticket"):
 				"ticket.actions.archived",
 				interaction.channel,
 				author=interaction.user,
-				ticket_id=ticket["id"],
+				ticket_id=ticket.id,
 				view=controls_view,
 			)
 
 		cfg = await self.get_ticket_config(interaction.guild.id)
-		if cfg and cfg.get("log_channel_id"):
-			log_ch = interaction.guild.get_channel(int(cfg["log_channel_id"]))
+		if cfg and cfg.log_channel_id:
+			log_ch = interaction.guild.get_channel(cfg.log_channel_id)
 			if log_ch and isinstance(log_ch, discord.abc.Messageable):
 				try:
 					await self.send_response(
 						"ticket.logs.archived",
 						log_ch,
 						actor=interaction.user,
-						ticket_user_id=ticket["user_id"],
+						ticket_user_id=ticket.user_id,
 						channel=interaction.channel,
-						ticket_id=ticket["id"],
+						ticket_id=ticket.id,
 					)
 				except discord.HTTPException as e:
 					logger.warning(f"Failed to send archive log: {e}")
@@ -648,10 +652,10 @@ class Ticket(commands.Cog, name="Ticket"):
 			except (discord.HTTPException, TypeError, ValueError, AttributeError) as e:
 				logger.debug(f"Failed to disable buttons on reopen message: {e}")
 
-		opener = interaction.guild.get_member(int(ticket["user_id"]))
+		opener = interaction.guild.get_member(ticket.user_id)
 		if not opener:
 			try:
-				opener = await interaction.guild.fetch_member(int(ticket["user_id"]))
+				opener = await interaction.guild.fetch_member(ticket.user_id)
 			except discord.HTTPException:
 				opener = None
 		if opener and isinstance(interaction.channel, discord.TextChannel):
@@ -662,7 +666,7 @@ class Ticket(commands.Cog, name="Ticket"):
 			except discord.HTTPException as e:
 				logger.warning(f"Failed to restore opener permissions on reopen: {e}")
 
-		await self.bot.db.execute("UPDATE tickets SET is_archived = false WHERE id = $1", ticket["id"])
+		await self.bot.api.tickets.reopen(interaction.guild.id, ticket.id)
 
 		if isinstance(interaction.channel, discord.abc.Messageable):
 			controls_view = await self.create_controls_view(interaction.guild, is_archived=False)
@@ -670,22 +674,22 @@ class Ticket(commands.Cog, name="Ticket"):
 				"ticket.actions.reopened",
 				interaction.channel,
 				author=interaction.user,
-				ticket_id=ticket["id"],
+				ticket_id=ticket.id,
 				view=controls_view,
 			)
 
 		cfg = await self.get_ticket_config(interaction.guild.id)
-		if cfg and cfg.get("log_channel_id"):
-			log_ch = interaction.guild.get_channel(int(cfg["log_channel_id"]))
+		if cfg and cfg.log_channel_id:
+			log_ch = interaction.guild.get_channel(cfg.log_channel_id)
 			if log_ch and isinstance(log_ch, discord.abc.Messageable):
 				try:
 					await self.send_response(
 						"ticket.logs.reopened",
 						log_ch,
 						actor=interaction.user,
-						ticket_user_id=ticket["user_id"],
+						ticket_user_id=ticket.user_id,
 						channel=interaction.channel,
-						ticket_id=ticket["id"],
+						ticket_id=ticket.id,
 					)
 				except discord.HTTPException as e:
 					logger.warning(f"Failed to send reopen log: {e}")
@@ -705,14 +709,14 @@ class Ticket(commands.Cog, name="Ticket"):
 		if not interaction.response.is_done():
 			await interaction.response.defer()
 
-		transcript = await self.export_transcript(interaction.channel, ticket["id"])  # type: ignore
+		transcript = await self.export_transcript(interaction.channel, ticket.id)  # type: ignore
 
 		ch_name = getattr(interaction.channel, "name", "ticket")
 		file_to_send = discord.File(io.BytesIO(transcript.encode("utf-8")), filename=f"transcript-{ch_name}.html")
 
 		cfg = await self.get_ticket_config(interaction.guild.id)
-		if cfg and cfg.get("log_channel_id"):
-			log_ch = interaction.guild.get_channel(int(cfg["log_channel_id"]))
+		if cfg and cfg.log_channel_id:
+			log_ch = interaction.guild.get_channel(cfg.log_channel_id)
 			if log_ch and isinstance(log_ch, discord.abc.Messageable):
 				log_file = discord.File(io.BytesIO(transcript.encode("utf-8")), filename=f"transcript-{ch_name}.html")
 				try:
@@ -720,9 +724,9 @@ class Ticket(commands.Cog, name="Ticket"):
 						"ticket.logs.saved",
 						log_ch,
 						actor=interaction.user,
-						ticket_user_id=ticket["user_id"],
+						ticket_user_id=ticket.user_id,
 						channel=interaction.channel,
-						ticket_id=ticket["id"],
+						ticket_id=ticket.id,
 						file=log_file,
 					)
 				except discord.HTTPException as e:
@@ -764,23 +768,15 @@ class Ticket(commands.Cog, name="Ticket"):
 			interaction,
 		)
 
-		transcript = await self.export_transcript(interaction.channel, ticket["id"])  # type: ignore
+		transcript = await self.export_transcript(interaction.channel, ticket.id)  # type: ignore
 
-		await self.bot.db.execute(
-			"""
-			UPDATE tickets
-			SET is_closed = true, is_archived = true, closed_at = now(), closed_by = $1
-			WHERE id = $2
-			""",
-			interaction.user.id,
-			ticket["id"],
-		)
+		await self.bot.api.tickets.close(interaction.guild.id, ticket.id, interaction.user.id)
 
 		ch_name = getattr(interaction.channel, "name", "ticket")
 		cfg = await self.get_ticket_config(interaction.guild.id)
 
-		if cfg and cfg.get("log_channel_id"):
-			log_ch = interaction.guild.get_channel(int(cfg["log_channel_id"]))
+		if cfg and cfg.log_channel_id:
+			log_ch = interaction.guild.get_channel(cfg.log_channel_id)
 			if log_ch and isinstance(log_ch, discord.abc.Messageable):
 				log_file = discord.File(io.BytesIO(transcript.encode("utf-8")), filename=f"transcript-{ch_name}.html")
 				try:
@@ -788,20 +784,20 @@ class Ticket(commands.Cog, name="Ticket"):
 						"ticket.logs.closed",
 						log_ch,
 						actor=interaction.user,
-						ticket_user_id=ticket["user_id"],
+						ticket_user_id=ticket.user_id,
 						channel=interaction.channel,
-						topic=ticket["title"],
-						ticket_id=ticket["id"],
+						topic=ticket.title,
+						ticket_id=ticket.id,
 						file=log_file,
 					)
 				except discord.HTTPException as e:
 					logger.warning(f"Failed to send close log: {e}")
 
-		if cfg is None or cfg.get("dm_transcript", True):
-			opener = interaction.guild.get_member(int(ticket["user_id"]))
+		if cfg is None or cfg.dm_transcript:
+			opener = interaction.guild.get_member(ticket.user_id)
 			if not opener:
 				try:
-					opener = await self.bot.fetch_user(int(ticket["user_id"]))
+					opener = await self.bot.fetch_user(ticket.user_id)
 				except (discord.HTTPException, discord.NotFound):
 					opener = None
 			if opener:
@@ -815,7 +811,7 @@ class Ticket(commands.Cog, name="Ticket"):
 						file=dm_file,
 					)
 				except (discord.Forbidden, discord.HTTPException) as e:
-					logger.debug(f"Could not DM user {ticket['user_id']}: {e}")
+					logger.debug(f"Could not DM user {ticket.user_id}: {e}")
 
 		if isinstance(interaction.channel, discord.abc.GuildChannel):
 			try:
@@ -827,16 +823,7 @@ class Ticket(commands.Cog, name="Ticket"):
 
 	@commands.Cog.listener()
 	async def on_guild_channel_delete(self, channel: discord.abc.GuildChannel):
-		if not self.bot.db:
-			return
-		await self.bot.db.execute(
-			"""
-			UPDATE tickets
-			SET is_closed = true, is_archived = true, closed_at = now()
-			WHERE channel_id = $1 AND is_closed = false
-			""",
-			channel.id,
-		)
+		await self.bot.api.tickets.channel_deleted(channel.id)
 
 
 async def setup(bot: Bot):

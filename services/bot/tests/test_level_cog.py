@@ -11,14 +11,19 @@ from core.settings import GuildSettings
 from helpers.custom_response import CustomResponse
 from helpers.leveling import GuildLevelConfig, LevelupMessage
 
+from api import Leaderboard, LevelOverride, MemberLevel, XpResult
+from api import LevelOverrides as StoredOverrides
+
 
 @pytest.fixture
 def mock_bot():
 	bot = MagicMock()
-	bot.db = MagicMock()
-	bot.db.execute = AsyncMock()
-	bot.db.fetch = AsyncMock(return_value=[])
-	bot.db.fetchrow = AsyncMock(return_value=None)
+	bot.api.levels.award = AsyncMock(return_value=XpResult(xp=20, level=0, previous_level=0))
+	bot.api.levels.member = AsyncMock()
+	bot.api.levels.leaderboard = AsyncMock()
+	bot.api.levels.overrides = AsyncMock(return_value=StoredOverrides())
+	bot.api.levels.update_override = AsyncMock()
+	bot.api.levels.rewards = AsyncMock(return_value=[])
 	bot.custom_response = MagicMock()
 	bot.custom_response.get_message = AsyncMock(
 		return_value={
@@ -32,7 +37,7 @@ def mock_bot():
 	bot.custom_response.convert_embeds = MagicMock(side_effect=lambda x: x)
 	bot.custom_response.get_list = partial(CustomResponse.get_list, bot.custom_response)
 	bot.event_bus.publish = AsyncMock()
-	bot.settings = GuildSettings(lambda: bot.db, bot.event_bus)
+	bot.settings = GuildSettings(bot.event_bus)
 	return bot
 
 
@@ -57,7 +62,7 @@ async def test_on_message_xp_ignores_bots(level_cog):
 	msg = MagicMock(spec=discord.Message)
 	msg.author.bot = True
 	await level_cog.on_message_xp(msg)
-	assert not level_cog.client.db.fetchrow.called
+	assert not level_cog.client.api.levels.award.called
 
 
 @pytest.mark.asyncio
@@ -66,7 +71,7 @@ async def test_on_message_xp_ignores_dms(level_cog):
 	msg.author.bot = False
 	msg.guild = None
 	await level_cog.on_message_xp(msg)
-	assert not level_cog.client.db.fetchrow.called
+	assert not level_cog.client.api.levels.award.called
 
 
 @pytest.mark.asyncio
@@ -79,7 +84,7 @@ async def test_on_message_xp_disabled_guild(level_cog):
 
 	level_cog.config.remember(999, GuildLevelConfig(guild_id=999, is_on=False))
 	await level_cog.on_message_xp(msg)
-	assert not level_cog.client.db.fetchrow.called
+	assert not level_cog.client.api.levels.award.called
 
 
 @pytest.mark.asyncio
@@ -95,7 +100,7 @@ async def test_on_message_xp_ignored_channel(level_cog):
 	seed_override(level_cog, channel=(444, (1.0, True)))  # Ignored
 
 	await level_cog.on_message_xp(msg)
-	assert not level_cog.client.db.fetchrow.called
+	assert not level_cog.client.api.levels.award.called
 
 
 @pytest.mark.asyncio
@@ -114,7 +119,7 @@ async def test_on_message_xp_ignored_role(level_cog):
 	seed_override(level_cog, role=(777, (1.0, True)))  # Ignored
 
 	await level_cog.on_message_xp(msg)
-	assert not level_cog.client.db.fetchrow.called
+	assert not level_cog.client.api.levels.award.called
 
 
 @pytest.mark.asyncio
@@ -130,16 +135,14 @@ async def test_on_message_xp_cooldown(level_cog):
 	level_cog.config.remember(999, GuildLevelConfig(guild_id=999, is_on=True, cooldown=60))
 	seed_override(level_cog, channel=(444, (1.0, False)))
 	seed_override(level_cog, role=(111, (1.0, False)))
-	level_cog.client.db.fetchrow.return_value = {"xp": 20, "level": 0}
-
 	# 1st message -> awards XP
 	await level_cog.on_message_xp(msg)
-	assert level_cog.client.db.fetchrow.called
+	assert level_cog.client.api.levels.award.called
 
 	# 2nd message immediately after -> cooldown blocks it
-	level_cog.client.db.fetchrow.reset_mock()
+	level_cog.client.api.levels.award.reset_mock()
 	await level_cog.on_message_xp(msg)
-	assert not level_cog.client.db.fetchrow.called
+	assert not level_cog.client.api.levels.award.called
 
 
 @pytest.mark.asyncio
@@ -173,7 +176,7 @@ async def test_on_message_xp_levelup_and_rewards(level_cog):
 	seed_override(level_cog, channel=(444, (1.0, False)))
 
 	# Mock user_levels insert returning 100 XP, old level 0
-	level_cog.client.db.fetchrow.return_value = {"xp": 100, "level": 0}
+	level_cog.client.api.levels.award.return_value = XpResult(xp=100, level=1, previous_level=0)
 
 	# Mock role reward at level 1
 	reward_role = MagicMock(spec=discord.Role)
@@ -184,10 +187,8 @@ async def test_on_message_xp_levelup_and_rewards(level_cog):
 
 	await level_cog.on_message_xp(msg)
 
-	# Verify level was updated in DB
-	level_cog.client.db.execute.assert_any_call(
-		"UPDATE user_levels SET level = $1 WHERE guild_id = $2 AND user_id = $3", 1, 999, 111
-	)
+	# Verify the XP went to the API, which keeps the level
+	level_cog.client.api.levels.award.assert_awaited_once_with(999, 111, 100)
 
 	# Verify role was granted
 	msg.author.add_roles.assert_called_once()
@@ -223,7 +224,7 @@ async def test_on_message_xp_levelup_localized_default(level_cog):
 		),
 	)
 	seed_override(level_cog, channel=(444, (1.0, False)))
-	level_cog.client.db.fetchrow.return_value = {"xp": 100, "level": 0}
+	level_cog.client.api.levels.award.return_value = XpResult(xp=100, level=1, previous_level=0)
 	level_cog.client.custom_response.get_message.return_value = "Localized GG!"
 
 	await level_cog.on_message_xp(msg)
@@ -257,7 +258,7 @@ async def test_on_message_xp_levelup_dict_payload_with_reply(level_cog):
 		),
 	)
 	seed_override(level_cog, channel=(444, (1.0, False)))
-	level_cog.client.db.fetchrow.return_value = {"xp": 100, "level": 0}
+	level_cog.client.api.levels.award.return_value = XpResult(xp=100, level=1, previous_level=0)
 
 	embed = MagicMock(spec=discord.Embed)
 	mentions = discord.AllowedMentions(users=True)
@@ -301,7 +302,7 @@ async def test_on_message_xp_levelup_dict_payload_separate_channel_strips_refere
 		),
 	)
 	seed_override(level_cog, channel=(444, (1.0, False)))
-	level_cog.client.db.fetchrow.return_value = {"xp": 100, "level": 0}
+	level_cog.client.api.levels.award.return_value = XpResult(xp=100, level=1, previous_level=0)
 
 	embed = MagicMock(spec=discord.Embed)
 	mentions = discord.AllowedMentions(users=True)
@@ -323,10 +324,7 @@ async def test_level_command_sends_card(level_cog):
 	ctx.send = AsyncMock()
 	ctx.defer = AsyncMock()
 
-	level_cog.client.db.fetchrow.side_effect = [
-		{"xp": 120, "level": 1},  # user_levels row
-		{"rank": 3},  # rank query
-	]
+	level_cog.client.api.levels.member.return_value = MemberLevel(user_id=111, xp=120, level=1, rank=3)
 
 	# Mock create_level_card to return a buffer
 	fake_buf = io.BytesIO(b"fake_image_bytes")
@@ -346,11 +344,13 @@ async def test_levels_command_leaderboard(level_cog):
 	ctx.send = AsyncMock()
 
 	# Mock total count and rows
-	level_cog.client.db.fetchrow.return_value = {"count": 2}
-	level_cog.client.db.fetch.return_value = [
-		{"user_id": 111, "xp": 1000, "level": 4},
-		{"user_id": 222, "xp": 500, "level": 3},
-	]
+	level_cog.client.api.levels.leaderboard.return_value = Leaderboard(
+		total=2,
+		entries=[
+			MemberLevel(user_id=111, xp=1000, level=4, rank=1),
+			MemberLevel(user_id=222, xp=500, level=3, rank=2),
+		],
+	)
 
 	u1 = MagicMock(spec=discord.User)
 	u1.name = "Alice"
@@ -383,8 +383,7 @@ async def test_levels_command_empty_leaderboard(level_cog):
 	ctx.guild.id = 999
 	ctx.send = AsyncMock()
 
-	level_cog.client.db.fetchrow.return_value = {"count": 0}
-	level_cog.client.db.fetch.return_value = []
+	level_cog.client.api.levels.leaderboard.return_value = Leaderboard(total=0, entries=[])
 
 	embed = discord.Embed(title="Level Leaderboard")
 	embed.add_field(name="#{number} {user}", value="Level: {level}")
@@ -403,27 +402,28 @@ async def test_levels_command_empty_leaderboard(level_cog):
 
 
 @pytest.mark.asyncio
-async def test_overrides_are_cached_until_reported_changed(level_cog):
+async def test_overrides_are_cached_until_changed(level_cog):
 	guild_id = 999
-
-	async def fetch(query, *args):
-		if "level_role_overrides" in query:
-			return [{"role_id": 123, "multiplier": 1.5, "is_ignored": False}]
-		return [{"channel_id": 456, "multiplier": 2.0, "is_ignored": True}]
-
-	level_cog.client.db.fetch = AsyncMock(side_effect=fetch)
+	overrides = level_cog.client.api.levels.overrides
+	overrides.return_value = StoredOverrides(
+		channels=[LevelOverride(id=456, multiplier=2.0, ignored=True)],
+		roles=[LevelOverride(id=123, multiplier=1.5, ignored=False)],
+	)
 
 	assert await level_cog.get_role_overrides(guild_id) == {123: (1.5, False)}
 	assert await level_cog.get_channel_override(guild_id, 456) == (2.0, True)
-	assert level_cog.client.db.fetch.await_count == 2  # one load: channel and role overrides
+	assert overrides.await_count == 1  # one load: channel and role overrides
 
 	await level_cog.get_role_overrides(guild_id)
-	assert level_cog.client.db.fetch.await_count == 2
+	assert overrides.await_count == 1
 
-	await level_cog.set_role_multiplier(guild_id, 123, 3.0)
+	await level_cog.levels.set_role_multiplier(guild_id, 123, 3.0)
 	await level_cog.get_role_overrides(guild_id)
-	assert level_cog.client.db.fetch.await_count == 4
-	level_cog.client.event_bus.publish.assert_awaited()
+	assert overrides.await_count == 2  # reloaded what the API stored
+	update = level_cog.client.api.levels.update_override.await_args.args
+	assert update[:3] == (guild_id, "role", 123)
+	assert update[3].multiplier == 3.0
+	assert update[3].ignored is None
 
 
 @pytest.mark.asyncio
