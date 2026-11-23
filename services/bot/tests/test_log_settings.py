@@ -1,21 +1,24 @@
-"""LogSettings against real PostgreSQL, with two bot instances sharing an in-process event bus."""
+"""LogSettings against an in-memory API, with two bot instances sharing an in-process event bus."""
 
 from __future__ import annotations
 
 import asyncio
 from types import SimpleNamespace
 
-import asyncpg
 import pytest
 from cogs.log import LOG_MODULES, LogConfig, LogSettings
 from core.clustering import LocalEventBus
+from core.clustering.interfaces import EventBus
 from core.settings import EVENTS_CHANNEL, GuildSettings
+from tests.fake_api import FakeLog, FakeLogStore
 
 GUILD = 7
 
 
-def make_bot(db: asyncpg.Pool, bus: LocalEventBus) -> SimpleNamespace:
-	return SimpleNamespace(settings=GuildSettings(lambda: db, bus), message_logging_guilds=set())
+def make_bot(store: FakeLogStore, bus: EventBus) -> SimpleNamespace:
+	settings = GuildSettings(bus)
+	api = SimpleNamespace(log=FakeLog(store, settings.origin))
+	return SimpleNamespace(settings=settings, api=api, message_logging_guilds=set())
 
 
 async def config_of(bot: SimpleNamespace) -> LogConfig:
@@ -30,9 +33,14 @@ async def settle() -> None:
 
 
 @pytest.fixture
-async def bots(db: asyncpg.Pool) -> tuple[SimpleNamespace, SimpleNamespace]:
-	bus = LocalEventBus()
-	a, b = make_bot(db, bus), make_bot(db, bus)
+def store() -> FakeLogStore:
+	return FakeLogStore(LocalEventBus())
+
+
+@pytest.fixture
+async def bots(store: FakeLogStore) -> tuple[SimpleNamespace, SimpleNamespace]:
+	bus = store.bus
+	a, b = make_bot(store, bus), make_bot(store, bus)
 	for bot in (a, b):
 
 		async def handler(event: dict, settings: GuildSettings = bot.settings) -> None:
@@ -42,19 +50,17 @@ async def bots(db: asyncpg.Pool) -> tuple[SimpleNamespace, SimpleNamespace]:
 	return a, b
 
 
-@pytest.mark.db
-async def test_enable_on_a_new_guild_logs_every_module(db, bots):
+async def test_enable_on_a_new_guild_logs_every_module(store, bots):
 	a, _ = bots
 
 	cfg = await LogSettings(a).enable(GUILD, channel_id=123)
 
 	assert cfg.enabled_modules == LOG_MODULES
-	row = await db.fetchrow("SELECT is_on, channel, modules FROM log WHERE guild_id = $1", GUILD)
-	assert (row["is_on"], int(row["channel"]), row["modules"]) == (True, 123, ["*"])
+	stored = store.configs[GUILD]
+	assert (stored.enabled, stored.channel_id, stored.modules) == (True, 123, ["*"])
 	assert GUILD in a.message_logging_guilds
 
 
-@pytest.mark.db
 async def test_enable_keeps_the_channel_when_none_is_given(bots):
 	a, _ = bots
 	logs = LogSettings(a)
@@ -66,7 +72,6 @@ async def test_enable_keeps_the_channel_when_none_is_given(bots):
 	assert (cfg.is_on, cfg.channel_id) == (True, 123)
 
 
-@pytest.mark.db
 async def test_disable_stops_message_buffering_on_every_instance(bots):
 	a, b = bots
 	await LogSettings(b).get(GUILD)  # b knows the log setting
@@ -81,7 +86,6 @@ async def test_disable_stops_message_buffering_on_every_instance(bots):
 	assert GUILD not in b.message_logging_guilds
 
 
-@pytest.mark.db
 async def test_other_instance_sees_new_modules_without_restart(bots):
 	a, b = bots
 	logs_a = LogSettings(a)
@@ -98,8 +102,7 @@ async def test_other_instance_sees_new_modules_without_restart(bots):
 	assert cfg.enabled_modules == {"on_member_join"}
 
 
-@pytest.mark.db
-async def test_removing_a_module_from_all_expands_the_wildcard(db, bots):
+async def test_removing_a_module_from_all_expands_the_wildcard(store, bots):
 	a, _ = bots
 	logs = LogSettings(a)
 	await logs.enable(GUILD, channel_id=1)
@@ -107,11 +110,10 @@ async def test_removing_a_module_from_all_expands_the_wildcard(db, bots):
 	cfg = await logs.remove_modules(GUILD, ["on_message_delete"])
 
 	assert cfg.enabled_modules == LOG_MODULES - {"on_message_delete"}
-	stored = await db.fetchval("SELECT modules FROM log WHERE guild_id = $1", GUILD)
+	stored = store.configs[GUILD].modules
 	assert "*" not in stored and "on_message_edit" in stored
 
 
-@pytest.mark.db
 async def test_per_event_channels_and_webhook_round_trip(bots):
 	a, b = bots
 	logs = LogSettings(a)

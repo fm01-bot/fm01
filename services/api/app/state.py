@@ -12,6 +12,9 @@ import redis.asyncio as aioredis
 from cryptography.fernet import Fernet
 from fastapi import Request
 
+from app.afk.store import AfkStore
+from app.alerts.store import AlertStore
+from app.automod.store import AutoModStore
 from app.bear_trap.store import BearTrapStore
 from app.config import Settings
 from app.dashboard.access import GuildAccess
@@ -20,10 +23,18 @@ from app.dashboard.sessions import SessionStore
 from app.db import create_pool
 from app.economy.store import Ledger
 from app.events import Announcer
+from app.giveaways.store import GiveawayStore
+from app.greetings.store import GreetingStore
+from app.leveling.store import LevelStore
+from app.log.store import LogStore
+from app.moderation.store import CaseStore
 from app.ratelimit import RateLimiter
 from app.settings.store import GuildSettingsStore
+from app.shop.store import ShopStore
+from app.snapshots.store import SnapshotStore
 from app.starboard.store import StarboardStore
 from app.status.store import StatusStore
+from app.tickets.store import TicketStore
 
 __all__ = ("AppState", "build_state", "get_state")
 
@@ -38,6 +49,17 @@ class AppState:
 		guild_settings: The guild settings store.
 		bear_traps: The bear trap store.
 		starboards: The starboard store.
+		greetings: The join and leave message store.
+		automod: The AutoMod configuration store.
+		log: The log configuration store.
+		cases: The moderation case store.
+		tickets: The support ticket store.
+		levels: The leveling store.
+		afk: The AFK store.
+		snapshots: The snapshot store.
+		shop: The shop store.
+		giveaways: The giveaway store.
+		alerts: The media alert store.
 		discord: The Discord client.
 		sessions: The dashboard session store.
 		access: The guild manager checks.
@@ -50,6 +72,17 @@ class AppState:
 	guild_settings: GuildSettingsStore
 	bear_traps: BearTrapStore
 	starboards: StarboardStore
+	greetings: GreetingStore
+	automod: AutoModStore
+	log: LogStore
+	cases: CaseStore
+	tickets: TicketStore
+	levels: LevelStore
+	afk: AfkStore
+	snapshots: SnapshotStore
+	shop: ShopStore
+	giveaways: GiveawayStore
+	alerts: AlertStore
 	discord: DiscordClient
 	sessions: SessionStore
 	access: GuildAccess
@@ -106,6 +139,17 @@ def assemble(config: Settings, pool: asyncpg.Pool, redis: aioredis.Redis, http: 
 		guild_settings=GuildSettingsStore(pool, announcer),
 		bear_traps=BearTrapStore(pool, announcer),
 		starboards=StarboardStore(pool, announcer),
+		greetings=GreetingStore(pool, announcer),
+		automod=AutoModStore(pool, announcer),
+		log=LogStore(pool, announcer),
+		cases=CaseStore(pool, announcer),
+		tickets=TicketStore(pool, announcer),
+		levels=LevelStore(pool, announcer),
+		afk=AfkStore(pool),
+		snapshots=SnapshotStore(pool),
+		shop=ShopStore(pool),
+		giveaways=GiveawayStore(pool),
+		alerts=AlertStore(pool),
 		discord=discord,
 		sessions=sessions,
 		access=GuildAccess(discord, sessions, redis, config.permission_ttl),

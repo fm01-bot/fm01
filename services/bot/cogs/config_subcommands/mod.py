@@ -24,7 +24,7 @@ def setup_mod_subcommands(parent_node: CLINode) -> CLINode:
 		assert ctx.guild is not None
 		raw_val = retention or retention_pos
 
-		setting = retention_setting(ctx.bot.settings)
+		setting = retention_setting(ctx.bot.settings, ctx.bot.api)
 		if not raw_val:
 			current = await setting.get(ctx.guild.id)
 			return await ctx.send(content=f"```ansi\nModeration case retention: {current}\n```")

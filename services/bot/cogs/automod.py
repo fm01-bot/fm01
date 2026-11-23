@@ -16,8 +16,10 @@ from discord.ext import commands
 from helpers.convert import text_to_seconds
 from helpers.regex import DISCORD_INVITE, URL_REGEX
 
+from api import AUTOMOD_SETTING
+from api import AutoModConfig as StoredAutoModConfig
+
 if TYPE_CHECKING:
-	import asyncpg
 	from core import Bot
 	from core.settings import GuildSetting
 
@@ -96,22 +98,24 @@ class AutoModConfig:
 		return default_action
 
 
-async def _load_automod(db: asyncpg.Pool, guild_id: int) -> AutoModConfig:
-	row = await db.fetchrow("SELECT guild_id, is_on, settings FROM automod_config WHERE guild_id = $1", guild_id)
-	return AutoModConfig.from_row(dict(row) if row else None, guild_id)
+def automod_setting(bot: Bot) -> GuildSetting[AutoModConfig]:
+	"""Register the guild's AutoMod configuration, stored behind the API.
 
+	Args:
+		bot: The bot, whose settings registry and API client it uses.
 
-async def _save_automod(db: asyncpg.Pool, guild_id: int, config: AutoModConfig) -> None:
-	await db.execute(
-		"""
-		INSERT INTO automod_config (guild_id, is_on, settings)
-		VALUES ($1, $2, $3)
-		ON CONFLICT (guild_id) DO UPDATE SET is_on = EXCLUDED.is_on, settings = EXCLUDED.settings
-		""",
-		guild_id,
-		config.is_on,
-		config.settings,
-	)
+	Returns:
+		The setting. Disabled defaults for guilds that never configured AutoMod.
+	"""
+
+	async def load(guild_id: int) -> AutoModConfig:
+		stored = await bot.api.automod.get(guild_id)
+		return AutoModConfig(guild_id=guild_id, is_on=stored.enabled, settings=stored.settings)
+
+	async def save(guild_id: int, config: AutoModConfig) -> None:
+		await bot.api.automod.set(guild_id, StoredAutoModConfig(enabled=config.is_on, settings=config.settings))
+
+	return bot.settings.add_remote(AUTOMOD_SETTING, load, save)
 
 
 class AutoMod(commands.Cog, name="AutoMod"):
@@ -119,7 +123,7 @@ class AutoMod(commands.Cog, name="AutoMod"):
 
 	def __init__(self, client: Bot) -> None:
 		self.client = client
-		self.config: GuildSetting[AutoModConfig] = client.settings.add("automod", _load_automod, _save_automod)
+		self.config: GuildSetting[AutoModConfig] = automod_setting(client)
 		self._spam_tracker: dict[tuple[int, int], collections.deque[float]] = {}
 		self._last_prune: float = time.monotonic()
 

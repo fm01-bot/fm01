@@ -11,7 +11,6 @@ import discord
 import pytest
 from args import Giveaway as GiveawayArg
 from cogs.giveaway import (
-	UPSERT_COUNTS,
 	Giveaway,
 	GiveawayJoinButton,
 	GiveawayLeaveButton,
@@ -23,6 +22,8 @@ from cogs.giveaway import (
 )
 from helpers.custom_response import CustomResponse
 from helpers.scheduler import ExpiryScheduler
+
+from api import GiveawayRecord
 
 MESSAGE_ID = 1234567890123456789
 NOW = datetime.datetime(2026, 11, 12, tzinfo=datetime.UTC)
@@ -52,7 +53,9 @@ def make_record(**overrides: Any) -> dict[str, Any]:
 @pytest.fixture
 def mock_bot():
 	bot = MagicMock()
-	bot.db = AsyncMock()
+	bot.api.giveaways.find = AsyncMock(return_value=None)
+	bot.api.giveaways.end = AsyncMock(return_value=None)
+	bot.api.giveaways.add_message_counts = AsyncMock()
 	bot.wait_until_ready = AsyncMock()
 	bot.shard_count = 1
 	bot.shard_ids = [0]
@@ -239,28 +242,27 @@ class TestResolveTarget:
 	async def test_reply_wins(self, mock_bot):
 		cog = Giveaway(mock_bot)
 		record = make_record()
-		mock_bot.db.fetchrow.side_effect = [record]
-		assert await cog.resolve_target(make_ctx(MESSAGE_ID), None, "active") is record
-		args = mock_bot.db.fetchrow.call_args.args
-		assert args[1:] == (555, MESSAGE_ID, "active")
+		mock_bot.api.giveaways.find.side_effect = [GiveawayRecord(**record)]
+		assert await cog.resolve_target(make_ctx(MESSAGE_ID), None, "active") == record
+		mock_bot.api.giveaways.find.assert_awaited_once_with(555, "active", MESSAGE_ID)
 
 	async def test_invalid_reply_falls_back_to_argument_then_latest(self, mock_bot):
 		cog = Giveaway(mock_bot)
 		latest = make_record(id=9)
-		mock_bot.db.fetchrow.side_effect = [None, None, latest]
+		mock_bot.api.giveaways.find.side_effect = [None, None, GiveawayRecord(**latest)]
 		result = await cog.resolve_target(make_ctx(111111111111111111), str(MESSAGE_ID), "ended")
-		assert result is latest
-		calls = mock_bot.db.fetchrow.call_args_list
-		assert [c.args[2] for c in calls[:2]] == [111111111111111111, MESSAGE_ID]
-		assert "ORDER BY created_at DESC" in calls[2].args[0]
-		assert calls[2].args[1:] == (555, "ended")
+		assert result == latest
+		calls = mock_bot.api.giveaways.find.await_args_list
+		assert [c.args for c in calls] == [
+			(555, "ended", 111111111111111111),
+			(555, "ended", MESSAGE_ID),
+			(555, "ended"),
+		]
 
 	async def test_slash_commands_ignore_reference(self, mock_bot):
 		cog = Giveaway(mock_bot)
-		mock_bot.db.fetchrow.side_effect = [None]
 		await cog.resolve_target(make_ctx(MESSAGE_ID, interaction=True), None, "active")
-		assert mock_bot.db.fetchrow.call_count == 1
-		assert "ORDER BY" in mock_bot.db.fetchrow.call_args.args[0]
+		mock_bot.api.giveaways.find.assert_awaited_once_with(555, "active")  # the newest, not the reply
 
 
 class TestLifecycle:
@@ -269,11 +271,11 @@ class TestLifecycle:
 		cog.counter.track(1, 100)
 		cog.counter.record(1, 10, now=0)
 		await cog.flush_counts()
-		mock_bot.db.executemany.assert_awaited_once_with(UPSERT_COUNTS, [(100, 10, 1)])
+		mock_bot.api.giveaways.add_message_counts.assert_awaited_once_with([(100, 10, 1)])
 
 	async def test_flush_restores_on_failure(self, mock_bot):
 		cog = Giveaway(mock_bot)
-		mock_bot.db.executemany.side_effect = RuntimeError("db down")
+		mock_bot.api.giveaways.add_message_counts.side_effect = RuntimeError("api down")
 		cog.counter.track(1, 100)
 		cog.counter.record(1, 10, now=0)
 		await cog.flush_counts()
@@ -281,7 +283,6 @@ class TestLifecycle:
 
 	async def test_finish_is_noop_when_not_active(self, mock_bot):
 		cog = Giveaway(mock_bot)
-		mock_bot.db.fetchrow.return_value = None
 		cog._draw = AsyncMock()
 		assert await cog.finish(7) is None
 		cog._draw.assert_not_awaited()
@@ -289,18 +290,18 @@ class TestLifecycle:
 	async def test_finish_skips_draw_when_message_is_gone(self, mock_bot):
 		cog = Giveaway(mock_bot)
 		record = make_record(status="ended")
-		mock_bot.db.fetchrow.return_value = record
+		mock_bot.api.giveaways.end.return_value = GiveawayRecord(**record)
 		cog.counter.track(record["guild_id"], 7)
 		cog._fetch_message = AsyncMock(return_value=None)
 		cog._draw = AsyncMock()
-		assert await cog.finish(7) is record
+		assert await cog.finish(7) == record
 		cog._draw.assert_not_awaited()
 		assert cog.counter.tracked == {}
 
 	async def test_finish_draws_edits_and_announces(self, mock_bot):
 		cog = Giveaway(mock_bot)
 		record = make_record(status="ended")
-		mock_bot.db.fetchrow.return_value = record
+		mock_bot.api.giveaways.end.return_value = GiveawayRecord(**record)
 		message = MagicMock()
 		winner = MagicMock()
 		cog._fetch_message = AsyncMock(return_value=message)

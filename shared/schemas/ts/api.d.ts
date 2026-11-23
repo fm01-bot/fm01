@@ -269,6 +269,642 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/internal/afk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Away Members
+         * @description List every member who is away, in every guild.
+         */
+        get: operations["internal_away_members"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/alerts/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Alert Accounts
+         * @description List the accounts that at least one enabled alert follows, each once.
+         */
+        get: operations["internal_alert_accounts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/alerts/baseline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Internal Alert Baseline
+         * @description Set a baseline on every enabled alert on an account that has none yet.
+         */
+        post: operations["internal_alert_baseline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/alerts/subscribers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Alert Subscribers
+         * @description List the enabled alerts that follow an account, by its `channel_account` or its `account_id`.
+         */
+        get: operations["internal_alert_subscribers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/alerts/{alert_id}/last-media": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Internal Alert Last Media
+         * @description Record the newest upload an alert has seen.
+         */
+        put: operations["internal_alert_last_media"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/cases/pending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Pending Cases
+         * @description List every open case that expires.
+         */
+        get: operations["internal_pending_cases"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/cases/{case_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Case Anywhere
+         * @description Get a case in any guild, e.g. to expire it.
+         */
+        get: operations["internal_case_anywhere"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/channels/{channel_id}/deleted": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Internal Channel Deleted
+         * @description Close the open tickets of a deleted channel.
+         */
+        post: operations["internal_channel_deleted"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/channels/{channel_id}/giveaway": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Find Giveaway
+         * @description Find a channel's giveaway with a status: the one with the message, else the newest.
+         */
+        get: operations["internal_find_giveaway"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/channels/{channel_id}/ticket": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Channel Ticket
+         * @description Get the open ticket of a channel.
+         */
+        get: operations["internal_channel_ticket"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/giveaways/active": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Active Giveaways
+         * @description List every active giveaway, in every guild.
+         */
+        get: operations["internal_active_giveaways"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/giveaways/message-counts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Internal Add Giveaway Message Counts
+         * @description Add messages members sent to their counts in giveaways that count messages.
+         */
+        post: operations["internal_add_giveaway_message_counts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/giveaways/purge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Internal Purge Giveaways
+         * @description Delete the entries and message counts of giveaways that finished more than 30 days ago.
+         */
+        post: operations["internal_purge_giveaways"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/giveaways/{giveaway_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Giveaway
+         * @description Get a giveaway.
+         */
+        get: operations["internal_giveaway"];
+        put?: never;
+        post?: never;
+        /**
+         * Internal Delete Giveaway
+         * @description Delete a giveaway with its entries, e.g. when its message couldn't be posted.
+         */
+        delete: operations["internal_delete_giveaway"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/giveaways/{giveaway_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Internal Cancel Giveaway
+         * @description Cancel an active giveaway without drawing winners.
+         */
+        post: operations["internal_cancel_giveaway"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/giveaways/{giveaway_id}/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Internal End Giveaway
+         * @description End an active giveaway. The bot draws the winners next.
+         */
+        post: operations["internal_end_giveaway"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/giveaways/{giveaway_id}/entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Giveaway Entrants
+         * @description List the members who entered a giveaway and haven't won it.
+         */
+        get: operations["internal_giveaway_entrants"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/giveaways/{giveaway_id}/entries/count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Giveaway Entry Count
+         * @description Count a giveaway's entries.
+         */
+        get: operations["internal_giveaway_entry_count"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/giveaways/{giveaway_id}/entries/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Giveaway Entry
+         * @description Get a member's entry in a giveaway.
+         */
+        get: operations["internal_giveaway_entry"];
+        /**
+         * Internal Enter Giveaway
+         * @description Enter a member into a giveaway. The bot checks the requirements first.
+         */
+        put: operations["internal_enter_giveaway"];
+        post?: never;
+        /**
+         * Internal Leave Giveaway
+         * @description Remove a member's entry from a giveaway.
+         */
+        delete: operations["internal_leave_giveaway"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/giveaways/{giveaway_id}/message": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Internal Set Giveaway Message
+         * @description Record the message the bot posted for a giveaway.
+         */
+        put: operations["internal_set_giveaway_message"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/giveaways/{giveaway_id}/message-counts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Giveaway Message Counts
+         * @description List the message counts of a giveaway's members.
+         */
+        get: operations["internal_giveaway_message_counts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/giveaways/{giveaway_id}/winners": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Internal Giveaway Winners
+         * @description Record that members won a giveaway, so a reroll doesn't draw them again.
+         */
+        post: operations["internal_giveaway_winners"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/afk/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Internal Afk Back
+         * @description Mark a member as back. Does nothing if they weren't away.
+         */
+        delete: operations["internal_afk_back"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/afk/{user_id}/toggle": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Internal Toggle Afk
+         * @description Make a member away, or back if they are away.
+         */
+        post: operations["internal_toggle_afk"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Guild Alerts
+         * @description List a guild's alerts, oldest first.
+         */
+        get: operations["internal_guild_alerts"];
+        put?: never;
+        /**
+         * Internal Add Alert
+         * @description Add an alert, or enable it again and update its account if the guild has it.
+         */
+        post: operations["internal_add_alert"];
+        /**
+         * Internal Remove Account Alerts
+         * @description Remove a guild's alerts that follow an account, by `channel_account` or `account_id`, ignoring case.
+         */
+        delete: operations["internal_remove_account_alerts"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/alerts/{alert_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Alert
+         * @description Get an alert.
+         */
+        get: operations["internal_alert"];
+        put?: never;
+        post?: never;
+        /**
+         * Internal Remove Alert
+         * @description Remove an alert.
+         */
+        delete: operations["internal_remove_alert"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/alerts/{alert_id}/enabled": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Internal Set Alert Enabled
+         * @description Turn an alert on or off.
+         */
+        put: operations["internal_set_alert_enabled"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/cases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal User Cases
+         * @description List a user's cases in a guild, oldest first.
+         */
+        get: operations["internal_user_cases"];
+        put?: never;
+        /**
+         * Internal Create Case
+         * @description Record a new case. The bot performs its Discord effect and deletes the case again if that fails.
+         */
+        post: operations["internal_create_case"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/cases/{case_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Case
+         * @description Get a case in a guild.
+         */
+        get: operations["internal_case"];
+        /**
+         * Internal Update Case
+         * @description Set a case's reason, expiry and message.
+         */
+        put: operations["internal_update_case"];
+        post?: never;
+        /**
+         * Internal Delete Case
+         * @description Delete a case regardless of retention. Deleting a case that doesn't exist does nothing.
+         */
+        delete: operations["internal_delete_case"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/cases/{case_id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Internal Close Case
+         * @description Close a case following the guild's retention: delete it or mark it inactive.
+         */
+        post: operations["internal_close_case"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/internal/guilds/{guild_id}/economy/accounts/{user_id}": {
         parameters: {
             query?: never;
@@ -389,6 +1025,130 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/internal/guilds/{guild_id}/giveaways": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Internal Create Giveaway
+         * @description Start a giveaway. The bot posts its message next.
+         */
+        post: operations["internal_create_giveaway"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/levels/leaderboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Level Leaderboard
+         * @description List one page of a guild's members by XP, most first.
+         */
+        get: operations["internal_level_leaderboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/levels/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Internal Member Levels
+         * @description Get several members' XP and level, without ranks. Members without XP are left out.
+         */
+        post: operations["internal_member_levels"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/levels/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Member Level
+         * @description Get a member's XP, level and rank. All zero, without a rank, if they have no XP.
+         */
+        get: operations["internal_member_level"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/levels/{user_id}/xp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Internal Award Xp
+         * @description Give a member XP and update their level.
+         */
+        post: operations["internal_award_xp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/settings/automod": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Automod
+         * @description Get a guild's AutoMod configuration. Off with no settings if the guild never configured AutoMod.
+         */
+        get: operations["internal_automod"];
+        /**
+         * Internal Set Automod
+         * @description Replace a guild's AutoMod configuration.
+         */
+        put: operations["internal_set_automod"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/internal/guilds/{guild_id}/settings/bear-trap": {
         parameters: {
             query?: never;
@@ -453,6 +1213,162 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/internal/guilds/{guild_id}/settings/case-retention": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Case Retention
+         * @description Get a guild's case retention. `keep` if the guild never set one.
+         */
+        get: operations["internal_case_retention"];
+        /**
+         * Internal Set Case Retention
+         * @description Set a guild's case retention.
+         */
+        put: operations["internal_set_case_retention"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/settings/greetings/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Greeting
+         * @description Get a guild's join or leave configuration. `null` if the guild never configured it.
+         */
+        get: operations["internal_greeting"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Internal Update Greeting
+         * @description Change a guild's join or leave configuration. `null` fields keep their value; a new configuration starts on.
+         */
+        patch: operations["internal_update_greeting"];
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/settings/leveling": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Level Config
+         * @description Get a guild's leveling configuration. The defaults if the guild never configured leveling.
+         */
+        get: operations["internal_level_config"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Internal Update Level Config
+         * @description Change a guild's leveling configuration. Fields left out keep their value; `null` clears the channel or message.
+         */
+        patch: operations["internal_update_level_config"];
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/settings/leveling/overrides": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Level Overrides
+         * @description List a guild's channel and role XP overrides.
+         */
+        get: operations["internal_level_overrides"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/settings/leveling/overrides/{kind}/{target_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Internal Update Level Override
+         * @description Change a channel's or role's XP override. `null` fields keep their value.
+         */
+        patch: operations["internal_update_level_override"];
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/settings/leveling/rewards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Level Rewards
+         * @description List a guild's role rewards, lowest level first.
+         */
+        get: operations["internal_level_rewards"];
+        put?: never;
+        /**
+         * Internal Add Level Reward
+         * @description Add a role reward. Adding one that exists does nothing.
+         */
+        post: operations["internal_add_level_reward"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/settings/leveling/rewards/{level}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Internal Remove Level Rewards
+         * @description Remove a level's role rewards: one role's, or every one.
+         */
+        delete: operations["internal_remove_level_rewards"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/internal/guilds/{guild_id}/settings/locale": {
         parameters: {
             query?: never;
@@ -472,6 +1388,34 @@ export interface paths {
         put: operations["internal_set_locale"];
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/settings/log": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Log Config
+         * @description Get a guild's log configuration. `null` if the guild never configured logging.
+         */
+        get: operations["internal_log_config"];
+        /**
+         * Internal Set Log Config
+         * @description Replace a guild's log configuration.
+         */
+        put: operations["internal_set_log_config"];
+        post?: never;
+        /**
+         * Internal Delete Log Config
+         * @description Remove a guild's log configuration.
+         */
+        delete: operations["internal_delete_log_config"];
         options?: never;
         head?: never;
         patch?: never;
@@ -547,6 +1491,98 @@ export interface paths {
          * @description Change a board. Fields left out keep their value.
          */
         patch: operations["internal_update_starboard"];
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/settings/tickets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Ticket Config
+         * @description Get a guild's ticket configuration. `null` if the guild never configured tickets.
+         */
+        get: operations["internal_ticket_config"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Internal Update Ticket Config
+         * @description Change a guild's ticket configuration. Fields left out keep their value; `null` clears a channel or role.
+         */
+        patch: operations["internal_update_ticket_config"];
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/shop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Shop
+         * @description List a guild's shop, oldest item first.
+         */
+        get: operations["internal_shop"];
+        put?: never;
+        /**
+         * Internal Add Shop Item
+         * @description Add an item to a guild's shop.
+         */
+        post: operations["internal_add_shop_item"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/shop/item": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Shop Item
+         * @description Get an item by its name, ignoring case.
+         */
+        get: operations["internal_shop_item"];
+        put?: never;
+        post?: never;
+        /**
+         * Internal Remove Shop Item
+         * @description Remove an item from a guild's shop, by its name ignoring case.
+         */
+        delete: operations["internal_remove_shop_item"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/snapshots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Internal Create Snapshot
+         * @description Save a snapshot of a guild under a new random code.
+         */
+        post: operations["internal_create_snapshot"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/internal/guilds/{guild_id}/starboard/messages/deleted": {
@@ -672,6 +1708,106 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/internal/guilds/{guild_id}/tickets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Internal Open Ticket
+         * @description Record a ticket the bot opened a channel for.
+         */
+        post: operations["internal_open_ticket"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/tickets/open-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Open Ticket Count
+         * @description Count a member's open tickets.
+         */
+        get: operations["internal_open_ticket_count"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/tickets/{ticket_id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Internal Archive Ticket
+         * @description Archive a ticket: the opener can still read it but no longer write.
+         */
+        post: operations["internal_archive_ticket"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/tickets/{ticket_id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Internal Close Ticket
+         * @description Close a ticket.
+         */
+        post: operations["internal_close_ticket"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/guilds/{guild_id}/tickets/{ticket_id}/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Internal Reopen Ticket
+         * @description Reopen an archived ticket.
+         */
+        post: operations["internal_reopen_ticket"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/internal/settings/bear-trap": {
         parameters: {
             query?: never;
@@ -712,6 +1848,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/internal/settings/log": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * All Log Configs
+         * @description List every guild's log configuration.
+         */
+        get: operations["all_log_configs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/internal/settings/prefix": {
         parameters: {
             query?: never;
@@ -744,6 +1900,26 @@ export interface paths {
          * @description List the boards of every guild that has any.
          */
         get: operations["all_starboards"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/snapshots/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Snapshot
+         * @description Get a snapshot by its code, ignoring case.
+         */
+        get: operations["internal_snapshot"];
         put?: never;
         post?: never;
         delete?: never;
@@ -820,6 +1996,127 @@ export interface components {
             wallet: "cash" | "bank";
         };
         /**
+         * AfkMember
+         * @description A member who is away.
+         */
+        AfkMember: {
+            /**
+             * Guild Id
+             * @example 1234567890123456789
+             */
+            guild_id: string;
+            /** Message */
+            message: string;
+            /** Previous Nick */
+            previous_nick: string;
+            /**
+             * User Id
+             * @example 1234567890123456789
+             */
+            user_id: string;
+        };
+        /**
+         * AfkToggle
+         * @description The reason and current nickname to record if the toggle makes the member away.
+         */
+        AfkToggle: {
+            /** Message */
+            message: string;
+            /** Previous Nick */
+            previous_nick: string;
+        };
+        /**
+         * AfkToggled
+         * @description The result of toggling a member's AFK.
+         */
+        AfkToggled: {
+            /** Away */
+            away: boolean;
+            /** Previous Nick */
+            previous_nick: string;
+        };
+        /**
+         * AlertAccount
+         * @description An account on a platform that at least one enabled alert follows.
+         */
+        AlertAccount: {
+            /** Account Id */
+            account_id?: string | null;
+            /** Account Name */
+            account_name?: string | null;
+            /** Channel Account */
+            channel_account: string;
+            /** Platform */
+            platform: string;
+        };
+        /**
+         * AlertBaseline
+         * @description A baseline for every enabled alert on an account that has none yet, so older uploads aren't announced.
+         */
+        AlertBaseline: {
+            /** Account Id */
+            account_id: string;
+            /** Channel Account */
+            channel_account: string;
+            /** Media Id */
+            media_id: string;
+            /** Platform */
+            platform: string;
+        };
+        /**
+         * AlertCreate
+         * @description An alert to add. Adding one that exists again enables it and updates the account.
+         */
+        AlertCreate: {
+            /** Account Id */
+            account_id?: string | null;
+            /** Account Name */
+            account_name?: string | null;
+            /** Channel Account */
+            channel_account: string;
+            /** Platform */
+            platform: string;
+            /**
+             * Target Channel Id
+             * @example 1234567890123456789
+             */
+            target_channel_id: string;
+        };
+        /**
+         * AlertEnabled
+         * @description Whether an alert is on.
+         */
+        AlertEnabled: {
+            /** Enabled */
+            enabled: boolean;
+        };
+        /**
+         * AlertMedia
+         * @description The newest upload an alert has seen.
+         */
+        AlertMedia: {
+            /** Media Id */
+            media_id: string;
+        };
+        /**
+         * AutoModConfig
+         * @description A guild's AutoMod configuration. Off with no settings if the guild never configured it.
+         */
+        AutoModConfig: {
+            /**
+             * Enabled
+             * @default false
+             */
+            enabled: boolean;
+            /**
+             * Settings
+             * @default {}
+             */
+            settings: {
+                [key: string]: unknown;
+            };
+        };
+        /**
          * Balance
          * @description A member's money in one guild. ``bank`` is negative while the member is in debt.
          */
@@ -890,6 +2187,124 @@ export interface components {
             message_channel_id?: string | null;
             /** Message Id */
             message_id?: string | null;
+        };
+        /**
+         * CaseClosed
+         * @description What closing a case did, following the guild's retention.
+         */
+        CaseClosed: {
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "deleted" | "deactivated";
+        };
+        /**
+         * CaseCreate
+         * @description A new case.
+         */
+        CaseCreate: {
+            /**
+             * Active
+             * @default true
+             */
+            active: boolean;
+            /**
+             * Case Id
+             * @example 1234567890123456789
+             */
+            case_id: string;
+            /**
+             * Created
+             * Format: date-time
+             */
+            created: string;
+            /** Expires */
+            expires?: string | null;
+            /** Message */
+            message?: string | null;
+            /**
+             * Moderator Id
+             * @example 1234567890123456789
+             */
+            moderator_id: string;
+            /** Reason */
+            reason?: string | null;
+            /** Type */
+            type: number;
+            /**
+             * User Id
+             * @example 1234567890123456789
+             */
+            user_id: string;
+        };
+        /**
+         * CaseRecord
+         * @description A stored case.
+         */
+        CaseRecord: {
+            /**
+             * Active
+             * @default true
+             */
+            active: boolean;
+            /**
+             * Case Id
+             * @example 1234567890123456789
+             */
+            case_id: string;
+            /**
+             * Created
+             * Format: date-time
+             */
+            created: string;
+            /** Expires */
+            expires?: string | null;
+            /**
+             * Guild Id
+             * @example 1234567890123456789
+             */
+            guild_id: string;
+            /** Message */
+            message?: string | null;
+            /**
+             * Moderator Id
+             * @example 1234567890123456789
+             */
+            moderator_id: string;
+            /** Reason */
+            reason?: string | null;
+            /** Type */
+            type: number;
+            /**
+             * User Id
+             * @example 1234567890123456789
+             */
+            user_id: string;
+        };
+        /**
+         * CaseRetention
+         * @description A guild's case retention.
+         */
+        CaseRetention: {
+            /**
+             * Retention
+             * @default keep
+             * @enum {string}
+             */
+            retention: "keep" | "delete";
+        };
+        /**
+         * CaseUpdate
+         * @description A case's new reason, expiry and message. Every field is written, ``None`` included.
+         */
+        CaseUpdate: {
+            /** Expires */
+            expires?: string | null;
+            /** Message */
+            message?: string | null;
+            /** Reason */
+            reason?: string | null;
         };
         /**
          * ClearStars
@@ -982,7 +2397,176 @@ export interface components {
          * @description Why a request failed. Clients branch on this, never on the message.
          * @enum {string}
          */
-        ErrorCode: "invalid_request" | "unauthorized" | "forbidden" | "not_found" | "insufficient_funds" | "same_account" | "invalid_channel" | "invalid_emoji" | "starboard_limit" | "starboard_name_taken" | "starboard_tier_taken" | "rate_limited" | "discord_unavailable";
+        ErrorCode: "invalid_request" | "unauthorized" | "forbidden" | "not_found" | "insufficient_funds" | "same_account" | "invalid_channel" | "invalid_emoji" | "starboard_limit" | "starboard_name_taken" | "starboard_tier_taken" | "shop_limit" | "shop_item_taken" | "giveaway_limit" | "alert_limit" | "rate_limited" | "discord_unavailable";
+        /**
+         * GiveawayCreate
+         * @description A giveaway to start.
+         */
+        GiveawayCreate: {
+            /**
+             * Channel Id
+             * @example 1234567890123456789
+             */
+            channel_id: string;
+            /**
+             * Ends At
+             * Format: date-time
+             */
+            ends_at: string;
+            /**
+             * Host Id
+             * @example 1234567890123456789
+             */
+            host_id: string;
+            /** Prize */
+            prize: string;
+            /** Required Level */
+            required_level?: number | null;
+            /** Required Messages */
+            required_messages?: number | null;
+            /** Required Role Id */
+            required_role_id?: string | null;
+            /** Winner Count */
+            winner_count: number;
+        };
+        /**
+         * GiveawayEntrants
+         * @description The members who entered a giveaway and haven't won it yet.
+         */
+        GiveawayEntrants: {
+            /** User Ids */
+            user_ids: string[];
+        };
+        /**
+         * GiveawayEntry
+         * @description Whether a member entered a giveaway, and how many messages they sent since it started.
+         */
+        GiveawayEntry: {
+            /** Entered */
+            entered: boolean;
+            /**
+             * Messages
+             * @default 0
+             */
+            messages: number;
+        };
+        /**
+         * GiveawayEntryChange
+         * @description Whether entering or leaving a giveaway changed anything.
+         */
+        GiveawayEntryChange: {
+            /** Changed */
+            changed: boolean;
+        };
+        /**
+         * GiveawayEntryCount
+         * @description How many members entered a giveaway.
+         */
+        GiveawayEntryCount: {
+            /** Count */
+            count: number;
+        };
+        /**
+         * GiveawayMessage
+         * @description The message the bot posted for a giveaway.
+         */
+        GiveawayMessage: {
+            /**
+             * Message Id
+             * @example 1234567890123456789
+             */
+            message_id: string;
+        };
+        /**
+         * GiveawayRecord
+         * @description A stored giveaway.
+         */
+        GiveawayRecord: {
+            /**
+             * Channel Id
+             * @example 1234567890123456789
+             */
+            channel_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Ended At */
+            ended_at?: string | null;
+            /**
+             * Ends At
+             * Format: date-time
+             */
+            ends_at: string;
+            /**
+             * Guild Id
+             * @example 1234567890123456789
+             */
+            guild_id: string;
+            /**
+             * Host Id
+             * @example 1234567890123456789
+             */
+            host_id: string;
+            /** Id */
+            id: number;
+            /** Message Id */
+            message_id?: string | null;
+            /** Prize */
+            prize: string;
+            /** Required Level */
+            required_level?: number | null;
+            /** Required Messages */
+            required_messages?: number | null;
+            /** Required Role Id */
+            required_role_id?: string | null;
+            /**
+             * Status
+             * @default active
+             * @enum {string}
+             */
+            status: "active" | "ended" | "cancelled";
+            /** Winner Count */
+            winner_count: number;
+        };
+        /**
+         * GiveawayWinners
+         * @description Members drawn as winners. They aren't drawn again in a reroll.
+         */
+        GiveawayWinners: {
+            /** User Ids */
+            user_ids: string[];
+        };
+        /**
+         * GreetingConfig
+         * @description A guild's join or leave message configuration. The bot posts only when it is on with a channel and a message.
+         */
+        GreetingConfig: {
+            /** Channel Id */
+            channel_id?: string | null;
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+            /** Message */
+            message?: string | null;
+        };
+        /**
+         * GreetingUpdate
+         * @description Changes to a join or leave configuration. ``None`` fields keep their value; a new configuration starts on.
+         */
+        GreetingUpdate: {
+            /** Channel Id */
+            channel_id?: string | null;
+            /** Enabled */
+            enabled?: boolean | null;
+            /** Fallback Channel Id */
+            fallback_channel_id?: string | null;
+            /** Message */
+            message?: string | null;
+        };
         /**
          * GuildBearTrap
          * @description A guild's bear trap state, with the guild's ID.
@@ -1019,6 +2603,40 @@ export interface components {
             locale?: string | null;
         };
         /**
+         * GuildLogConfig
+         * @description A guild's log configuration, with the guild's ID.
+         */
+        GuildLogConfig: {
+            /** Channel Id */
+            channel_id?: string | null;
+            /**
+             * Channels
+             * @default {}
+             */
+            channels: {
+                [key: string]: string;
+            };
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+            /**
+             * Guild Id
+             * @example 1234567890123456789
+             */
+            guild_id: string;
+            /**
+             * Modules
+             * @default [
+             *       "*"
+             *     ]
+             */
+            modules: string[];
+            /** Webhook Url */
+            webhook_url?: string | null;
+        };
+        /**
          * GuildPrefix
          * @description A guild's prefix, with the guild's ID.
          */
@@ -1053,6 +2671,16 @@ export interface components {
             guild_id: string;
         };
         /**
+         * Leaderboard
+         * @description One page of a guild's members by XP, most first.
+         */
+        Leaderboard: {
+            /** Entries */
+            entries: components["schemas"]["MemberLevel"][];
+            /** Total */
+            total: number;
+        };
+        /**
          * LeaderboardEntry
          * @description One member on a guild's leaderboard.
          */
@@ -1068,12 +2696,171 @@ export interface components {
             user_id: string;
         };
         /**
+         * LevelConfig
+         * @description A guild's leveling configuration. The defaults apply to guilds that never configured leveling.
+         */
+        LevelConfig: {
+            /**
+             * Cooldown
+             * @default 60
+             */
+            cooldown: number;
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+            /** Levelup Message */
+            levelup_message?: string | null;
+            /**
+             * Max Xp
+             * @default 25
+             */
+            max_xp: number;
+            /** Message Channel Id */
+            message_channel_id?: string | null;
+            /**
+             * Message Mode
+             * @default current
+             * @enum {string}
+             */
+            message_mode: "disabled" | "current" | "channel";
+            /**
+             * Min Xp
+             * @default 15
+             */
+            min_xp: number;
+            /**
+             * Multiplier
+             * @default 1
+             */
+            multiplier: number;
+            /**
+             * Stack Roles
+             * @default true
+             */
+            stack_roles: boolean;
+        };
+        /**
+         * LevelConfigUpdate
+         * @description Changes to a leveling configuration. Fields left out keep their value; ``null`` clears the channel or message.
+         */
+        LevelConfigUpdate: {
+            /** Cooldown */
+            cooldown?: number | null;
+            /** Enabled */
+            enabled?: boolean | null;
+            /** Levelup Message */
+            levelup_message?: string | null;
+            /** Max Xp */
+            max_xp?: number | null;
+            /** Message Channel Id */
+            message_channel_id?: string | null;
+            /** Message Mode */
+            message_mode?: ("disabled" | "current" | "channel") | null;
+            /** Min Xp */
+            min_xp?: number | null;
+            /** Multiplier */
+            multiplier?: number | null;
+            /** Stack Roles */
+            stack_roles?: boolean | null;
+        };
+        /**
+         * LevelOverride
+         * @description A channel's or role's XP multiplier, and whether it awards no XP at all.
+         */
+        LevelOverride: {
+            /**
+             * Id
+             * @example 1234567890123456789
+             */
+            id: string;
+            /**
+             * Ignored
+             * @default false
+             */
+            ignored: boolean;
+            /**
+             * Multiplier
+             * @default 1
+             */
+            multiplier: number;
+        };
+        /**
+         * LevelOverrideUpdate
+         * @description Changes to a channel's or role's override. ``None`` fields keep their value.
+         */
+        LevelOverrideUpdate: {
+            /** Ignored */
+            ignored?: boolean | null;
+            /** Multiplier */
+            multiplier?: number | null;
+        };
+        /**
+         * LevelOverrides
+         * @description A guild's channel and role XP overrides.
+         */
+        LevelOverrides: {
+            /**
+             * Channels
+             * @default []
+             */
+            channels: components["schemas"]["LevelOverride"][];
+            /**
+             * Roles
+             * @default []
+             */
+            roles: components["schemas"]["LevelOverride"][];
+        };
+        /**
+         * LevelReward
+         * @description A role members get when they reach a level.
+         */
+        LevelReward: {
+            /** Level */
+            level: number;
+            /**
+             * Role Id
+             * @example 1234567890123456789
+             */
+            role_id: string;
+        };
+        /**
          * LocaleOverride
          * @description A guild's chosen bot language. ``None`` means it follows the members' and the guild's Discord locales.
          */
         LocaleOverride: {
             /** Locale */
             locale?: string | null;
+        };
+        /**
+         * LogConfig
+         * @description A guild's log configuration.
+         */
+        LogConfig: {
+            /** Channel Id */
+            channel_id?: string | null;
+            /**
+             * Channels
+             * @default {}
+             */
+            channels: {
+                [key: string]: string;
+            };
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+            /**
+             * Modules
+             * @default [
+             *       "*"
+             *     ]
+             */
+            modules: string[];
+            /** Webhook Url */
+            webhook_url?: string | null;
         };
         /**
          * ManagedGuild
@@ -1089,6 +2876,84 @@ export interface components {
             id: string;
             /** Name */
             name: string;
+        };
+        /**
+         * MediaAlert
+         * @description A stored alert.
+         */
+        MediaAlert: {
+            /** Account Id */
+            account_id?: string | null;
+            /** Account Name */
+            account_name?: string | null;
+            /** Channel Account */
+            channel_account: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+            /**
+             * Guild Id
+             * @example 1234567890123456789
+             */
+            guild_id: string;
+            /** Id */
+            id: number;
+            /** Last Media Id */
+            last_media_id?: string | null;
+            /** Last Media Time */
+            last_media_time?: string | null;
+            /** Platform */
+            platform: string;
+            /**
+             * Target Channel Id
+             * @example 1234567890123456789
+             */
+            target_channel_id: string;
+        };
+        /**
+         * MemberLevel
+         * @description A member's XP and level in a guild.
+         */
+        MemberLevel: {
+            /**
+             * Level
+             * @default 0
+             */
+            level: number;
+            /** Rank */
+            rank?: number | null;
+            /**
+             * User Id
+             * @example 1234567890123456789
+             */
+            user_id: string;
+            /**
+             * Xp
+             * @default 0
+             */
+            xp: number;
+        };
+        /**
+         * MessageCount
+         * @description Messages a member sent in a guild with giveaways that count messages, since the last flush.
+         */
+        MessageCount: {
+            /** Count */
+            count: number;
+            /** Giveaway Id */
+            giveaway_id: number;
+            /**
+             * User Id
+             * @example 1234567890123456789
+             */
+            user_id: string;
         };
         /**
          * MessageIds
@@ -1120,6 +2985,35 @@ export interface components {
              * @example 1234567890123456789
              */
             user_id: string;
+        };
+        /**
+         * OpenTicketCount
+         * @description How many open tickets a member has.
+         */
+        OpenTicketCount: {
+            /** Count */
+            count: number;
+        };
+        /**
+         * PendingCase
+         * @description An open case that expires.
+         */
+        PendingCase: {
+            /**
+             * Case Id
+             * @example 1234567890123456789
+             */
+            case_id: string;
+            /**
+             * Expires
+             * Format: date-time
+             */
+            expires: string;
+            /**
+             * Guild Id
+             * @example 1234567890123456789
+             */
+            guild_id: string;
         };
         /**
          * Prefix
@@ -1155,6 +3049,14 @@ export interface components {
              * @enum {string}
              */
             wallet: "cash" | "bank";
+        };
+        /**
+         * RemovedAlerts
+         * @description How many alerts a removal deleted.
+         */
+        RemovedAlerts: {
+            /** Removed */
+            removed: number;
         };
         /**
          * SessionExchange
@@ -1230,6 +3132,74 @@ export interface components {
          * @enum {string}
          */
         ShardStatus: "operational" | "lagging" | "unresponsive";
+        /**
+         * ShopItem
+         * @description An item in a guild's shop. Names are unique per guild, ignoring case.
+         */
+        ShopItem: {
+            /**
+             * Creator Id
+             * @example 1234567890123456789
+             */
+            creator_id: string;
+            /** Description */
+            description: string;
+            /** Name */
+            name: string;
+            /** Price */
+            price: number;
+            /**
+             * Role Id
+             * @example 1234567890123456789
+             */
+            role_id: string;
+        };
+        /**
+         * Snapshot
+         * @description A saved snapshot.
+         */
+        Snapshot: {
+            /**
+             * Author Id
+             * @example 1234567890123456789
+             */
+            author_id: string;
+            /** Code */
+            code: string;
+            /**
+             * Date
+             * Format: date-time
+             */
+            date: string;
+            /**
+             * Guild Id
+             * @example 1234567890123456789
+             */
+            guild_id: string;
+            /** Name */
+            name: string;
+            /** Payload */
+            payload: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * SnapshotCreate
+         * @description A snapshot to save.
+         */
+        SnapshotCreate: {
+            /**
+             * Author Id
+             * @example 1234567890123456789
+             */
+            author_id: string;
+            /** Name */
+            name: string;
+            /** Payload */
+            payload: {
+                [key: string]: unknown;
+            };
+        };
         /**
          * StarChange
          * @description A member added or removed a star. ``message_id`` may be the original or one of its posts.
@@ -1448,6 +3418,156 @@ export interface components {
             overall: components["schemas"]["ClusterDay"][];
         };
         /**
+         * Ticket
+         * @description A stored ticket.
+         */
+        Ticket: {
+            /**
+             * Archived
+             * @default false
+             */
+            archived: boolean;
+            /**
+             * Channel Id
+             * @example 1234567890123456789
+             */
+            channel_id: string;
+            /**
+             * Closed
+             * @default false
+             */
+            closed: boolean;
+            /** Closed At */
+            closed_at?: string | null;
+            /** Closed By */
+            closed_by?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Description */
+            description: string;
+            /**
+             * Guild Id
+             * @example 1234567890123456789
+             */
+            guild_id: string;
+            /** Id */
+            id: number;
+            /** Title */
+            title: string;
+            /**
+             * User Id
+             * @example 1234567890123456789
+             */
+            user_id: string;
+        };
+        /**
+         * TicketClose
+         * @description Who closed a ticket.
+         */
+        TicketClose: {
+            /**
+             * Closed By
+             * @example 1234567890123456789
+             */
+            closed_by: string;
+        };
+        /**
+         * TicketConfig
+         * @description A guild's ticket configuration.
+         */
+        TicketConfig: {
+            /** Category Id */
+            category_id?: string | null;
+            /**
+             * Description Max Length
+             * @default 1800
+             */
+            description_max_length: number;
+            /**
+             * Description Min Length
+             * @default 10
+             */
+            description_min_length: number;
+            /**
+             * Dm Transcript
+             * @default true
+             */
+            dm_transcript: boolean;
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+            /** Log Channel Id */
+            log_channel_id?: string | null;
+            /**
+             * Max Tickets
+             * @default 1
+             */
+            max_tickets: number;
+            /** Support Role Id */
+            support_role_id?: string | null;
+            /**
+             * Topic Max Length
+             * @default 100
+             */
+            topic_max_length: number;
+            /**
+             * Topic Min Length
+             * @default 3
+             */
+            topic_min_length: number;
+        };
+        /**
+         * TicketConfigUpdate
+         * @description Changes to a ticket configuration. Fields left out keep their value; ``null`` clears a channel or role.
+         */
+        TicketConfigUpdate: {
+            /** Category Id */
+            category_id?: string | null;
+            /** Description Max Length */
+            description_max_length?: number | null;
+            /** Description Min Length */
+            description_min_length?: number | null;
+            /** Dm Transcript */
+            dm_transcript?: boolean | null;
+            /** Enabled */
+            enabled?: boolean | null;
+            /** Log Channel Id */
+            log_channel_id?: string | null;
+            /** Max Tickets */
+            max_tickets?: number | null;
+            /** Support Role Id */
+            support_role_id?: string | null;
+            /** Topic Max Length */
+            topic_max_length?: number | null;
+            /** Topic Min Length */
+            topic_min_length?: number | null;
+        };
+        /**
+         * TicketOpen
+         * @description A ticket the bot just opened a channel for.
+         */
+        TicketOpen: {
+            /**
+             * Channel Id
+             * @example 1234567890123456789
+             */
+            channel_id: string;
+            /** Description */
+            description: string;
+            /** Title */
+            title: string;
+            /**
+             * User Id
+             * @example 1234567890123456789
+             */
+            user_id: string;
+        };
+        /**
          * TransferRequest
          * @description Move cash from one member to another. If it fails, neither balance changes.
          */
@@ -1464,6 +3584,34 @@ export interface components {
              * @example 1234567890123456789
              */
             sender_id: string;
+        };
+        /**
+         * UserIds
+         * @description Members to look up.
+         */
+        UserIds: {
+            /** User Ids */
+            user_ids: string[];
+        };
+        /**
+         * XpAward
+         * @description XP a member earned with a message.
+         */
+        XpAward: {
+            /** Amount */
+            amount: number;
+        };
+        /**
+         * XpResult
+         * @description A member's XP and level after an award.
+         */
+        XpResult: {
+            /** Level */
+            level: number;
+            /** Previous Level */
+            previous_level: number;
+            /** Xp */
+            xp: number;
         };
     };
     responses: never;
@@ -2169,6 +4317,1596 @@ export interface operations {
             };
         };
     };
+    internal_away_members: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AfkMember"][];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_alert_accounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertAccount"][];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_alert_baseline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AlertBaseline"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_alert_subscribers: {
+        parameters: {
+            query: {
+                platform: string;
+                channel_account: string;
+                account_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaAlert"][];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_alert_last_media: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alert_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AlertMedia"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_pending_cases: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PendingCase"][];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_case_anywhere: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseRecord"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_channel_deleted: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                channel_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_find_giveaway: {
+        parameters: {
+            query: {
+                status: "active" | "ended" | "cancelled";
+                message_id?: string | null;
+            };
+            header?: never;
+            path: {
+                channel_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiveawayRecord"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_channel_ticket: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                channel_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Ticket"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_active_giveaways: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiveawayRecord"][];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_add_giveaway_message_counts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MessageCount"][];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_purge_giveaways: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_giveaway: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                giveaway_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiveawayRecord"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_delete_giveaway: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                giveaway_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_cancel_giveaway: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                giveaway_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiveawayRecord"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_end_giveaway: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                giveaway_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiveawayRecord"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_giveaway_entrants: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                giveaway_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiveawayEntrants"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_giveaway_entry_count: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                giveaway_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiveawayEntryCount"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_giveaway_entry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                giveaway_id: number;
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiveawayEntry"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_enter_giveaway: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                giveaway_id: number;
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiveawayEntryChange"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_leave_giveaway: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                giveaway_id: number;
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiveawayEntryChange"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_set_giveaway_message: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                giveaway_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GiveawayMessage"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiveawayRecord"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_giveaway_message_counts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                giveaway_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageCount"][];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_giveaway_winners: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                giveaway_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GiveawayWinners"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_afk_back: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_toggle_afk: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AfkToggle"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AfkToggled"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_guild_alerts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaAlert"][];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_add_alert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AlertCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaAlert"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_remove_account_alerts: {
+        parameters: {
+            query: {
+                platform: string;
+                account: string;
+            };
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemovedAlerts"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_alert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+                alert_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaAlert"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_remove_alert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+                alert_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_set_alert_enabled: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+                alert_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AlertEnabled"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaAlert"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_user_cases: {
+        parameters: {
+            query: {
+                user_id: string;
+                which?: "open" | "active" | "expired" | "all";
+                type?: number | null;
+            };
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseRecord"][];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_create_case: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CaseCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseRecord"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_case: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+                case_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseRecord"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_update_case: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+                case_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CaseUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseRecord"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_delete_case: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+                case_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_close_case: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+                case_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseClosed"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     balance: {
         parameters: {
             query?: never;
@@ -2426,6 +6164,310 @@ export interface operations {
             };
         };
     };
+    internal_create_giveaway: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GiveawayCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiveawayRecord"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_level_leaderboard: {
+        parameters: {
+            query?: {
+                offset?: number;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Leaderboard"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_member_levels: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserIds"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberLevel"][];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_member_level: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberLevel"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_award_xp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["XpAward"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["XpResult"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_automod: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutoModConfig"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_set_automod: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description The calling bot instance's ID. Change events from this request carry it, so that instance ignores them. */
+                "X-Fm01-Origin"?: string | null;
+            };
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AutoModConfig"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutoModConfig"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     internal_bear_trap: {
         parameters: {
             query?: never;
@@ -2603,6 +6645,487 @@ export interface operations {
             };
         };
     };
+    internal_case_retention: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseRetention"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_set_case_retention: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description The calling bot instance's ID. Change events from this request carry it, so that instance ignores them. */
+                "X-Fm01-Origin"?: string | null;
+            };
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CaseRetention"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseRetention"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_greeting: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+                kind: "join" | "leave";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GreetingConfig"] | null;
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_update_greeting: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description The calling bot instance's ID. Change events from this request carry it, so that instance ignores them. */
+                "X-Fm01-Origin"?: string | null;
+            };
+            path: {
+                guild_id: string;
+                kind: "join" | "leave";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GreetingUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GreetingConfig"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_level_config: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LevelConfig"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_update_level_config: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description The calling bot instance's ID. Change events from this request carry it, so that instance ignores them. */
+                "X-Fm01-Origin"?: string | null;
+            };
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LevelConfigUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LevelConfig"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_level_overrides: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LevelOverrides"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_update_level_override: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description The calling bot instance's ID. Change events from this request carry it, so that instance ignores them. */
+                "X-Fm01-Origin"?: string | null;
+            };
+            path: {
+                guild_id: string;
+                kind: "channel" | "role";
+                target_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LevelOverrideUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LevelOverride"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_level_rewards: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LevelReward"][];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_add_level_reward: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description The calling bot instance's ID. Change events from this request carry it, so that instance ignores them. */
+                "X-Fm01-Origin"?: string | null;
+            };
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LevelReward"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_remove_level_rewards: {
+        parameters: {
+            query?: {
+                role_id?: string | null;
+            };
+            header?: {
+                /** @description The calling bot instance's ID. Change events from this request carry it, so that instance ignores them. */
+                "X-Fm01-Origin"?: string | null;
+            };
+            path: {
+                guild_id: string;
+                level: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     internal_locale: {
         parameters: {
             query?: never;
@@ -2669,6 +7192,134 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["LocaleOverride"];
                 };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_log_config: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LogConfig"] | null;
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_set_log_config: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description The calling bot instance's ID. Change events from this request carry it, so that instance ignores them. */
+                "X-Fm01-Origin"?: string | null;
+            };
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LogConfig"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LogConfig"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_delete_log_config: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description The calling bot instance's ID. Change events from this request carry it, so that instance ignores them. */
+                "X-Fm01-Origin"?: string | null;
+            };
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description The request failed. `code` says why. */
             "4XX": {
@@ -2932,6 +7583,303 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Starboard"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_ticket_config: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketConfig"] | null;
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_update_ticket_config: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description The calling bot instance's ID. Change events from this request carry it, so that instance ignores them. */
+                "X-Fm01-Origin"?: string | null;
+            };
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TicketConfigUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketConfig"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_shop: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopItem"][];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_add_shop_item: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShopItem"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopItem"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_shop_item: {
+        parameters: {
+            query: {
+                name: string;
+            };
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopItem"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_remove_shop_item: {
+        parameters: {
+            query: {
+                name: string;
+            };
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_create_snapshot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SnapshotCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Snapshot"];
                 };
             };
             /** @description The request failed. `code` says why. */
@@ -3219,6 +8167,219 @@ export interface operations {
             };
         };
     };
+    internal_open_ticket: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TicketOpen"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Ticket"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_open_ticket_count: {
+        parameters: {
+            query: {
+                user_id: string;
+            };
+            header?: never;
+            path: {
+                guild_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpenTicketCount"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_archive_ticket: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Ticket"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_close_ticket: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TicketClose"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Ticket"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_reopen_ticket: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guild_id: string;
+                ticket_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Ticket"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     all_bear_traps: {
         parameters: {
             query?: never;
@@ -3295,6 +8456,44 @@ export interface operations {
             };
         };
     };
+    all_log_configs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuildLogConfig"][];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     all_prefixes: {
         parameters: {
             query?: never;
@@ -3349,6 +8548,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GuildStarboards"][];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_snapshot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Snapshot"];
                 };
             };
             /** @description The request failed. `code` says why. */

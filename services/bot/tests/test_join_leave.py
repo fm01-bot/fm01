@@ -7,6 +7,8 @@ import pytest
 from cogs.join_leave import JoinLeave
 from core.settings import GuildSettings
 
+from api import GreetingConfig
+
 
 def create_mock_member(
 	guild_id: int = 12345,
@@ -153,9 +155,8 @@ def test_format_message_with_channel_and_server_and_extra_kwargs():
 @pytest.mark.asyncio
 async def test_on_member_join_listener():
 	bot = MagicMock()
-	bot.db = AsyncMock()
-	bot.event_bus.publish = AsyncMock()
-	bot.settings = GuildSettings(lambda: bot.db, bot.event_bus)
+	bot.api.greetings.get = AsyncMock()
+	bot.settings = GuildSettings(bot.event_bus)
 	cog = JoinLeave(bot)
 
 	member = create_mock_member()
@@ -163,12 +164,9 @@ async def test_on_member_join_listener():
 	channel.send = AsyncMock()
 	member.guild.get_channel.return_value = channel
 
-	bot.db.fetchrow.return_value = {
-		"guild_id": member.guild.id,
-		"is_on": True,
-		"channel": 123456,
-		"message": "Welcome {user.mention} to {guild.name}!",
-	}
+	bot.api.greetings.get.return_value = GreetingConfig(
+		enabled=True, channel_id=123456, message="Welcome {user.mention} to {guild.name}!"
+	)
 
 	await cog.on_member_join(member)
 	channel.send.assert_called_once_with("Welcome <@99999> to Test Server!")
@@ -177,9 +175,8 @@ async def test_on_member_join_listener():
 @pytest.mark.asyncio
 async def test_on_member_join_disabled_or_no_message():
 	bot = MagicMock()
-	bot.db = AsyncMock()
-	bot.event_bus.publish = AsyncMock()
-	bot.settings = GuildSettings(lambda: bot.db, bot.event_bus)
+	bot.api.greetings.get = AsyncMock()
+	bot.settings = GuildSettings(bot.event_bus)
 	cog = JoinLeave(bot)
 
 	member = create_mock_member()
@@ -188,24 +185,18 @@ async def test_on_member_join_disabled_or_no_message():
 	member.guild.get_channel.return_value = channel
 
 	# is_on is False
-	bot.db.fetchrow.return_value = {
-		"guild_id": member.guild.id,
-		"is_on": False,
-		"channel": 123456,
-		"message": "Welcome {user.mention}!",
-	}
+	bot.api.greetings.get.return_value = GreetingConfig(
+		enabled=False, channel_id=123456, message="Welcome {user.mention}!"
+	)
 
 	await cog.on_member_join(member)
 	channel.send.assert_not_called()
 
 	# bot user ignored
 	member.bot = True
-	bot.db.fetchrow.return_value = {
-		"guild_id": member.guild.id,
-		"is_on": True,
-		"channel": 123456,
-		"message": "Welcome {user.mention}!",
-	}
+	bot.api.greetings.get.return_value = GreetingConfig(
+		enabled=True, channel_id=123456, message="Welcome {user.mention}!"
+	)
 	await cog.on_member_join(member)
 	channel.send.assert_not_called()
 
@@ -213,9 +204,8 @@ async def test_on_member_join_disabled_or_no_message():
 @pytest.mark.asyncio
 async def test_on_member_remove_listener():
 	bot = MagicMock()
-	bot.db = AsyncMock()
-	bot.event_bus.publish = AsyncMock()
-	bot.settings = GuildSettings(lambda: bot.db, bot.event_bus)
+	bot.api.greetings.get = AsyncMock()
+	bot.settings = GuildSettings(bot.event_bus)
 	cog = JoinLeave(bot)
 
 	member = create_mock_member()
@@ -223,12 +213,9 @@ async def test_on_member_remove_listener():
 	channel.send = AsyncMock()
 	member.guild.get_channel.return_value = channel
 
-	bot.db.fetchrow.return_value = {
-		"guild_id": member.guild.id,
-		"is_on": True,
-		"channel": 654321,
-		"message": "Goodbye {user.name} from {guild.name}!",
-	}
+	bot.api.greetings.get.return_value = GreetingConfig(
+		enabled=True, channel_id=654321, message="Goodbye {user.name} from {guild.name}!"
+	)
 
 	await cog.on_member_remove(member)
 	channel.send.assert_called_once_with("Goodbye alice from Test Server!")

@@ -5,11 +5,14 @@ from typing import Literal
 import discord
 from args import Role, User
 from core import Bot, Context, command, group
-from core.api import InsufficientFunds
+from core.api import ApiError, InsufficientFunds
 from core.cooldowns import shared_cooldown
 from discord import app_commands
 from discord.ext import commands
 from helpers import custom_response, random_helper
+
+from api import ErrorCode
+from api import ShopItem as StoredShopItem
 
 logger = logging.getLogger(__name__)
 
@@ -269,20 +272,21 @@ class Shop(commands.Cog, name="Shop"):
 	def __init__(self, client):
 		self.client: Bot = client
 		self.ledger = client.api.economy
+		self.store = client.api.shop
 		self.custom_response = custom_response.CustomResponse(client, name="shop")
 
 	@group(user=False)
 	async def shop(self, ctx: Context):
 		assert ctx.guild is not None
-		row = await self.client.db.fetch("SELECT * FROM shop WHERE guild_id = $1", ctx.guild.id)
-		if not row:
+		stored = await self.store.items(ctx.guild.id)
+		if not stored:
 			await ctx.send("shop.list.empty")
 			return
 
 		items = [
-			{"item": ShopItem(i["item_name"], i["item_price"], i["item_description"], role)}
-			for i in row
-			if (role := ctx.guild.get_role(i["role"]))
+			{"item": ShopItem(i.name, i.price, i.description, role)}
+			for i in stored
+			if (role := ctx.guild.get_role(i.role_id))
 		]
 		(message,) = await self.custom_response.get_list("shop.list.show", ctx, items)
 		await ctx.send(**message)
@@ -291,15 +295,13 @@ class Shop(commands.Cog, name="Shop"):
 	async def buy(self, ctx: Context, item_name: str):
 		assert ctx.guild is not None
 		assert isinstance(ctx.author, discord.Member)
-		row = await self.client.db.fetchrow(
-			"SELECT * FROM shop WHERE guild_id = $1 AND LOWER(item_name) = $2", ctx.guild.id, item_name.lower()
-		)
-		if not row:
+		stored = await self.store.get(ctx.guild.id, item_name)
+		if not stored:
 			await ctx.send("shop.buy.errors.not_found")
 			return
 
-		role = ctx.guild.get_role(row["role"])
-		item = ShopItem(row["item_name"], row["item_price"], row["item_description"], role)
+		role = ctx.guild.get_role(stored.role_id)
+		item = ShopItem(stored.name, stored.price, stored.description, role)
 		if not item.raw_role:
 			await ctx.send("shop.buy.errors.role_not_found")
 			return
@@ -328,31 +330,25 @@ class Shop(commands.Cog, name="Shop"):
 	async def set_item(self, ctx: Context, item_name: str, price: int, description: str, role: discord.Role):
 		assert ctx.guild is not None
 		assert isinstance(ctx.author, discord.Member)
-		row = await self.client.db.fetchrow(
-			"SELECT * FROM shop WHERE guild_id = $1 AND LOWER(item_name) = $2", ctx.guild.id, item_name.lower()
-		)
-		if row:
-			await ctx.send("shop.set.errors.already_item")
-			return
-
-		items = await self.client.db.fetch("SELECT * FROM shop WHERE guild_id = $1", ctx.guild.id)
-		if len(items) + 1 >= 10:
-			await ctx.send("shop.set.errors.limit")
-			return
-
 		if ctx.author.top_role.position <= role.position:
 			await ctx.send("shop.set.errors.role_higher")
 			return
 
-		await self.client.db.execute(
-			"INSERT INTO shop(item_name, item_description, item_price, role, guild_id, creator_id) VALUES($1, $2, $3, $4, $5, $6)",
-			item_name,
-			description,
-			price,
-			role.id,
-			ctx.guild.id,
-			ctx.author.id,
-		)
+		try:
+			await self.store.add(
+				ctx.guild.id,
+				StoredShopItem(
+					name=item_name, description=description, price=price, role_id=role.id, creator_id=ctx.author.id
+				),
+			)
+		except ApiError as exc:
+			if exc.code is ErrorCode.SHOP_ITEM_TAKEN:
+				await ctx.send("shop.set.errors.already_item")
+				return
+			if exc.code is ErrorCode.SHOP_LIMIT:
+				await ctx.send("shop.set.errors.limit")
+				return
+			raise
 
 		item = ShopItem(item_name, price, description, role)
 		await ctx.send("shop.set.success", item=item)
@@ -363,22 +359,18 @@ class Shop(commands.Cog, name="Shop"):
 	async def remove_item(self, ctx: Context, item_name: str):
 		assert ctx.guild is not None
 		assert isinstance(ctx.author, discord.Member)
-		row = await self.client.db.fetchrow(
-			"SELECT * FROM shop WHERE guild_id = $1 AND LOWER(item_name) = $2", ctx.guild.id, item_name.lower()
-		)
-		if not row:
+		stored = await self.store.get(ctx.guild.id, item_name)
+		if not stored:
 			await ctx.send("shop.remove.errors.not_found")
 			return
 
-		role = ctx.guild.get_role(row["role"])
-		item = ShopItem(row["item_name"], row["item_price"], row["item_description"], role)
+		role = ctx.guild.get_role(stored.role_id)
+		item = ShopItem(stored.name, stored.price, stored.description, role)
 		if item.raw_role and ctx.author.top_role.position <= item.raw_role.position:
 			await ctx.send("shop.remove.errors.role_higher")
 			return
 
-		await self.client.db.execute(
-			"DELETE FROM shop WHERE guild_id = $1 AND LOWER(item_name) = $2", ctx.guild.id, item.name.lower()
-		)
+		await self.store.remove(ctx.guild.id, item.name)
 		await ctx.send("shop.remove.success", item=item)
 
 

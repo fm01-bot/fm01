@@ -11,6 +11,9 @@ from cogs.ticket import (
 )
 from core.settings import GuildSettings
 from helpers.cli_parser import CLIParseError, CLIParser
+from tests.fake_api import FakeTickets
+
+from api import TicketConfig
 
 
 def test_config_ticket_enable_parse():
@@ -140,9 +143,8 @@ def test_config_ticket_desc_parse():
 @pytest.mark.asyncio
 async def test_config_ticket_execution_flow():
 	bot = MagicMock()
-	bot.db = AsyncMock()
-	bot.event_bus.publish = AsyncMock()
-	bot.settings = GuildSettings(lambda: bot.db, bot.event_bus)
+	bot.api.tickets = FakeTickets()
+	bot.settings = GuildSettings(bot.event_bus)
 	bot.get_cog.return_value = None
 	bot.custom_response.get_message = AsyncMock(return_value="Open Ticket")
 
@@ -182,7 +184,7 @@ async def test_config_ticket_execution_flow():
 
 	# Execute enable
 	await config_cog.parser.execute("ticket enable", ctx=ctx)
-	bot.db.execute.assert_called()
+	assert bot.api.tickets.configs[12345].enabled is True
 	assert "[+] Ticket system enabled" in ctx.send.call_args[1]["content"]
 
 	# Execute category
@@ -224,14 +226,6 @@ async def test_config_ticket_execution_flow():
 	assert "button" not in text_ch.send.call_args[1]
 
 	# Execute status
-	bot.db.fetchrow.return_value = {
-		"is_on": True,
-		"category_id": 777,
-		"log_channel_id": 999,
-		"support_role_id": 555,
-		"max_tickets": 3,
-		"dm_transcript": False,
-	}
 	await config_cog.parser.execute("ticket status", ctx=ctx)
 	status_out = ctx.send.call_args[1]["content"]
 	assert "Status:        Enabled" in status_out
@@ -243,24 +237,12 @@ async def test_config_ticket_execution_flow():
 	assert "Modal Desc:    Min 10 / Max 1800" in status_out
 
 	# Execute length with no args (display current settings)
-	bot.db.fetchrow.return_value = {
-		"topic_min_length": 3,
-		"topic_max_length": 100,
-		"description_min_length": 10,
-		"description_max_length": 1800,
-	}
 	await config_cog.parser.execute("ticket length", ctx=ctx)
 	len_out = ctx.send.call_args[1]["content"]
 	assert "Topic:       Min 3 / Max 100" in len_out
 	assert "Description: Min 10 / Max 1800" in len_out
 
 	# Execute length update
-	bot.db.fetchrow.return_value = {
-		"topic_min_length": 3,
-		"topic_max_length": 100,
-		"description_min_length": 10,
-		"description_max_length": 1800,
-	}
 	await config_cog.parser.execute("ticket length --topic-min 5 --topic-max 50 --desc-min 20 --desc-max 1500", ctx=ctx)
 	len_update_out = ctx.send.call_args[1]["content"]
 	assert "[+] Ticket modal lengths updated:" in len_update_out
@@ -274,19 +256,11 @@ async def test_config_ticket_execution_flow():
 	assert "Topic: Min 6 / Max 45" in modal_update_out
 
 	# Execute topic command
-	bot.db.fetchrow.return_value = {
-		"topic_min_length": 5,
-		"topic_max_length": 50,
-	}
 	await config_cog.parser.execute("ticket topic --min 4 --max 60", ctx=ctx)
 	topic_out = ctx.send.call_args[1]["content"]
 	assert "[+] Ticket topic length set to: Min 4 / Max 60" in topic_out
 
 	# Execute description command
-	bot.db.fetchrow.return_value = {
-		"description_min_length": 20,
-		"description_max_length": 1500,
-	}
 	await config_cog.parser.execute("ticket description --min 15 --max 2000", ctx=ctx)
 	desc_out = ctx.send.call_args[1]["content"]
 	assert "[+] Ticket description length set to: Min 15 / Max 2000" in desc_out
@@ -300,9 +274,8 @@ async def test_config_ticket_execution_flow():
 @pytest.mark.asyncio
 async def test_config_ticket_limit_invalid():
 	bot = MagicMock()
-	bot.db = AsyncMock()
-	bot.event_bus.publish = AsyncMock()
-	bot.settings = GuildSettings(lambda: bot.db, bot.event_bus)
+	bot.api.tickets = FakeTickets()
+	bot.settings = GuildSettings(bot.event_bus)
 	ctx = MagicMock()
 	ctx.guild = MagicMock()
 	config_cog = Config(bot)
@@ -317,21 +290,13 @@ async def test_config_ticket_limit_invalid():
 @pytest.mark.asyncio
 async def test_config_ticket_length_validation():
 	bot = MagicMock()
-	bot.db = AsyncMock()
-	bot.event_bus.publish = AsyncMock()
-	bot.settings = GuildSettings(lambda: bot.db, bot.event_bus)
+	bot.api.tickets = FakeTickets()
+	bot.settings = GuildSettings(bot.event_bus)
 	ctx = MagicMock()
 	ctx.guild = MagicMock()
 	ctx.bot = bot
 	ctx.send = AsyncMock()
 	config_cog = Config(bot)
-
-	bot.db.fetchrow.return_value = {
-		"topic_min_length": 3,
-		"topic_max_length": 100,
-		"description_min_length": 10,
-		"description_max_length": 1800,
-	}
 
 	# Non-integer min/max
 	with pytest.raises(CLIParseError):
@@ -357,15 +322,8 @@ async def test_config_ticket_length_validation():
 @pytest.mark.asyncio
 async def test_ticket_modal_configured_lengths():
 	bot = MagicMock()
-	bot.db = AsyncMock()
-	bot.event_bus.publish = AsyncMock()
-	bot.settings = GuildSettings(lambda: bot.db, bot.event_bus)
-	bot.db.fetchrow.return_value = {
-		"topic_min_length": 8,
-		"topic_max_length": 64,
-		"description_min_length": 25,
-		"description_max_length": 1200,
-	}
+	bot.api.tickets = FakeTickets()
+	bot.settings = GuildSettings(bot.event_bus)
 	bot.custom_response.get_message = AsyncMock(return_value="Label")
 	cog = Ticket(bot)
 
@@ -373,6 +331,9 @@ async def test_ticket_modal_configured_lengths():
 	interaction.guild = MagicMock()
 	interaction.guild.id = 12345
 
+	bot.api.tickets.configs[12345] = TicketConfig(
+		topic_min_length=8, topic_max_length=64, description_min_length=25, description_max_length=1200
+	)
 	modal = await cog.create_ticket_modal(interaction)
 	assert modal.topic.min_length == 8
 	assert modal.topic.max_length == 64
@@ -383,9 +344,8 @@ async def test_ticket_modal_configured_lengths():
 @pytest.mark.asyncio
 async def test_ticket_permissions():
 	bot = MagicMock()
-	bot.db = AsyncMock()
-	bot.event_bus.publish = AsyncMock()
-	bot.settings = GuildSettings(lambda: bot.db, bot.event_bus)
+	bot.api.tickets = FakeTickets()
+	bot.settings = GuildSettings(bot.event_bus)
 	cog = Ticket(bot)
 
 	guild = MagicMock()
@@ -401,17 +361,13 @@ async def test_ticket_permissions():
 	interaction.guild = guild
 	interaction.user = member
 
-	ticket_row = {
-		"id": 1,
-		"user_id": 100,
-	}
+	ticket_row = bot.api.tickets.add(guild.id, channel_id=1, user_id=100)
 
 	# Opener should be allowed
 	assert await cog.can_manage_ticket(interaction, ticket_row) is True
 
 	# Different member should be denied
 	member.id = 200
-	bot.db.fetchrow.return_value = None
 	assert await cog.can_manage_ticket(interaction, ticket_row) is False
 
 	# Administrator should be allowed
@@ -423,17 +379,16 @@ async def test_ticket_permissions():
 	support_role = MagicMock(spec=discord.Role)
 	support_role.id = 300
 	member.roles = [support_role]
-	bot.db.fetchrow.return_value = {"support_role_id": 300}
-	await cog.config.changed(guild.id)  # the support role was just configured
+	bot.api.tickets.configs[guild.id] = TicketConfig(support_role_id=300)
+	cog.config.forget(guild.id)  # the support role was just configured
 	assert await cog.can_manage_ticket(interaction, ticket_row) is True
 
 
 @pytest.mark.asyncio
 async def test_ticket_create_flow():
 	bot = MagicMock()
-	bot.db = AsyncMock()
-	bot.event_bus.publish = AsyncMock()
-	bot.settings = GuildSettings(lambda: bot.db, bot.event_bus)
+	bot.api.tickets = FakeTickets()
+	bot.settings = GuildSettings(bot.event_bus)
 	bot.custom_response.get_message = AsyncMock(return_value="Your ticket has been created: #ticket-alice")
 	cog = Ticket(bot)
 
@@ -471,8 +426,7 @@ async def test_ticket_create_flow():
 	interaction.followup.send = AsyncMock()
 
 	# Config: enabled, limit 1, no open tickets
-	bot.db.fetchrow.return_value = {"is_on": True, "max_tickets": 1, "category_id": None, "log_channel_id": None}
-	bot.db.fetchval = AsyncMock(side_effect=[0, 42])  # count=0, returning ticket_id=42
+	bot.api.tickets.configs[12345] = TicketConfig(enabled=True, max_tickets=1)
 
 	await cog.handle_ticket_create(interaction, topic="Billing issue", description="I need help with my payment")
 
@@ -486,9 +440,8 @@ async def test_ticket_create_flow():
 @pytest.mark.asyncio
 async def test_ticket_create_limit_exceeded():
 	bot = MagicMock()
-	bot.db = AsyncMock()
-	bot.event_bus.publish = AsyncMock()
-	bot.settings = GuildSettings(lambda: bot.db, bot.event_bus)
+	bot.api.tickets = FakeTickets()
+	bot.settings = GuildSettings(bot.event_bus)
 	bot.custom_response.get_message = AsyncMock(
 		return_value="You already have 1 open ticket(s). The maximum allowed is 1."
 	)
@@ -509,8 +462,8 @@ async def test_ticket_create_limit_exceeded():
 	interaction.followup = MagicMock()
 	interaction.followup.send = AsyncMock()
 
-	bot.db.fetchrow.return_value = {"is_on": True, "max_tickets": 1}
-	bot.db.fetchval.return_value = 1  # already has 1 ticket open
+	bot.api.tickets.configs[12345] = TicketConfig(enabled=True, max_tickets=1)
+	bot.api.tickets.add(12345, channel_id=1, user_id=100)  # already has 1 ticket open
 
 	await cog.handle_ticket_create(interaction, topic="Issue", description="Description")
 
@@ -523,10 +476,8 @@ async def test_ticket_create_limit_exceeded():
 @pytest.mark.asyncio
 async def test_ticket_modal_localization():
 	bot = MagicMock()
-	bot.db = AsyncMock()
-	bot.db.fetchrow.return_value = None
-	bot.event_bus.publish = AsyncMock()
-	bot.settings = GuildSettings(lambda: bot.db, bot.event_bus)
+	bot.api.tickets = FakeTickets()
+	bot.settings = GuildSettings(bot.event_bus)
 	bot.custom_response.get_message = AsyncMock(side_effect=lambda key, *args, **kwargs: f"loc_{key.split('.')[-1]}")
 	cog = Ticket(bot)
 
@@ -581,9 +532,8 @@ async def test_ticket_controls_view_localization():
 @pytest.mark.asyncio
 async def test_ticket_archive_and_reopen():
 	bot = MagicMock()
-	bot.db = AsyncMock()
-	bot.event_bus.publish = AsyncMock()
-	bot.settings = GuildSettings(lambda: bot.db, bot.event_bus)
+	bot.api.tickets = FakeTickets()
+	bot.settings = GuildSettings(bot.event_bus)
 	bot.custom_response.get_message = AsyncMock(side_effect=lambda key, *args, **kwargs: key)
 	cog = Ticket(bot)
 
@@ -605,10 +555,7 @@ async def test_ticket_archive_and_reopen():
 	interaction.channel = channel
 	interaction.response.defer = AsyncMock()
 
-	bot.db.fetchrow.side_effect = [
-		{"id": 10, "user_id": 100, "channel_id": 777},  # get_ticket
-		{"is_on": True, "log_channel_id": None},  # get_ticket_config
-	]
+	ticket = bot.api.tickets.add(12345, channel_id=777, user_id=100)
 
 	# Test archive
 	await cog.handle_archive_action(interaction)
@@ -618,15 +565,13 @@ async def test_ticket_archive_and_reopen():
 	channel.send.assert_called_once()
 	view = channel.send.call_args[1]["view"]
 	assert isinstance(view, ArchivedTicketControlsView)
+	assert bot.api.tickets.tickets[ticket.id].archived is True
 
 	# Test reopen
 	channel.set_permissions.reset_mock()
 	channel.send.reset_mock()
-	bot.db.fetchrow.side_effect = [
-		{"id": 10, "user_id": 100, "channel_id": 777},  # get_ticket
-		{"is_on": True, "log_channel_id": None},  # get_ticket_config
-	]
 	await cog.handle_reopen_action(interaction)
+	assert bot.api.tickets.tickets[ticket.id].archived is False
 	channel.set_permissions.assert_called_with(member, send_messages=True, view_channel=True, read_message_history=True)
 	channel.send.assert_called_once()
 	view = channel.send.call_args[1]["view"]
@@ -636,9 +581,8 @@ async def test_ticket_archive_and_reopen():
 @pytest.mark.asyncio
 async def test_ticket_save_and_close():
 	bot = MagicMock()
-	bot.db = AsyncMock()
-	bot.event_bus.publish = AsyncMock()
-	bot.settings = GuildSettings(lambda: bot.db, bot.event_bus)
+	bot.api.tickets = FakeTickets()
+	bot.settings = GuildSettings(bot.event_bus)
 	bot.custom_response.get_message = AsyncMock(return_value="Success")
 	cog = Ticket(bot)
 
@@ -667,10 +611,8 @@ async def test_ticket_save_and_close():
 	interaction.response.defer = AsyncMock()
 	interaction.followup.send = AsyncMock()
 
-	bot.db.fetchrow.side_effect = [
-		{"id": 10, "user_id": 100, "channel_id": 777, "title": "Help"},  # get_ticket
-		{"is_on": True, "log_channel_id": 999, "dm_transcript": True},  # get_ticket_config
-	]
+	ticket = bot.api.tickets.add(12345, channel_id=777, user_id=100, title="Help")
+	bot.api.tickets.configs[12345] = TicketConfig(log_channel_id=999, dm_transcript=True)
 
 	# Mock chat_exporter
 	with patch("chat_exporter.export", AsyncMock(return_value="<html>transcript</html>")):
@@ -682,27 +624,22 @@ async def test_ticket_save_and_close():
 	member.send.assert_called_once()
 	channel.delete.assert_called_once()
 
-	# DB update must not reference transcript_path
-	bot.db.execute.assert_called_once()
-	query_str = bot.db.execute.call_args[0][0]
-	assert "transcript_path" not in query_str
-	assert "is_closed = true" in query_str
+	closed = bot.api.tickets.tickets[ticket.id]
+	assert (closed.closed, closed.closed_by) == (True, 100)
 
 
 @pytest.mark.asyncio
 async def test_on_guild_channel_delete():
 	bot = MagicMock()
-	bot.db = AsyncMock()
-	bot.event_bus.publish = AsyncMock()
-	bot.settings = GuildSettings(lambda: bot.db, bot.event_bus)
+	bot.api.tickets = FakeTickets()
+	bot.settings = GuildSettings(bot.event_bus)
 	cog = Ticket(bot)
 
+	ticket = bot.api.tickets.add(1, channel_id=12345, user_id=100)
 	ch = MagicMock(spec=discord.TextChannel)
 	ch.id = 12345
 	await cog.on_guild_channel_delete(ch)
-	bot.db.execute.assert_called_once()
-	assert "UPDATE tickets" in bot.db.execute.call_args[0][0]
-	assert bot.db.execute.call_args[0][1] == 12345
+	assert bot.api.tickets.tickets[ticket.id].closed is True
 
 
 @pytest.mark.asyncio

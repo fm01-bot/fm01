@@ -15,13 +15,10 @@ class AFK(commands.Cog):
 		self.afk_cache: dict[tuple[int, int], dict[str, str]] = {}
 
 	async def cog_load(self):
-		rows = await self.client.db.fetch(
-			"SELECT guild_id, user_id, message, previous_nick FROM afk WHERE state = TRUE"
-		)
-		for r in rows:
-			self.afk_cache[(int(r["guild_id"]), int(r["user_id"]))] = {
-				"message": r["message"],
-				"previous_nick": r["previous_nick"],
+		for member in await self.client.api.afk.away():
+			self.afk_cache[(member.guild_id, member.user_id)] = {
+				"message": member.message,
+				"previous_nick": member.previous_nick,
 			}
 
 	@commands.Cog.listener("on_message")
@@ -38,9 +35,7 @@ class AFK(commands.Cog):
 			return
 
 		data = self.afk_cache.pop(key, None)
-		await self.client.db.execute(
-			"UPDATE afk SET state = $1 WHERE user_id = $2 AND guild_id = $3", False, ctx.author.id, ctx.guild.id
-		)
+		await self.client.api.afk.back(message.guild.id, message.author.id)
 		if data and data.get("previous_nick"):
 			try:
 				await ctx.author.edit(nick=data["previous_nick"])
@@ -89,52 +84,19 @@ class AFK(commands.Cog):
 			return await ctx.send("afk.link")
 
 		key = (ctx.guild.id, ctx.author.id)
-		row = await self.client.db.fetchrow(
-			"SELECT * FROM afk WHERE user_id = $1 AND guild_id = $2", ctx.author.id, ctx.guild.id
+		toggled = await self.client.api.afk.toggle(
+			ctx.guild.id, ctx.author.id, str(reason_text), ctx.author.display_name
 		)
-		if not row:
-			await self.client.db.execute(
-				"INSERT INTO afk (user_id, guild_id, message, state, previous_nick) VALUES($1, $2, $3, $4, $5)",
-				ctx.author.id,
-				ctx.guild.id,
-				reason_text,
-				True,
-				ctx.author.display_name,
-			)
-			self.afk_cache[key] = {"message": str(reason_text), "previous_nick": ctx.author.display_name}
-			try:
-				nick = await self.custom_response("afk.name", ctx, nickname=ctx.author.display_name)
-				if isinstance(nick, str):
-					nick = nick[:32]
-				if isinstance(ctx.author, discord.Member):
-					await ctx.author.edit(nick=nick)
-			except (discord.Forbidden, discord.HTTPException):
-				pass
-			return await ctx.send("afk.on")
-
-		if row["state"]:
-			# Turn off AFK
+		if not toggled.away:
 			self.afk_cache.pop(key, None)
-			await self.client.db.execute(
-				"UPDATE afk SET state = $1 WHERE user_id = $2 AND guild_id = $3", False, ctx.author.id, ctx.guild.id
-			)
 			try:
 				if isinstance(ctx.author, discord.Member):
-					await ctx.author.edit(nick=row["previous_nick"])
+					await ctx.author.edit(nick=toggled.previous_nick)
 			except (discord.Forbidden, discord.HTTPException):
 				pass
 			return await ctx.send("afk.off")
 		else:
-			# Turn on AFK
 			self.afk_cache[key] = {"message": str(reason_text), "previous_nick": ctx.author.display_name}
-			await self.client.db.execute(
-				"UPDATE afk SET state = $1, message = $2, previous_nick = $3 WHERE user_id = $4 AND guild_id = $5",
-				True,
-				reason_text,
-				ctx.author.display_name,
-				ctx.author.id,
-				ctx.guild.id,
-			)
 			try:
 				nick = await self.custom_response("afk.name", ctx, nickname=ctx.author.display_name)
 				if isinstance(nick, str):

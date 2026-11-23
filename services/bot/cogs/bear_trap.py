@@ -15,7 +15,7 @@ from collections.abc import Awaitable, Mapping
 from typing import Any
 
 import discord
-from cogs.mod.cases import Case, CaseStore, Softban, retention_setting
+from cogs.mod.cases import Case, CaseStore, Softban
 from core import Bot
 from core.api import ApiClient, ApiUnavailable
 from core.context import VALID_SEND_KWARGS
@@ -159,7 +159,7 @@ class BearTrap(commands.Cog, name="BearTrap"):
 	def __init__(self, bot: Bot) -> None:
 		self.bot = bot
 		self.setting = bear_trap_setting(bot.settings, bot.api, bot)
-		self.cases = CaseStore(bot, bot.db, retention_setting(bot.settings).get)
+		self.cases = CaseStore(bot)
 		self.responses = CustomResponse(bot, "bear_trap")
 		self._locks: defaultdict[int, asyncio.Lock] = defaultdict(asyncio.Lock)
 		self._catching: set[tuple[int, int]] = set()

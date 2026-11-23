@@ -13,16 +13,27 @@ from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, FastAPI
 
+from app.afk import routes as afk_routes
+from app.alerts import routes as alert_routes
 from app.auth import require_internal
+from app.automod import routes as automod_routes
 from app.bear_trap import routes as bear_trap_routes
 from app.config import Settings
 from app.dashboard import routes as dashboard_routes
 from app.economy import routes as economy_routes
 from app.errors import ERROR_RESPONSES, install_error_handlers
+from app.giveaways import routes as giveaway_routes
+from app.greetings import routes as greeting_routes
+from app.leveling import routes as leveling_routes
+from app.log import routes as log_routes
+from app.moderation import routes as moderation_routes
 from app.settings import routes as settings_routes
+from app.shop import routes as shop_routes
+from app.snapshots import routes as snapshot_routes
 from app.starboard import routes as starboard_routes
 from app.state import AppState, build_state
 from app.status import routes as status_routes
+from app.tickets import routes as ticket_routes
 
 __all__ = ("app", "create_app")
 
@@ -85,6 +96,20 @@ def create_app(config: Settings | None = None, state_factory: StateFactory = bui
 	internal.include_router(settings_routes.internal)
 	internal.include_router(bear_trap_routes.internal)
 	internal.include_router(starboard_routes.internal)
+	for routes in (
+		greeting_routes,
+		automod_routes,
+		log_routes,
+		moderation_routes,
+		ticket_routes,
+		leveling_routes,
+		afk_routes,
+		snapshot_routes,
+		shop_routes,
+		giveaway_routes,
+		alert_routes,
+	):
+		internal.include_router(routes.internal)
 
 	dashboard = APIRouter(prefix="/dashboard")
 	dashboard.include_router(dashboard_routes.router)

@@ -7,7 +7,7 @@ import random
 import time
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 import discord
 from args import User
@@ -17,8 +17,17 @@ from discord.ext import commands
 from helpers.level_card import create_level_card
 from helpers.leveling import GuildLevelConfig, LevelupMessage, level_from_total_xp
 
+from api import (
+	LEVEL_CONFIG_SETTING,
+	LEVEL_OVERRIDES_SETTING,
+	LEVEL_REWARDS_SETTING,
+	LevelConfig,
+	LevelConfigUpdate,
+	LevelOverrideUpdate,
+)
+
 if TYPE_CHECKING:
-	import asyncpg
+	from core.api import ApiClient
 	from core.settings import GuildSetting, GuildSettings
 
 logger = logging.getLogger(__name__)
@@ -32,48 +41,222 @@ class LevelOverrides:
 	roles: Mapping[int, tuple[float, bool]] = field(default_factory=dict)
 
 
-async def _load_level_config(db: asyncpg.Pool, guild_id: int) -> GuildLevelConfig:
-	row = await db.fetchrow("SELECT * FROM level_config WHERE guild_id = $1", guild_id)
-	if not row:
-		return GuildLevelConfig(guild_id=guild_id)
-	raw_mode = row["message_mode"]
+def _guild_config(guild_id: int, stored: LevelConfig) -> GuildLevelConfig:
+	"""Build the bot's leveling configuration from the one the API stores.
+
+	Args:
+		guild_id: The guild.
+		stored: The stored configuration.
+
+	Returns:
+		The configuration.
+	"""
 	return GuildLevelConfig(
 		guild_id=guild_id,
-		is_on=bool(row["is_on"]),
-		multiplier=float(row["multiplier"]),
-		min_xp=int(row["min_xp"]),
-		max_xp=int(row["max_xp"]),
-		cooldown=int(row["cooldown"]),
-		message_mode=LevelupMessage(raw_mode)
-		if raw_mode in LevelupMessage._value2member_map_
-		else LevelupMessage.CURRENT,
-		message_channel=int(row["message_channel"]) if row["message_channel"] else None,
-		levelup_message=str(row["levelup_message"]) if row["levelup_message"] else None,
-		stack_roles=bool(row["stack_roles"]),
+		is_on=stored.enabled,
+		multiplier=stored.multiplier,
+		min_xp=stored.min_xp,
+		max_xp=stored.max_xp,
+		cooldown=stored.cooldown,
+		message_mode=LevelupMessage(stored.message_mode),
+		message_channel=stored.message_channel_id,
+		levelup_message=stored.levelup_message,
+		stack_roles=stored.stack_roles,
 	)
 
 
-def level_config_setting(settings: GuildSettings) -> GuildSetting[GuildLevelConfig]:
-	"""The guild's leveling configuration, registered on ``settings`` (usable without the Level cog loaded)."""
-	return settings.add("level.config", _load_level_config)
+def level_config_setting(settings: GuildSettings, api: ApiClient) -> GuildSetting[GuildLevelConfig]:
+	"""Register the guild's leveling configuration, stored behind the API (usable without the Level cog loaded).
+
+	Args:
+		settings: The registry to add it to.
+		api: The API client it loads through.
+
+	Returns:
+		The setting. The defaults for guilds that never configured leveling.
+	"""
+
+	async def load(guild_id: int) -> GuildLevelConfig:
+		return _guild_config(guild_id, await api.levels.config(guild_id))
+
+	return settings.add_remote(LEVEL_CONFIG_SETTING, load, None)
 
 
-async def _load_role_rewards(db: asyncpg.Pool, guild_id: int) -> list[tuple[int, int]]:
-	rows = await db.fetch("SELECT level, role_id FROM level_roles WHERE guild_id = $1 ORDER BY level ASC", guild_id)
-	return [(int(r["level"]), int(r["role_id"])) for r in rows]
+class LevelSettings:
+	"""A guild's leveling configuration, role rewards and XP overrides, and the changes the commands make to them.
 
+	Usable without the Level cog loaded (the config commands use it directly). Every change goes through the API,
+	which announces it; this instance caches what the API stored, or reloads it.
 
-async def _load_overrides(db: asyncpg.Pool, guild_id: int) -> LevelOverrides:
-	channel_rows = await db.fetch(
-		"SELECT channel_id, multiplier, is_ignored FROM level_channel_overrides WHERE guild_id = $1", guild_id
-	)
-	role_rows = await db.fetch(
-		"SELECT role_id, multiplier, is_ignored FROM level_role_overrides WHERE guild_id = $1", guild_id
-	)
-	return LevelOverrides(
-		channels={int(r["channel_id"]): (float(r["multiplier"]), bool(r["is_ignored"])) for r in channel_rows},
-		roles={int(r["role_id"]): (float(r["multiplier"]), bool(r["is_ignored"])) for r in role_rows},
-	)
+	Args:
+		bot: The bot, whose settings registry and API client it uses.
+	"""
+
+	def __init__(self, bot: Bot) -> None:
+		api = bot.api
+		self._api = api.levels
+
+		async def load_rewards(guild_id: int) -> list[tuple[int, int]]:
+			return [(reward.level, reward.role_id) for reward in await api.levels.rewards(guild_id)]
+
+		async def load_overrides(guild_id: int) -> LevelOverrides:
+			stored = await api.levels.overrides(guild_id)
+			return LevelOverrides(
+				channels={o.id: (o.multiplier, o.ignored) for o in stored.channels},
+				roles={o.id: (o.multiplier, o.ignored) for o in stored.roles},
+			)
+
+		self.config: GuildSetting[GuildLevelConfig] = level_config_setting(bot.settings, api)
+		self.rewards: GuildSetting[list[tuple[int, int]]] = bot.settings.add_remote(
+			LEVEL_REWARDS_SETTING, load_rewards, None
+		)
+		self.overrides: GuildSetting[LevelOverrides] = bot.settings.add_remote(
+			LEVEL_OVERRIDES_SETTING, load_overrides, None
+		)
+
+	async def get_guild_config(self, guild_id: int) -> GuildLevelConfig:
+		"""The guild's leveling configuration (defaults if it has none)."""
+		return await self.config.get(guild_id)
+
+	async def get_role_rewards(self, guild_id: int) -> list[tuple[int, int]]:
+		"""The guild's (level, role_id) rewards, lowest level first."""
+		return await self.rewards.get(guild_id)
+
+	async def _update(self, guild_id: int, **changes: Any) -> None:
+		"""Change the leveling configuration and cache what the API stored.
+
+		Args:
+			guild_id: The guild.
+			**changes: `LevelConfigUpdate` fields. ``None`` clears the channel or message.
+		"""
+		stored = await self._api.update_config(guild_id, LevelConfigUpdate(**changes))
+		self.config.remember(guild_id, _guild_config(guild_id, stored))
+
+	async def enable_leveling(self, guild_id: int) -> None:
+		"""Enable leveling in the given guild.
+
+		Args:
+			guild_id: Discord guild ID.
+		"""
+		await self._update(guild_id, enabled=True)
+
+	async def disable_leveling(self, guild_id: int) -> None:
+		"""Disable leveling in the given guild.
+
+		Args:
+			guild_id: Discord guild ID.
+		"""
+		await self._update(guild_id, enabled=False)
+
+	async def update_xp_config(
+		self,
+		guild_id: int,
+		*,
+		min_xp: int | None = None,
+		max_xp: int | None = None,
+		multiplier: float | None = None,
+		cooldown: int | None = None,
+	) -> None:
+		"""Update XP generation rates and cooldown settings for a guild. ``None`` keeps a value.
+
+		Args:
+			guild_id: Discord guild ID.
+			min_xp: Minimum base XP awarded per message.
+			max_xp: Maximum base XP awarded per message.
+			multiplier: Global XP multiplier.
+			cooldown: Cooldown in seconds between XP gains per member.
+		"""
+		changes = {"min_xp": min_xp, "max_xp": max_xp, "multiplier": multiplier, "cooldown": cooldown}
+		await self._update(guild_id, **{key: value for key, value in changes.items() if value is not None})
+
+	async def update_message_config(
+		self, guild_id: int, *, mode: str | None = None, channel_id: int | None = None, template: str | None = None
+	) -> None:
+		"""Update level-up announcement delivery mode, channel, and message template. ``None`` keeps a value.
+
+		Args:
+			guild_id: Discord guild ID.
+			mode: Delivery mode ('current', 'channel', or 'disabled').
+			channel_id: Target channel ID when mode is 'channel'.
+			template: Custom announcement message template.
+		"""
+		changes = {"message_mode": mode, "message_channel_id": channel_id, "levelup_message": template}
+		await self._update(guild_id, **{key: value for key, value in changes.items() if value is not None})
+
+	async def set_stack_roles(self, guild_id: int, stack: bool) -> None:
+		"""Configure whether role rewards stack or replace previous tiers.
+
+		Args:
+			guild_id: Discord guild ID.
+			stack: True to keep all previous role rewards, False to retain only highest unlocked.
+		"""
+		await self._update(guild_id, stack_roles=stack)
+
+	async def add_role_reward(self, guild_id: int, level: int, role_id: int) -> None:
+		"""Add a role reward unlocked upon reaching a level.
+
+		Args:
+			guild_id: Discord guild ID.
+			level: Level milestone.
+			role_id: Discord role ID to award.
+		"""
+		await self._api.add_reward(guild_id, level, role_id)
+		await self.rewards.refresh(guild_id)
+
+	async def remove_role_reward(self, guild_id: int, level: int, role_id: int | None = None) -> None:
+		"""Remove role reward(s) associated with a level.
+
+		Args:
+			guild_id: Discord guild ID.
+			level: Level milestone.
+			role_id: Optional specific role ID to remove. If None, removes all roles for that level.
+		"""
+		await self._api.remove_rewards(guild_id, level, role_id)
+		await self.rewards.refresh(guild_id)
+
+	async def _override(self, guild_id: int, kind: Literal["channel", "role"], target_id: int, **changes: Any) -> None:
+		await self._api.update_override(guild_id, kind, target_id, LevelOverrideUpdate(**changes))
+		await self.overrides.refresh(guild_id)
+
+	async def set_channel_ignored(self, guild_id: int, channel_id: int, is_ignored: bool) -> None:
+		"""Set whether a channel is excluded from XP gain.
+
+		Args:
+			guild_id: Discord guild ID.
+			channel_id: Discord channel ID.
+			is_ignored: True to ignore channel, False to allow XP.
+		"""
+		await self._override(guild_id, "channel", channel_id, ignored=is_ignored)
+
+	async def set_channel_multiplier(self, guild_id: int, channel_id: int, multiplier: float) -> None:
+		"""Set custom XP multiplier for a channel.
+
+		Args:
+			guild_id: Discord guild ID.
+			channel_id: Discord channel ID.
+			multiplier: XP multiplier factor.
+		"""
+		await self._override(guild_id, "channel", channel_id, multiplier=multiplier)
+
+	async def set_role_ignored(self, guild_id: int, role_id: int, is_ignored: bool) -> None:
+		"""Set whether members with a role are excluded from XP gain.
+
+		Args:
+			guild_id: Discord guild ID.
+			role_id: Discord role ID.
+			is_ignored: True to ignore role, False to allow XP.
+		"""
+		await self._override(guild_id, "role", role_id, ignored=is_ignored)
+
+	async def set_role_multiplier(self, guild_id: int, role_id: int, multiplier: float) -> None:
+		"""Set custom XP multiplier for a role.
+
+		Args:
+			guild_id: Discord guild ID.
+			role_id: Discord role ID.
+			multiplier: XP multiplier factor.
+		"""
+		await self._override(guild_id, "role", role_id, multiplier=multiplier)
 
 
 @app_commands.guild_only()
@@ -88,18 +271,19 @@ class Level(commands.Cog, name="Level"):
 			client: The main bot instance.
 		"""
 		self.client = client
-		self.config: GuildSetting[GuildLevelConfig] = level_config_setting(client.settings)
-		self.rewards: GuildSetting[list[tuple[int, int]]] = client.settings.add("level.rewards", _load_role_rewards)
-		self.overrides: GuildSetting[LevelOverrides] = client.settings.add("level.overrides", _load_overrides)
+		self.levels = LevelSettings(client)
+		self.config = self.levels.config
+		self.rewards = self.levels.rewards
+		self.overrides = self.levels.overrides
 		self.cooldowns: dict[tuple[int, int], float] = {}
 
 	async def get_guild_config(self, guild_id: int) -> GuildLevelConfig:
 		"""The guild's leveling configuration (defaults if it has none)."""
-		return await self.config.get(guild_id)
+		return await self.levels.get_guild_config(guild_id)
 
 	async def get_role_rewards(self, guild_id: int) -> list[tuple[int, int]]:
 		"""The guild's (level, role_id) rewards, lowest level first."""
-		return await self.rewards.get(guild_id)
+		return await self.levels.get_role_rewards(guild_id)
 
 	async def get_channel_override(self, guild_id: int, channel_id: int) -> tuple[float, bool] | None:
 		"""The (multiplier, is_ignored) override for a channel, if any."""
@@ -108,246 +292,6 @@ class Level(commands.Cog, name="Level"):
 	async def get_role_overrides(self, guild_id: int) -> Mapping[int, tuple[float, bool]]:
 		"""The guild's role_id -> (multiplier, is_ignored) overrides."""
 		return (await self.overrides.get(guild_id)).roles
-
-	async def enable_leveling(self, guild_id: int) -> None:
-		"""Enable leveling in the given guild.
-
-		Args:
-			guild_id: Discord guild ID.
-		"""
-		await self.client.db.execute(
-			"""
-			INSERT INTO level_config (guild_id, is_on)
-			VALUES ($1, true)
-			ON CONFLICT (guild_id) DO UPDATE SET is_on = true
-			""",
-			guild_id,
-		)
-		await self.config.changed(guild_id)
-
-	async def disable_leveling(self, guild_id: int) -> None:
-		"""Disable leveling in the given guild.
-
-		Args:
-			guild_id: Discord guild ID.
-		"""
-		await self.client.db.execute(
-			"""
-			INSERT INTO level_config (guild_id, is_on)
-			VALUES ($1, false)
-			ON CONFLICT (guild_id) DO UPDATE SET is_on = false
-			""",
-			guild_id,
-		)
-		await self.config.changed(guild_id)
-
-	async def update_xp_config(
-		self,
-		guild_id: int,
-		*,
-		min_xp: int | None = None,
-		max_xp: int | None = None,
-		multiplier: float | None = None,
-		cooldown: int | None = None,
-	) -> None:
-		"""Update XP generation rates and cooldown settings for a guild.
-
-		Args:
-			guild_id: Discord guild ID.
-			min_xp: Minimum base XP awarded per message.
-			max_xp: Maximum base XP awarded per message.
-			multiplier: Global XP multiplier.
-			cooldown: Cooldown in seconds between XP gains per member.
-		"""
-		cfg = await self.get_guild_config(guild_id)
-		new_min = min_xp if min_xp is not None else cfg.min_xp
-		new_max = max_xp if max_xp is not None else cfg.max_xp
-		new_mult = multiplier if multiplier is not None else cfg.multiplier
-		new_cd = cooldown if cooldown is not None else cfg.cooldown
-
-		await self.client.db.execute(
-			"""
-			INSERT INTO level_config (guild_id, min_xp, max_xp, multiplier, cooldown)
-			VALUES ($1, $2, $3, $4, $5)
-			ON CONFLICT (guild_id) DO UPDATE SET
-				min_xp = $2,
-				max_xp = $3,
-				multiplier = $4,
-				cooldown = $5
-			""",
-			guild_id,
-			new_min,
-			new_max,
-			new_mult,
-			new_cd,
-		)
-		await self.config.changed(guild_id)
-
-	async def update_message_config(
-		self, guild_id: int, *, mode: str | None = None, channel_id: int | None = None, template: str | None = None
-	) -> None:
-		"""Update level-up announcement delivery mode, channel, and message template.
-
-		Args:
-			guild_id: Discord guild ID.
-			mode: Delivery mode ('current', 'channel', or 'disabled').
-			channel_id: Target channel ID when mode is 'channel'.
-			template: Custom announcement message template.
-		"""
-		cfg = await self.get_guild_config(guild_id)
-		new_mode = mode if mode is not None else cfg.message_mode.value
-		new_ch = channel_id if channel_id is not None else cfg.message_channel
-		new_tmpl = template if template is not None else cfg.levelup_message
-
-		await self.client.db.execute(
-			"""
-			INSERT INTO level_config (guild_id, message_mode, message_channel, levelup_message)
-			VALUES ($1, $2, $3, $4)
-			ON CONFLICT (guild_id) DO UPDATE SET
-				message_mode = $2,
-				message_channel = $3,
-				levelup_message = $4
-			""",
-			guild_id,
-			new_mode,
-			new_ch,
-			new_tmpl,
-		)
-		await self.config.changed(guild_id)
-
-	async def add_role_reward(self, guild_id: int, level: int, role_id: int) -> None:
-		"""Add a role reward unlocked upon reaching a level.
-
-		Args:
-			guild_id: Discord guild ID.
-			level: Level milestone.
-			role_id: Discord role ID to award.
-		"""
-		await self.client.db.execute(
-			"""
-			INSERT INTO level_roles (guild_id, level, role_id)
-			VALUES ($1, $2, $3)
-			ON CONFLICT (guild_id, level, role_id) DO NOTHING
-			""",
-			guild_id,
-			level,
-			role_id,
-		)
-		await self.rewards.changed(guild_id)
-
-	async def remove_role_reward(self, guild_id: int, level: int, role_id: int | None = None) -> None:
-		"""Remove role reward(s) associated with a level.
-
-		Args:
-			guild_id: Discord guild ID.
-			level: Level milestone.
-			role_id: Optional specific role ID to remove. If None, removes all roles for that level.
-		"""
-		if role_id is not None:
-			await self.client.db.execute(
-				"DELETE FROM level_roles WHERE guild_id = $1 AND level = $2 AND role_id = $3", guild_id, level, role_id
-			)
-		else:
-			await self.client.db.execute("DELETE FROM level_roles WHERE guild_id = $1 AND level = $2", guild_id, level)
-		await self.rewards.changed(guild_id)
-
-	async def set_stack_roles(self, guild_id: int, stack: bool) -> None:
-		"""Configure whether role rewards stack or replace previous tiers.
-
-		Args:
-			guild_id: Discord guild ID.
-			stack: True to keep all previous role rewards, False to retain only highest unlocked.
-		"""
-		await self.client.db.execute(
-			"""
-			INSERT INTO level_config (guild_id, stack_roles)
-			VALUES ($1, $2)
-			ON CONFLICT (guild_id) DO UPDATE SET stack_roles = $2
-			""",
-			guild_id,
-			stack,
-		)
-		await self.config.changed(guild_id)
-
-	async def set_channel_ignored(self, guild_id: int, channel_id: int, is_ignored: bool) -> None:
-		"""Set whether a channel is excluded from XP gain.
-
-		Args:
-			guild_id: Discord guild ID.
-			channel_id: Discord channel ID.
-			is_ignored: True to ignore channel, False to allow XP.
-		"""
-		await self.client.db.execute(
-			"""
-			INSERT INTO level_channel_overrides (guild_id, channel_id, is_ignored)
-			VALUES ($1, $2, $3)
-			ON CONFLICT (guild_id, channel_id) DO UPDATE SET is_ignored = $3
-			""",
-			guild_id,
-			channel_id,
-			is_ignored,
-		)
-		await self.overrides.changed(guild_id)
-
-	async def set_channel_multiplier(self, guild_id: int, channel_id: int, multiplier: float) -> None:
-		"""Set custom XP multiplier for a channel.
-
-		Args:
-			guild_id: Discord guild ID.
-			channel_id: Discord channel ID.
-			multiplier: XP multiplier factor.
-		"""
-		await self.client.db.execute(
-			"""
-			INSERT INTO level_channel_overrides (guild_id, channel_id, multiplier)
-			VALUES ($1, $2, $3)
-			ON CONFLICT (guild_id, channel_id) DO UPDATE SET multiplier = $3
-			""",
-			guild_id,
-			channel_id,
-			multiplier,
-		)
-		await self.overrides.changed(guild_id)
-
-	async def set_role_ignored(self, guild_id: int, role_id: int, is_ignored: bool) -> None:
-		"""Set whether members with a role are excluded from XP gain.
-
-		Args:
-			guild_id: Discord guild ID.
-			role_id: Discord role ID.
-			is_ignored: True to ignore role, False to allow XP.
-		"""
-		await self.client.db.execute(
-			"""
-			INSERT INTO level_role_overrides (guild_id, role_id, is_ignored)
-			VALUES ($1, $2, $3)
-			ON CONFLICT (guild_id, role_id) DO UPDATE SET is_ignored = $3
-			""",
-			guild_id,
-			role_id,
-			is_ignored,
-		)
-		await self.overrides.changed(guild_id)
-
-	async def set_role_multiplier(self, guild_id: int, role_id: int, multiplier: float) -> None:
-		"""Set custom XP multiplier for a role.
-
-		Args:
-			guild_id: Discord guild ID.
-			role_id: Discord role ID.
-			multiplier: XP multiplier factor.
-		"""
-		await self.client.db.execute(
-			"""
-			INSERT INTO level_role_overrides (guild_id, role_id, multiplier)
-			VALUES ($1, $2, $3)
-			ON CONFLICT (guild_id, role_id) DO UPDATE SET multiplier = $3
-			""",
-			guild_id,
-			role_id,
-			multiplier,
-		)
-		await self.overrides.changed(guild_id)
 
 	@command(name="level", aliases=["rank", "xp", "lvl"], user=False)
 	async def level_command(self, ctx: Context, member: discord.Member | None = None) -> None:
@@ -359,20 +303,9 @@ class Level(commands.Cog, name="Level"):
 		if not target:
 			return
 
-		row = await self.client.db.fetchrow(
-			"SELECT xp, level FROM user_levels WHERE guild_id = $1 AND user_id = $2", ctx.guild.id, target.id
-		)
-		total_xp = int(row["xp"]) if row else 0
-		progress = level_from_total_xp(total_xp)
-
-		rank: int | None = None
-		if total_xp > 0:
-			rank_row = await self.client.db.fetchrow(
-				"SELECT COUNT(*) + 1 as rank FROM user_levels WHERE guild_id = $1 AND xp > $2", ctx.guild.id, total_xp
-			)
-			rank = int(rank_row["rank"]) if rank_row else 1
-		else:
-			rank = None
+		member_level = await self.client.api.levels.member(ctx.guild.id, target.id)
+		progress = level_from_total_xp(member_level.xp)
+		rank = member_level.rank
 
 		localized_label = await self.client.custom_response.get_message("level_card.label", ctx)
 		level_label = localized_label if isinstance(localized_label, str) else "lvl"
@@ -398,26 +331,17 @@ class Level(commands.Cog, name="Level"):
 		per_page = 10
 		offset = (page - 1) * per_page
 
-		total_count_row = await self.client.db.fetchrow(
-			"SELECT COUNT(*) as count FROM user_levels WHERE guild_id = $1", ctx.guild.id
-		)
-		total_count = int(total_count_row["count"]) if total_count_row else 0
-		total_pages = max(1, (total_count + per_page - 1) // per_page)
+		board = await self.client.api.levels.leaderboard(ctx.guild.id, offset, per_page)
+		total_pages = max(1, (board.total + per_page - 1) // per_page)
 
 		if page > total_pages:
 			page = total_pages
 			offset = (page - 1) * per_page
-
-		rows = await self.client.db.fetch(
-			"SELECT user_id, xp, level FROM user_levels WHERE guild_id = $1 ORDER BY xp DESC LIMIT $2 OFFSET $3",
-			ctx.guild.id,
-			per_page,
-			offset,
-		)
+			board = await self.client.api.levels.leaderboard(ctx.guild.id, offset, per_page)
 
 		entries = []
-		for idx, row in enumerate(rows):
-			user_id = int(row["user_id"])
+		for idx, row in enumerate(board.entries):
+			user_id = row.user_id
 			cached_user = self.client.get_user(user_id)
 			entries.append(
 				{
@@ -425,8 +349,8 @@ class Level(commands.Cog, name="Level"):
 					"user": User.from_user(cached_user)
 					if cached_user
 					else await self.client.custom_response.get_message("level_unknown_user", ctx, user_id=user_id),
-					"level": row["level"],
-					"xp": f"{int(row['xp']):,}",
+					"level": row.level,
+					"xp": f"{row.xp:,}",
 				}
 			)
 		(message,) = await self.client.custom_response.get_list(
@@ -597,36 +521,10 @@ class Level(commands.Cog, name="Level"):
 		if xp_to_add <= 0:
 			return
 
-		row = await self.client.db.fetchrow(
-			"""
-			INSERT INTO user_levels (guild_id, user_id, xp, level, last_message_at)
-			VALUES ($1, $2, $3, 0, now())
-			ON CONFLICT (guild_id, user_id) DO UPDATE SET
-				xp = user_levels.xp + $3,
-				last_message_at = now()
-			RETURNING xp, level
-			""",
-			guild_id,
-			message.author.id,
-			xp_to_add,
-		)
-		if not row:
-			return
-
-		new_total_xp = int(row["xp"])
-		old_level = int(row["level"])
-		new_progress = level_from_total_xp(new_total_xp)
-
-		if new_progress.level > old_level:
-			await self.client.db.execute(
-				"UPDATE user_levels SET level = $1 WHERE guild_id = $2 AND user_id = $3",
-				new_progress.level,
-				guild_id,
-				message.author.id,
-			)
-
-			await self.handle_role_rewards(message.author, old_level, new_progress.level, config.stack_roles)
-			await self.send_levelup_notification(message, config, new_progress.level, new_total_xp)
+		result = await self.client.api.levels.award(guild_id, message.author.id, xp_to_add)
+		if result.level > result.previous_level:
+			await self.handle_role_rewards(message.author, result.previous_level, result.level, config.stack_roles)
+			await self.send_levelup_notification(message, config, result.level, result.xp)
 
 
 async def setup(client: Bot):

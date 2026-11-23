@@ -47,5 +47,3 @@ jobs:
 
       - name: Run pytest
         run: uv run pytest -v
-        env:
-          REQUIRE_DB_TESTS: "1"

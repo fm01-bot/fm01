@@ -186,8 +186,6 @@ services:
       context: .
       dockerfile: services/bot/Dockerfile
     depends_on:
-      db:
-        condition: service_healthy
       lavalink:
         condition: service_healthy
       redis:
@@ -196,8 +194,6 @@ services:
         condition: service_started
       cobalt:
         condition: service_started
-      migrations:
-        condition: service_completed_successfully
       api:
         condition: service_healthy
     restart: unless-stopped
@@ -206,11 +202,6 @@ services:
       API_INTERNAL_TOKEN: ${API_INTERNAL_TOKEN:?Please set an internal API token in .env}
       TOKEN: ${TOKEN:?Please set a bot token in .env}
       DEBUG_TOKEN: ${DEBUG_TOKEN}
-      DB_PASSWORD: ${DB_PASSWORD:?Please set a database password in .env}
-      DB_PORT: ${DB_PORT:-5432}
-      DB_USER: ${DB_USER:-fm01}
-      DB_HOST: ${DB_HOST:-db}
-      DB_NAME: ${DB_NAME:-fm01}
       LAVALINK_URI: ${LAVALINK_URI:-http://lavalink:2333}
       LAVALINK_PASSWORD: ${LAVALINK_PASSWORD}
       SENTRY_DSN: ${SENTRY_DSN:-}

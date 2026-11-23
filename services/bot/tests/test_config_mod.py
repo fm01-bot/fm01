@@ -4,8 +4,9 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from cogs.config import Config
-from core.settings import INVALIDATE_SETTING, GuildSettings
+from core.settings import GuildSettings
 from helpers.cli_parser import CLIParseError, CLIParser
+from tests.fake_api import FakeCases
 
 
 @pytest.fixture
@@ -14,10 +15,8 @@ def mock_ctx():
 	ctx.guild = MagicMock()
 	ctx.guild.id = 12345
 	ctx.bot = MagicMock()
-	ctx.bot.db = AsyncMock()
-	ctx.bot.event_bus = MagicMock()
-	ctx.bot.event_bus.publish = AsyncMock()
-	ctx.bot.settings = GuildSettings(lambda: ctx.bot.db, ctx.bot.event_bus)
+	ctx.bot.api.cases = FakeCases()
+	ctx.bot.settings = GuildSettings(ctx.bot.event_bus)
 	ctx.send = AsyncMock()
 	return ctx
 
@@ -25,7 +24,6 @@ def mock_ctx():
 @pytest.mark.asyncio
 async def test_config_mod_view_default(mock_ctx):
 	config_cog = Config(mock_ctx.bot)
-	mock_ctx.bot.db.fetchrow.return_value = None
 
 	tokens = CLIParser.split_args("mod")
 	node, opts = config_cog.parser.parse(tokens)
@@ -46,20 +44,9 @@ async def test_config_mod_set_delete(mock_ctx):
 	assert node.callback is not None
 	await node.callback(mock_ctx, **opts)
 
-	# Should insert/upsert into mod_config
-	execute_args = mock_ctx.bot.db.execute.call_args.args
-	assert "INSERT INTO mod_config" in execute_args[0]
-	assert execute_args[1] == 12345
-	assert execute_args[2] == "delete"
-
-	# Should update the cached setting and tell other instances
+	# Stored through the API, which tells the other instances; cached here at once
+	assert mock_ctx.bot.api.cases.retentions[12345] == "delete"
 	assert mock_ctx.bot.settings["mod.retention"].cache[12345] == "delete"
-	event = mock_ctx.bot.event_bus.publish.call_args.args[1]
-	assert (event["type"], event["key"], event["guild_id"]) == (
-		INVALIDATE_SETTING,
-		"mod.retention",
-		"12345",
-	)  # snowflakes are strings on the wire
 	call_content = mock_ctx.send.call_args.kwargs.get("content", "")
 	assert "Moderation case retention set to delete" in call_content
 

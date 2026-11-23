@@ -1,10 +1,8 @@
 import asyncio
 import contextlib
 import datetime
-import json
 import os
 import socket
-import sys
 import traceback
 import uuid
 from io import StringIO
@@ -14,7 +12,6 @@ from time import perf_counter
 from typing import Any
 
 import aiohttp
-import asyncpg
 import discord
 import discord.http
 import wavelink
@@ -88,7 +85,6 @@ class Bot(commands.AutoShardedBot):
 		self.uptime: datetime.datetime | MISSING = None
 		self.lavalink: dict[str, wavelink.Node] | MISSING = None
 		intents: discord.Intents = discord.Intents.all()
-		self.db: asyncpg.Pool | MISSING = None
 		self.session: aiohttp.ClientSession | None = None
 
 		uses_fixed_shard_count = self.cluster_config.is_clustered or self.cluster_config.uses_gateway_proxy
@@ -139,7 +135,7 @@ class Bot(commands.AutoShardedBot):
 		"""Shards that received READY (or resumed) and haven't disconnected since."""
 		origin = uuid.uuid4().hex
 		self.api = ApiClient(os.getenv("API_URL", "http://localhost:8000"), os.getenv("API_INTERNAL_TOKEN", ""), origin)
-		self.settings = GuildSettings(lambda: self.db, self.event_bus, origin)
+		self.settings = GuildSettings(self.event_bus, origin)
 		self.prefix: GuildSetting[Prefix] = prefix_setting(self.settings, self.api)
 		self.locale_override: GuildSetting[str | None] = locale_override_setting(self.settings, self.api)
 		self.prefix_cache = self.prefix.cache
@@ -218,12 +214,6 @@ class Bot(commands.AutoShardedBot):
 	async def setup_hook(self):
 		self.logger.info("Running initial setup hook...")
 		benchmark = perf_counter()
-
-		try:
-			await self.database_initialization()
-		except asyncpg.InvalidAuthorizationSpecificationError:
-			self.logger.exception("Failed to connect to database")
-			sys.exit()
 
 		if self.cluster_config.gateway_url:
 			await self.verify_gateway_proxy_shard_count(self.cluster_config.gateway_url)
@@ -379,34 +369,9 @@ class Bot(commands.AutoShardedBot):
 		if self.session and not self.session.closed:
 			self.logger.debug("Closing aiohttp session...")
 			await self.session.close()
-		if self.db:
-			self.logger.debug("Closing database connection...")
-			await self.db.close()
 		self.logger.debug("Closing bot superclass...")
 		await super().close()
 		self.logger.info("Bot closed.")
-
-	@staticmethod
-	async def db_connection_init(connection: asyncpg.connection.Connection):
-		await connection.set_type_codec("jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog")
-		await connection.set_type_codec("json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog")
-
-	async def database_initialization(self):
-		self.logger.info("Connecting to database...")
-		benchmark = perf_counter()
-		self.db = await asyncpg.create_pool(
-			host=os.getenv("DB_HOST"),
-			database=os.getenv("DB_NAME"),
-			user=os.getenv("DB_USER"),
-			password=os.getenv("DB_PASSWORD"),
-			port=os.getenv("DB_PORT"),
-			timeout=None,
-			init=self.db_connection_init,
-			max_inactive_connection_lifetime=120,  # timeout is 2 mins
-			max_size=50,
-		)
-		end = perf_counter() - benchmark
-		self.logger.debug(f"Connected to database in {end:.2f}s")
 
 	async def load_cogs(self):
 		self.logger.info("Loading cogs...")

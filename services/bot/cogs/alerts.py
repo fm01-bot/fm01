@@ -1,13 +1,15 @@
 from __future__ import annotations
 
-import datetime
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import aiohttp
 import discord
+from core.api import ApiError
 from discord.ext import commands, tasks
 from helpers.alert_providers import get_provider
+
+from api import AlertCreate, ErrorCode, MediaAlert
 
 if TYPE_CHECKING:
 	from args.media import Media
@@ -53,24 +55,17 @@ class Alerts(commands.Cog, name="Alerts"):
 		try:
 			session = await self.get_session()
 			# Query distinct active accounts
-			rows = await self.client.db.fetch(
-				"""
-				SELECT DISTINCT platform, channel_account, account_id, account_name
-				FROM media_alerts
-				WHERE is_enabled = true
-				"""
-			)
-			for row in rows:
+			for row in await self.client.api.alerts.accounts():
 				try:
 					await self.check_account(
 						session=session,
-						platform=row["platform"],
-						channel_account=row["channel_account"],
-						account_id=row["account_id"] or row["channel_account"],
-						account_name=row["account_name"],
+						platform=row.platform,
+						channel_account=row.channel_account,
+						account_id=row.account_id or row.channel_account,
+						account_name=row.account_name,
 					)
 				except Exception as e:  # noqa: BLE001
-					logger.warning(f"Error checking {row['platform']} account {row['channel_account']}: {e}")
+					logger.warning(f"Error checking {row.platform} account {row.channel_account}: {e}")
 		except Exception as e:  # noqa: BLE001
 			logger.error(f"Unhandled error in alert polling loop: {e}")
 
@@ -99,65 +94,32 @@ class Alerts(commands.Cog, name="Alerts"):
 		)
 		if not media:
 			if provider.live_only:
-				await self.client.db.execute(
-					"""
-					UPDATE media_alerts SET last_media_id = $1, last_media_time = $2
-					WHERE is_enabled = true
-					AND platform = $3
-					AND (channel_account = $4 OR account_id = $5)
-					AND last_media_id IS NULL
-					""",
-					OFFLINE_BASELINE,
-					datetime.datetime.now(datetime.UTC),
-					platform,
-					channel_account,
-					account_id,
-				)
+				await self.client.api.alerts.set_baseline(platform, channel_account, account_id, OFFLINE_BASELINE)
 			return
 
 		# Fetch all alert subscriptions for this platform & account
-		alerts = await self.client.db.fetch(
-			"""
-			SELECT * FROM media_alerts
-			WHERE is_enabled = true
-			AND platform = $1
-			AND (channel_account = $2 OR account_id = $3)
-			""",
-			platform,
-			channel_account,
-			account_id,
-		)
+		alerts = await self.client.api.alerts.subscribers(platform, channel_account, account_id)
 
 		for alert_row in alerts:
-			last_id = alert_row["last_media_id"]
+			last_id = alert_row.last_media_id
 			if last_id == media.id:
 				continue
 
 			# If this is the initial baseline check (last_media_id is None)
 			if last_id is None:
 				# Initialize baseline so we don't back-notify older uploads
-				await self.client.db.execute(
-					"UPDATE media_alerts SET last_media_id = $1, last_media_time = $2 WHERE id = $3",
-					media.id,
-					datetime.datetime.now(datetime.UTC),
-					alert_row["id"],
-				)
+				await self.client.api.alerts.set_last_media(alert_row.id, media.id)
 				continue
 
 			# Dispatch alert notification
 			sent = await self.dispatch_alert(alert_row, media)
 			if sent:
-				await self.client.db.execute(
-					"UPDATE media_alerts SET last_media_id = $1, last_media_time = $2 WHERE id = $3",
-					media.id,
-					datetime.datetime.now(datetime.UTC),
-					alert_row["id"],
-				)
+				await self.client.api.alerts.set_last_media(alert_row.id, media.id)
 
-	async def dispatch_alert(self, alert_row: dict[str, Any], media: Media) -> bool:
+	async def dispatch_alert(self, alert_row: MediaAlert, media: Media) -> bool:
 		"""Formats and sends the alert message using localization with dashboard override support."""
-		guild_id = int(alert_row["guild_id"])
-		channel_id = int(alert_row["target_channel_id"])
+		guild_id = alert_row.guild_id
+		channel_id = alert_row.target_channel_id
 
 		guild = self.client.get_guild(guild_id)
 		if not guild:
@@ -197,26 +159,14 @@ class Alerts(commands.Cog, name="Alerts"):
 			logger.warning(f"Could not send alert to channel {channel_id} in guild {guild_id}: {e}")
 			return False
 
-	# Database accessors
-	async def get_guild_alerts(self, guild_id: int) -> list[dict[str, Any]]:
-		"""Returns all configured alerts for a guild."""
-		rows = await self.client.db.fetch(
-			"SELECT * FROM media_alerts WHERE guild_id = $1 ORDER BY id ASC",
-			guild_id,
-		)
-		return [dict(row) for row in rows]
+	# Accessors, through the API
+	async def get_guild_alerts(self, guild_id: int) -> list[MediaAlert]:
+		"""Returns all configured alerts for a guild, oldest first."""
+		return await self.client.api.alerts.for_guild(guild_id)
 
-	async def get_alert(self, alert_id: int, guild_id: int | None = None) -> dict[str, Any] | None:
-		"""Retrieves a specific alert by its primary key ID."""
-		if guild_id is not None:
-			row = await self.client.db.fetchrow(
-				"SELECT * FROM media_alerts WHERE id = $1 AND guild_id = $2",
-				alert_id,
-				guild_id,
-			)
-		else:
-			row = await self.client.db.fetchrow("SELECT * FROM media_alerts WHERE id = $1", alert_id)
-		return dict(row) if row else None
+	async def get_alert(self, alert_id: int, guild_id: int) -> MediaAlert | None:
+		"""Retrieves a guild's alert by its ID."""
+		return await self.client.api.alerts.get(guild_id, alert_id)
 
 	async def add_alert(
 		self,
@@ -228,78 +178,36 @@ class Alerts(commands.Cog, name="Alerts"):
 		target_channel_id: int,
 	) -> int:
 		"""Creates a new media alert subscription enforcing the limit of 5 per server."""
-		count = await self.client.db.fetchval(
-			"SELECT COUNT(*) FROM media_alerts WHERE guild_id = $1",
-			guild_id,
-		)
-		if count is not None and count >= self.MAX_ALERTS_PER_GUILD:
-			raise AlertLimitReachedError(
-				f"Server has reached the limit of {self.MAX_ALERTS_PER_GUILD} alert subscriptions."
+		try:
+			alert = await self.client.api.alerts.add(
+				guild_id,
+				AlertCreate(
+					platform=platform,
+					channel_account=channel_account,
+					account_id=account_id,
+					account_name=account_name,
+					target_channel_id=target_channel_id,
+				),
 			)
-
-		row = await self.client.db.fetchrow(
-			"""
-			INSERT INTO media_alerts (
-				guild_id, platform, channel_account, account_id,
-				account_name, target_channel_id, is_enabled
-			)
-			VALUES ($1, $2, $3, $4, $5, $6, true)
-			ON CONFLICT (guild_id, platform, channel_account, target_channel_id)
-			DO UPDATE SET
-				account_id = EXCLUDED.account_id,
-				account_name = EXCLUDED.account_name,
-				is_enabled = true
-			RETURNING id
-			""",
-			guild_id,
-			platform.lower(),
-			channel_account,
-			account_id,
-			account_name,
-			target_channel_id,
-		)
-		assert row is not None
-		return int(row["id"])
+		except ApiError as exc:
+			if exc.code is ErrorCode.ALERT_LIMIT:
+				raise AlertLimitReachedError(
+					f"Server has reached the limit of {self.MAX_ALERTS_PER_GUILD} alert subscriptions."
+				) from exc
+			raise
+		return alert.id
 
 	async def remove_alert(self, alert_id: int, guild_id: int) -> bool:
 		"""Removes an alert by ID for the specified guild."""
-		res = await self.client.db.execute(
-			"DELETE FROM media_alerts WHERE id = $1 AND guild_id = $2",
-			alert_id,
-			guild_id,
-		)
-		return res == "DELETE 1"
+		return await self.client.api.alerts.remove(guild_id, alert_id)
 
-	async def remove_alert_by_platform_and_account(
-		self,
-		guild_id: int,
-		platform: str,
-		channel_account: str,
-	) -> int:
+	async def remove_alert_by_platform_and_account(self, guild_id: int, platform: str, channel_account: str) -> int:
 		"""Removes alerts matching platform and account for the specified guild."""
-		res = await self.client.db.execute(
-			"""
-			DELETE FROM media_alerts
-			WHERE guild_id = $1
-			AND platform = $2
-			AND (LOWER(channel_account) = LOWER($3) OR LOWER(account_id) = LOWER($3))
-			""",
-			guild_id,
-			platform.lower(),
-			channel_account,
-		)
-		parts = res.split()
-		return int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 0
+		return await self.client.api.alerts.remove_account(guild_id, platform, channel_account)
 
 	async def set_alert_enabled(self, alert_id: int, guild_id: int, enabled: bool) -> bool:
 		"""Enables or disables an alert."""
-		res = await self.client.db.execute(
-			"UPDATE media_alerts SET is_enabled = $1 WHERE id = $2 AND guild_id = $3",
-			enabled,
-			alert_id,
-			guild_id,
-		)
-		return res == "UPDATE 1"
+		return await self.client.api.alerts.set_enabled(guild_id, alert_id, enabled)
 
 
 async def setup(client: Bot) -> None:

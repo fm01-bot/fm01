@@ -1,4 +1,4 @@
-"""CaseStore against a real PostgreSQL database. Discord objects are faked; the database is not."""
+"""CaseStore against an in-memory API that behaves like the Internal API. Discord objects are faked."""
 
 from __future__ import annotations
 
@@ -6,15 +6,12 @@ import datetime
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import asyncpg
 import discord
 import pytest
 from cogs.mod import Ban, CaseStore, CaseType, Kick, Mute, Warn
-from cogs.mod.cases import Retention, retention_setting
-from core.clustering import LocalEventBus
-from core.settings import GuildSetting, GuildSettings
+from tests.fake_api import FakeCases
 
-pytestmark = pytest.mark.db
+from api import CaseCreate
 
 GUILD_ID = 1 << 22
 NOW = datetime.datetime.now(tz=datetime.UTC)
@@ -59,6 +56,7 @@ def world() -> dict[str, Any]:
 	guild.unban = AsyncMock()
 
 	bot = MagicMock()
+	bot.api.cases = FakeCases()
 	bot.get_guild = MagicMock(side_effect=lambda gid: guild if gid == GUILD_ID else None)
 	bot.get_user = MagicMock(side_effect=users.get)
 	return {"bot": bot, "guild": guild, "moderator": moderator, "target": target, "other": other}
@@ -79,15 +77,13 @@ def scheduler() -> FakeScheduler:
 
 
 @pytest.fixture
-def retention(db: asyncpg.Pool) -> GuildSetting[Retention]:
-	return retention_setting(GuildSettings(lambda: db, LocalEventBus()))
+def api(world: dict[str, Any]) -> FakeCases:
+	return world["bot"].api.cases
 
 
 @pytest.fixture
-def store(
-	db: asyncpg.Pool, world: dict[str, Any], retention: GuildSetting[Retention], scheduler: FakeScheduler
-) -> CaseStore:
-	return CaseStore(world["bot"], db, retention.get, scheduler)
+def store(world: dict[str, Any], scheduler: FakeScheduler) -> CaseStore:
+	return CaseStore(world["bot"], scheduler)
 
 
 def warn(world: dict[str, Any], case_id: int, user: Any = None, **kwargs: Any) -> Warn:
@@ -126,7 +122,7 @@ async def test_active_only_returns_active_cases_of_that_type_for_that_user(store
 	assert [case.id for case in bans] == [21]
 
 
-async def test_closing_bans_leaves_other_case_types_alone(store, world, db):
+async def test_closing_bans_leaves_other_case_types_alone(store, world, api):
 	"""Regression: unban used to deactivate every case the user had."""
 	await store.open(warn(world, 30))
 	await store.open(mute(world, 31, NOW + datetime.timedelta(hours=1)))
@@ -135,27 +131,20 @@ async def test_closing_bans_leaves_other_case_types_alone(store, world, db):
 	for case in await store.active(world["guild"], world["target"], CaseType.BAN):
 		await store.close(case)
 
-	rows = {int(r["case_id"]): r["active"] for r in await db.fetch("SELECT case_id, active FROM cases")}
+	rows = {case_id: case.active for case_id, case in api.cases.items()}
 	assert rows == {30: True, 31: True, 32: False}
 	world["guild"].unban.assert_awaited_once()
 
 
-async def test_close_follows_retention(store, world, db, retention):
+async def test_close_reports_what_the_api_did_under_retention(store, world, api):
 	await store.open(warn(world, 40))
 	assert await store.close(await store.get(world["guild"], 40)) == "deactivated"
-	assert await db.fetchval("SELECT active FROM cases WHERE case_id = 40") is False
+	assert api.cases[40].active is False
 
-	await retention.set(GUILD_ID, "delete")
+	await api.set_retention(GUILD_ID, "delete")
 	await store.open(warn(world, 41))
 	assert await store.close(await store.get(world["guild"], 41)) == "deleted"
-	assert await db.fetchval("SELECT count(*) FROM cases WHERE case_id = 41") == 0
-
-
-async def test_retention_is_read_from_mod_config(store, world, db):
-	await db.execute("INSERT INTO mod_config (guild_id, case_retention) VALUES ($1, 'delete')", GUILD_ID)
-	await store.open(warn(world, 45))
-
-	assert await store.close(await store.get(world["guild"], 45)) == "deleted"
+	assert 41 not in api.cases
 
 
 async def test_closing_an_inactive_case_does_not_repeat_side_effects(store, world):
@@ -177,33 +166,32 @@ async def test_open_schedules_expiry_and_close_cancels_it(store, world, schedule
 	assert scheduler.scheduled == {}
 
 
-async def test_edit_persists_and_reschedules(store, world, scheduler, db):
+async def test_edit_persists_and_reschedules(store, world, scheduler, api):
 	case = await store.open(warn(world, 70, reason="old", expires=NOW + datetime.timedelta(hours=1)))
 	new_expiry = NOW + datetime.timedelta(days=1)
 
 	await store.edit(case, reason="new", expires=new_expiry)
 
-	row = await db.fetchrow("SELECT reason, expires FROM cases WHERE case_id = 70")
-	assert row["reason"] == "new"
-	assert row["expires"] == new_expiry
+	assert api.cases[70].reason == "new"
+	assert api.cases[70].expires == new_expiry
 	assert scheduler.scheduled == {70: new_expiry}
 
 
-async def test_open_skips_non_members_except_for_bans(store, world, db):
+async def test_open_skips_non_members_except_for_bans(store, world, api):
 	stranger = make_user(404)
 
 	assert await store.open(warn(world, 80, user=stranger)) is None
 	assert await store.open(ban(world, 81, user=stranger)) is not None
-	assert [int(r["case_id"]) for r in await db.fetch("SELECT case_id FROM cases")] == [81]
+	assert list(api.cases) == [81]
 
 
-async def test_failed_side_effect_rolls_the_case_back(store, world, db):
+async def test_failed_side_effect_rolls_the_case_back(store, world, api):
 	world["guild"].ban.side_effect = discord.HTTPException(MagicMock(status=403), "missing permissions")
 
 	with pytest.raises(discord.HTTPException):
 		await store.open(ban(world, 90))
 
-	assert await db.fetchval("SELECT count(*) FROM cases") == 0
+	assert api.cases == {}
 
 
 async def test_for_user_filters_by_status(store, world):
@@ -219,22 +207,19 @@ async def test_for_user_filters_by_status(store, world):
 	assert await ids("all") == [100, 101, 102]
 
 
-async def test_expire_closes_due_case_and_drops_cases_of_left_guilds(store, world, db):
+async def test_expire_closes_due_case_and_drops_cases_of_left_guilds(store, world, api):
 	await store.open(warn(world, 110, expires=NOW + datetime.timedelta(minutes=1)))
-	await db.execute(
-		"INSERT INTO cases (type, guild_id, case_id, user_id, moderator_id, expires, active) "
-		"VALUES ($1, $2, 111, 2, 1, $3, true)",
-		CaseType.WARN.value,
+	await api.create(
 		999 << 22,
-		NOW,
+		CaseCreate(case_id=111, type=CaseType.WARN.value, user_id=2, moderator_id=1, expires=NOW, created=NOW),
 	)
 
 	assert sorted(key for key, _, _ in await store.pending()) == [110, 111]
 	await store.expire(110)
 	await store.expire(111)
 
-	assert await db.fetchval("SELECT active FROM cases WHERE case_id = 110") is False
-	assert await db.fetchval("SELECT count(*) FROM cases WHERE case_id = 111") == 0
+	assert api.cases[110].active is False
+	assert 111 not in api.cases
 
 
 async def test_listing_fetches_each_uncached_user_once(store, world):
