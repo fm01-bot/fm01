@@ -10,19 +10,21 @@ from __future__ import annotations
 import asyncio
 import datetime
 import logging
-from collections.abc import Awaitable, Callable, Sequence
+from collections.abc import Callable, Sequence
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Literal, Protocol
 
-import asyncpg
 import discord
 from args import FormatDateTime, Guild, Member, User
 from discord.utils import MISSING
 from helpers import custom_response
 from helpers.scheduler import ExpiryScheduler
 
+from api import RETENTION_SETTING, CaseCreate, CaseRecord, CaseUpdate
+
 if TYPE_CHECKING:
 	from core import Bot
+	from core.api import ApiClient
 	from core.settings import GuildSetting, GuildSettings
 
 __all__ = (
@@ -44,7 +46,6 @@ __all__ = (
 logger = logging.getLogger(__name__)
 
 type Retention = Literal["keep", "delete"]
-type RetentionLookup = Callable[[int], Awaitable[Retention]]
 type CaseStatus = Literal["active", "expired", "all"]
 type CloseOutcome = Literal["deleted", "deactivated"]
 
@@ -372,49 +373,32 @@ class CaseScheduler(Protocol):
 	def stop(self) -> None: ...
 
 
-async def _load_retention(db: asyncpg.Pool, guild_id: int) -> Retention:
-	row = await db.fetchrow(
-		"INSERT INTO mod_config (guild_id) VALUES ($1) "
-		"ON CONFLICT (guild_id) DO UPDATE SET guild_id = EXCLUDED.guild_id RETURNING case_retention",
-		guild_id,
-	)
-	return "delete" if row and row["case_retention"] == "delete" else "keep"
+def retention_setting(settings: GuildSettings, api: ApiClient) -> GuildSetting[Retention]:
+	"""Register the guild's case retention policy, stored behind the API.
 
+	Args:
+		settings: The registry to add it to.
+		api: The API client it loads and saves through.
 
-async def _save_retention(db: asyncpg.Pool, guild_id: int, value: Retention) -> None:
-	await db.execute(
-		"INSERT INTO mod_config (guild_id, case_retention) VALUES ($1, $2) "
-		"ON CONFLICT (guild_id) DO UPDATE SET case_retention = EXCLUDED.case_retention",
-		guild_id,
-		value,
-	)
-
-
-def retention_setting(settings: GuildSettings) -> GuildSetting[Retention]:
-	"""The guild's case retention policy (``mod_config.case_retention``), registered on ``settings``."""
-	return settings.add("mod.retention", _load_retention, _save_retention)
+	Returns:
+		The setting. ``keep`` for guilds that never set one.
+	"""
+	return settings.add_remote(RETENTION_SETTING, api.cases.retention, api.cases.set_retention)
 
 
 class CaseStore:
-	"""Reads, opens, closes, edits and expires moderation cases.
+	"""Reads, opens, closes, edits and expires moderation cases through the API.
+
+	The API applies the guild's retention when a case is closed.
 
 	Args:
-		bot: The bot, used to resolve guilds and users from stored IDs.
-		db: The database pool holding the ``cases`` table.
-		retention: Returns a guild's retention policy; decides whether closing a case deletes or deactivates it.
+		bot: The bot, used to resolve guilds and users from stored IDs and to reach the API.
 		scheduler: Expiry scheduler. Defaults to a `CaseExpirationManager` that expires cases through this store.
 	"""
 
-	def __init__(
-		self,
-		bot: Bot,
-		db: asyncpg.Pool,
-		retention: RetentionLookup,
-		scheduler: CaseScheduler | None = None,
-	) -> None:
+	def __init__(self, bot: Bot, scheduler: CaseScheduler | None = None) -> None:
 		self._bot = bot
-		self._db = db
-		self._retention = retention
+		self._api = bot.api.cases
 		self._scheduler: CaseScheduler = scheduler or CaseExpirationManager(bot, self)
 
 	def start(self) -> None:
@@ -427,20 +411,15 @@ class CaseStore:
 
 	async def get(self, guild: discord.Guild, case_id: int) -> Case | None:
 		"""Return the case with ``case_id`` in ``guild``, or ``None``."""
-		row = await self._db.fetchrow("SELECT * FROM cases WHERE case_id = $1 AND guild_id = $2", case_id, guild.id)
-		return await self._from_row(row, guild) if row else None
+		record = await self._api.get(guild.id, case_id)
+		return await self._from_record(record, guild) if record else None
 
 	async def active(
 		self, guild: discord.Guild, user: discord.Member | discord.User, case_type: CaseType
 	) -> list[Case]:
 		"""Return the user's active cases of one type in ``guild``, oldest first."""
-		rows = await self._db.fetch(
-			"SELECT * FROM cases WHERE guild_id = $1 AND user_id = $2 AND type = $3 AND active = true ORDER BY created",
-			guild.id,
-			user.id,
-			case_type.value,
-		)
-		return await self._from_rows(rows, guild, user)
+		records = await self._api.for_user(guild.id, user.id, "open", case_type.value)
+		return await self._from_records(records, guild, user)
 
 	async def for_user(
 		self, guild: discord.Guild, user: discord.Member | discord.User, status: CaseStatus = "all"
@@ -452,16 +431,8 @@ class CaseStore:
 			user: The user the cases are about.
 			status: ``"active"`` (active and not past expiry), ``"expired"`` (inactive or past expiry), or ``"all"``.
 		"""
-		query = "SELECT * FROM cases WHERE guild_id = $1 AND user_id = $2"
-		params: list[Any] = [guild.id, user.id]
-		if status == "active":
-			query += " AND active = true AND (expires IS NULL OR expires > $3)"
-			params.append(datetime.datetime.now(tz=datetime.UTC))
-		elif status == "expired":
-			query += " AND (active = false OR (expires IS NOT NULL AND expires <= $3))"
-			params.append(datetime.datetime.now(tz=datetime.UTC))
-		rows = await self._db.fetch(query + " ORDER BY created DESC", *params)
-		return await self._from_rows(rows, guild, user)
+		records = await self._api.for_user(guild.id, user.id, status)
+		return await self._from_records(list(reversed(records)), guild, user)
 
 	async def open(self, case: Case) -> Case | None:
 		"""Record a new case and perform its side effects.
@@ -476,26 +447,24 @@ class CaseStore:
 			return None
 
 		await case.before_creation()
-		await self._db.execute(
-			"""
-			INSERT INTO cases (type, guild_id, case_id, user_id, moderator_id, reason, expires, message, active, created)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-			""",
-			case.type.value,
+		await self._api.create(
 			case._guild.id,
-			case.id,
-			case._user.id,
-			case._moderator.id,
-			case.reason,
-			case.expires,
-			case.message,
-			case.active,
-			case._created,
+			CaseCreate(
+				case_id=case.id,
+				type=case.type.value,
+				user_id=case._user.id,
+				moderator_id=case._moderator.id,
+				reason=case.reason,
+				expires=case.expires,
+				message=case.message,
+				active=case.active,
+				created=case._created,
+			),
 		)
 		try:
 			await case.after_creation()
 		except Exception:
-			await self._db.execute("DELETE FROM cases WHERE case_id = $1", case.id)
+			await self._api.delete(case._guild.id, case.id)
 			raise
 
 		if case.active and case.expires:
@@ -512,12 +481,7 @@ class CaseStore:
 		was_active = case.active
 		if was_active:
 			await case.before_deletion()
-		if await self._retention(case._guild.id) == "delete":
-			await self._db.execute("DELETE FROM cases WHERE case_id = $1", case.id)
-			outcome: CloseOutcome = "deleted"
-		else:
-			await self._db.execute("UPDATE cases SET active = false WHERE case_id = $1", case.id)
-			outcome = "deactivated"
+		outcome = (await self._api.close(case._guild.id, case.id)).outcome
 		case.active = False
 		if was_active:
 			await case.after_deletion()
@@ -528,7 +492,7 @@ class CaseStore:
 		self._scheduler.cancel(case.id)
 		if case.active:
 			await case.before_deletion()
-		await self._db.execute("DELETE FROM cases WHERE case_id = $1", case.id)
+		await self._api.delete(case._guild.id, case.id)
 		if case.active:
 			case.active = False
 			await case.after_deletion()
@@ -548,12 +512,8 @@ class CaseStore:
 			case.expires = expires
 		if message is not MISSING:
 			case.message = message
-		await self._db.execute(
-			"UPDATE cases SET reason = $1, expires = $2, message = $3 WHERE case_id = $4",
-			case.reason,
-			case.expires,
-			case.message,
-			case.id,
+		await self._api.update(
+			case._guild.id, case.id, CaseUpdate(reason=case.reason, expires=case.expires, message=case.message)
 		)
 		self._scheduler.cancel(case.id)
 		if case.active and case.expires:
@@ -562,54 +522,48 @@ class CaseStore:
 
 	async def pending(self) -> list[tuple[int, int, datetime.datetime]]:
 		"""Return ``(case_id, guild_id, expires)`` for every active case that expires."""
-		rows = await self._db.fetch(
-			"SELECT case_id, guild_id, expires FROM cases WHERE active = true AND expires IS NOT NULL"
-		)
-		return [(int(row["case_id"]), int(row["guild_id"]), row["expires"]) for row in rows]
+		return [(case.case_id, case.guild_id, case.expires) for case in await self._api.pending()]
 
 	async def expire(self, case_id: int) -> None:
 		"""Close an expired case. Cases from guilds the bot has left are deleted outright."""
-		row = await self._db.fetchrow("SELECT * FROM cases WHERE case_id = $1 AND active = true", case_id)
-		if not row:
+		record = await self._api.find(case_id)
+		if record is None or not record.active:
 			return
-		guild = self._bot.get_guild(int(row["guild_id"]))
+		guild = self._bot.get_guild(record.guild_id)
 		if guild is None:
-			await self._db.execute("DELETE FROM cases WHERE case_id = $1", case_id)
+			await self._api.delete(record.guild_id, case_id)
 			return
-		await self.close(await self._from_row(row, guild))
+		await self.close(await self._from_record(record, guild))
 
-	async def _from_row(
-		self, row: asyncpg.Record, guild: discord.Guild, user: discord.Member | discord.User | None = None
+	async def _from_record(
+		self, record: CaseRecord, guild: discord.Guild, user: discord.Member | discord.User | None = None
 	) -> Case:
-		(case,) = await self._from_rows([row], guild, user)
+		(case,) = await self._from_records([record], guild, user)
 		return case
 
-	async def _from_rows(
-		self, rows: Sequence[asyncpg.Record], guild: discord.Guild, user: discord.Member | discord.User | None = None
+	async def _from_records(
+		self, records: Sequence[CaseRecord], guild: discord.Guild, user: discord.Member | discord.User | None = None
 	) -> list[Case]:
-		"""Build the `Case` subclass for each row, resolving every distinct user once (cache, then the API)."""
-		ids = {int(row["moderator_id"]) for row in rows}
+		"""Build the `Case` subclass for each record, resolving every distinct user once (cache, then the API)."""
+		ids = {record.moderator_id for record in records}
 		if user is None:
-			ids |= {int(row["user_id"]) for row in rows}
+			ids |= {record.user_id for record in records}
 		users = await self._resolve_users(ids)
-		cases = []
-		for row in rows:
-			active = row["active"]
-			cases.append(
-				CASE_CLASSES[CaseType(row["type"])](
-					_id=int(row["case_id"]),
-					bot=self._bot,
-					guild=guild,
-					user=user or users[int(row["user_id"])],
-					moderator=users[int(row["moderator_id"])],
-					reason=row["reason"],
-					expires=row["expires"],
-					message=row["message"],
-					created=row["created"],
-					active=True if active is None else active,
-				)
+		return [
+			CASE_CLASSES[CaseType(record.type)](
+				_id=record.case_id,
+				bot=self._bot,
+				guild=guild,
+				user=user or users[record.user_id],
+				moderator=users[record.moderator_id],
+				reason=record.reason,
+				expires=record.expires,
+				message=record.message,
+				created=record.created,
+				active=record.active,
 			)
-		return cases
+			for record in records
+		]
 
 	async def _resolve_users(self, user_ids: set[int]) -> dict[int, discord.User]:
 		resolved = {uid: cached for uid in user_ids if (cached := self._bot.get_user(uid)) is not None}

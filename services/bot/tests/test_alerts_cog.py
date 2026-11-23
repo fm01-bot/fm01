@@ -6,12 +6,16 @@ import discord
 import pytest
 from args.media import Media
 from cogs.alerts import OFFLINE_BASELINE, AlertLimitReachedError, Alerts
+from core.api import ApiError
+from tests.fake_api import alert
+
+from api import ErrorBody, ErrorCode
 
 
 @pytest.fixture
 def mock_bot():
 	bot = MagicMock()
-	bot.db = AsyncMock()
+	bot.api.alerts = MagicMock()
 	bot.wait_until_ready = AsyncMock()
 	bot.config = MagicMock()
 	bot.config.emojis = {"check": "✅", "x": "❌"}
@@ -40,8 +44,7 @@ def alerts_cog(mock_bot):
 
 @pytest.mark.asyncio
 async def test_add_alert_success(alerts_cog, mock_bot):
-	mock_bot.db.fetchval = AsyncMock(return_value=2)  # Currently 2 alerts configured
-	mock_bot.db.fetchrow = AsyncMock(return_value={"id": 42})
+	mock_bot.api.alerts.add = AsyncMock(return_value=alert(id=42))
 
 	alert_id = await alerts_cog.add_alert(
 		guild_id=123,
@@ -52,12 +55,20 @@ async def test_add_alert_success(alerts_cog, mock_bot):
 		target_channel_id=999,
 	)
 	assert alert_id == 42
-	mock_bot.db.fetchrow.assert_called_once()
+	assert mock_bot.api.alerts.add.await_args is not None
+	sent = mock_bot.api.alerts.add.await_args.args[1]
+	assert (sent.platform, sent.channel_account, sent.account_id, sent.target_channel_id) == (
+		"youtube",
+		"@Creator",
+		"UC12345",
+		999,
+	)
 
 
 @pytest.mark.asyncio
 async def test_add_alert_limit_exceeded(alerts_cog, mock_bot):
-	mock_bot.db.fetchval = AsyncMock(return_value=5)  # Already 5 alerts configured
+	refusal = ApiError(409, ErrorBody(code=ErrorCode.ALERT_LIMIT, message="alert limit"))
+	mock_bot.api.alerts.add = AsyncMock(side_effect=refusal)
 
 	with pytest.raises(AlertLimitReachedError):
 		await alerts_cog.add_alert(
@@ -97,11 +108,7 @@ async def test_dispatch_alert_localized_embed(alerts_cog, mock_bot):
 		platform="youtube",
 	)
 
-	alert_row = {
-		"id": 1,
-		"guild_id": 123,
-		"target_channel_id": 999,
-	}
+	alert_row = alert(id=1, guild_id=123, target_channel_id=999)
 
 	sent = await alerts_cog.dispatch_alert(alert_row, media)
 	assert sent is True
@@ -148,11 +155,7 @@ async def test_dispatch_alert_fallback(alerts_cog, mock_bot):
 		platform="twitch",
 	)
 
-	alert_row = {
-		"id": 3,
-		"guild_id": 123,
-		"target_channel_id": 999,
-	}
+	alert_row = alert(id=3, guild_id=123, target_channel_id=999)
 
 	sent = await alerts_cog.dispatch_alert(alert_row, media)
 	assert sent is True
@@ -164,18 +167,18 @@ async def test_dispatch_alert_fallback(alerts_cog, mock_bot):
 
 @pytest.mark.asyncio
 async def test_alert_crud_methods(alerts_cog, mock_bot):
-	mock_bot.db.fetch = AsyncMock(return_value=[{"id": 1, "platform": "youtube"}])
+	mock_bot.api.alerts.for_guild = AsyncMock(return_value=[alert(id=1, platform="youtube")])
 	alerts = await alerts_cog.get_guild_alerts(123)
 	assert len(alerts) == 1
-	assert alerts[0]["platform"] == "youtube"
+	assert alerts[0].platform == "youtube"
 
-	mock_bot.db.execute = AsyncMock(return_value="DELETE 1")
-	deleted = await alerts_cog.remove_alert(1, 123)
-	assert deleted is True
+	mock_bot.api.alerts.remove = AsyncMock(return_value=True)
+	assert await alerts_cog.remove_alert(1, 123) is True
+	mock_bot.api.alerts.remove.assert_awaited_once_with(123, 1)
 
-	mock_bot.db.execute = AsyncMock(return_value="UPDATE 1")
-	toggled = await alerts_cog.set_alert_enabled(1, 123, False)
-	assert toggled is True
+	mock_bot.api.alerts.set_enabled = AsyncMock(return_value=True)
+	assert await alerts_cog.set_alert_enabled(1, 123, False) is True
+	mock_bot.api.alerts.set_enabled.assert_awaited_once_with(123, 1, False)
 
 
 @pytest.mark.asyncio
@@ -183,14 +186,11 @@ async def test_check_account_records_offline_baseline_for_live_only(alerts_cog, 
 	provider = MagicMock(live_only=True)
 	provider.fetch_latest = AsyncMock(return_value=None)
 	monkeypatch.setattr("cogs.alerts.get_provider", lambda _platform: provider)
-	mock_bot.db.execute = AsyncMock()
+	mock_bot.api.alerts.set_baseline = AsyncMock()
 
 	await alerts_cog.check_account(MagicMock(), "twitch", "streamer", "123")
 
-	query, *args = mock_bot.db.execute.call_args.args
-	assert "last_media_id IS NULL" in query
-	assert args[0] == OFFLINE_BASELINE
-	assert args[2:] == ["twitch", "streamer", "123"]
+	mock_bot.api.alerts.set_baseline.assert_awaited_once_with("twitch", "streamer", "123", OFFLINE_BASELINE)
 
 
 @pytest.mark.asyncio
@@ -198,11 +198,11 @@ async def test_check_account_skips_baseline_when_upload_feed_is_empty(alerts_cog
 	provider = MagicMock(live_only=False)
 	provider.fetch_latest = AsyncMock(return_value=None)
 	monkeypatch.setattr("cogs.alerts.get_provider", lambda _platform: provider)
-	mock_bot.db.execute = AsyncMock()
+	mock_bot.api.alerts.set_baseline = AsyncMock()
 
 	await alerts_cog.check_account(MagicMock(), "youtube", "@creator", "UC1")
 
-	mock_bot.db.execute.assert_not_called()
+	mock_bot.api.alerts.set_baseline.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -218,11 +218,11 @@ async def test_check_account_announces_stream_after_offline_baseline(alerts_cog,
 	provider = MagicMock(live_only=True)
 	provider.fetch_latest = AsyncMock(return_value=media)
 	monkeypatch.setattr("cogs.alerts.get_provider", lambda _platform: provider)
-	mock_bot.db.fetch = AsyncMock(return_value=[{"id": 1, "last_media_id": OFFLINE_BASELINE}])
-	mock_bot.db.execute = AsyncMock()
+	mock_bot.api.alerts.subscribers = AsyncMock(return_value=[alert(id=1, last_media_id=OFFLINE_BASELINE)])
+	mock_bot.api.alerts.set_last_media = AsyncMock()
 	alerts_cog.dispatch_alert = AsyncMock(return_value=True)
 
 	await alerts_cog.check_account(MagicMock(), "twitch", "streamer", "123")
 
 	alerts_cog.dispatch_alert.assert_awaited_once()
-	assert mock_bot.db.execute.call_args.args[1] == "stream_1"
+	mock_bot.api.alerts.set_last_media.assert_awaited_once_with(1, "stream_1")

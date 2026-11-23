@@ -45,7 +45,7 @@ class TicketConfigUpdate(BaseModel):
 	category_id: Snowflake | None = None
 	log_channel_id: Snowflake | None = None
 	support_role_id: Snowflake | None = None
-	max_tickets: int | None = Field(default=None, ge=1, le=100)
+	max_tickets: int | None = Field(default=None, ge=0)
 	dm_transcript: bool | None = None
 	topic_min_length: int | None = Field(default=None, ge=0, le=4000)
 	topic_max_length: int | None = Field(default=None, ge=1, le=4000)

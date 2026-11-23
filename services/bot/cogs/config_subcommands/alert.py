@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any
 
 import aiohttp
 import discord
+from core.api import ApiError
 from helpers.alert_providers import (
 	SUPPORTED_PLATFORMS,
 	AccountNotFoundError,
@@ -14,6 +15,8 @@ from helpers.alert_providers import (
 	get_provider,
 )
 from helpers.cli_parser import CLINode, CLIParseError
+
+from api import MAX_ALERTS, AlertCreate, ErrorCode
 
 from .helpers import resolve_channel
 
@@ -59,11 +62,8 @@ def setup_alert_subcommands(parent_node: CLINode) -> CLINode:
 			raise CLIParseError(f"Provider for platform `{platform}` is not available.", add_node)
 
 		# Check 5-alert total limit per server
-		count = await ctx.bot.db.fetchval(
-			"SELECT COUNT(*) FROM media_alerts WHERE guild_id = $1",
-			ctx.guild.id,
-		)
-		if count is not None and count >= 5:
+		count = len(await ctx.bot.api.alerts.for_guild(ctx.guild.id))
+		if count >= MAX_ALERTS:
 			raise CLIParseError(
 				"This server has reached the maximum limit of 5 alert subscriptions. "
 				"Remove an existing alert using `?!config alert remove` before adding a new one.",
@@ -116,38 +116,24 @@ def setup_alert_subcommands(parent_node: CLINode) -> CLINode:
 				await session.close()
 
 		# Add alert to database
-		if alerts_cog and hasattr(alerts_cog, "add_alert"):
-			alert_id = await alerts_cog.add_alert(
-				guild_id=ctx.guild.id,
-				platform=plat,
-				channel_account=account,
-				account_id=account_id,
-				account_name=account_name,
-				target_channel_id=target_channel.id,
-			)
-		else:
-			row = await ctx.bot.db.fetchrow(
-				"""
-				INSERT INTO media_alerts (
-					guild_id, platform, channel_account, account_id,
-					account_name, target_channel_id, is_enabled
-				)
-				VALUES ($1, $2, $3, $4, $5, $6, true)
-				ON CONFLICT (guild_id, platform, channel_account, target_channel_id)
-				DO UPDATE SET
-					account_id = EXCLUDED.account_id,
-					account_name = EXCLUDED.account_name,
-					is_enabled = true
-				RETURNING id
-				""",
+		try:
+			alert = await ctx.bot.api.alerts.add(
 				ctx.guild.id,
-				plat,
-				account,
-				account_id,
-				account_name,
-				target_channel.id,
+				AlertCreate(
+					platform=plat,
+					channel_account=account,
+					account_id=account_id,
+					account_name=account_name,
+					target_channel_id=target_channel.id,
+				),
 			)
-			alert_id = int(row["id"]) if row else 0
+		except ApiError as exc:
+			if exc.code is not ErrorCode.ALERT_LIMIT:
+				raise
+			raise CLIParseError(
+				"This server has reached the maximum limit of 5 alert subscriptions.", add_node
+			) from exc
+		alert_id = alert.id
 
 		lines = [
 			f"[+] Alert #{alert_id} successfully added ({plat})",
@@ -166,21 +152,11 @@ def setup_alert_subcommands(parent_node: CLINode) -> CLINode:
 	async def alert_remove(ctx: Context, target: str, account: str | None = None, **kwargs: Any):
 		assert ctx.guild is not None
 		target_clean = target.strip()
-		alerts_cog: Any = ctx.bot.get_cog("Alerts")
 
 		# If target is numeric alert ID
 		if target_clean.isdigit():
 			alert_id = int(target_clean)
-			removed = False
-			if alerts_cog and hasattr(alerts_cog, "remove_alert"):
-				removed = await alerts_cog.remove_alert(alert_id, ctx.guild.id)
-			else:
-				res = await ctx.bot.db.execute(
-					"DELETE FROM media_alerts WHERE id = $1 AND guild_id = $2",
-					alert_id,
-					ctx.guild.id,
-				)
-				removed = res == "DELETE 1"
+			removed = await ctx.bot.api.alerts.remove(ctx.guild.id, alert_id)
 
 			if not removed:
 				raise CLIParseError(f"Alert #{alert_id} was not found in this server.", remove_node)
@@ -194,23 +170,7 @@ def setup_alert_subcommands(parent_node: CLINode) -> CLINode:
 					f"Please provide the account name to remove: `?!config alert remove {plat} <account>`",
 					remove_node,
 				)
-			del_count = 0
-			if alerts_cog and hasattr(alerts_cog, "remove_alert_by_platform_and_account"):
-				del_count = await alerts_cog.remove_alert_by_platform_and_account(ctx.guild.id, plat, account.strip())
-			else:
-				res = await ctx.bot.db.execute(
-					"""
-					DELETE FROM media_alerts
-					WHERE guild_id = $1
-					AND platform = $2
-					AND (LOWER(channel_account) = LOWER($3) OR LOWER(account_id) = LOWER($3))
-					""",
-					ctx.guild.id,
-					plat,
-					account.strip(),
-				)
-				parts = res.split()
-				del_count = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 0
+			del_count = await ctx.bot.api.alerts.remove_account(ctx.guild.id, plat, account.strip())
 
 			if del_count == 0:
 				raise CLIParseError(
@@ -233,10 +193,7 @@ def setup_alert_subcommands(parent_node: CLINode) -> CLINode:
 
 	async def alert_list(ctx: Context, **kwargs: Any):
 		assert ctx.guild is not None
-		rows = await ctx.bot.db.fetch(
-			"SELECT * FROM media_alerts WHERE guild_id = $1 ORDER BY id ASC",
-			ctx.guild.id,
-		)
+		rows = [dict(alert) for alert in await ctx.bot.api.alerts.for_guild(ctx.guild.id)]
 		if not rows:
 			return await ctx.send(
 				content="```ansi\n[-] No media alerts configured for this server (Limit: 5).\nUse `?!config alert add <platform> <channel>` to add one.\n```"
@@ -244,7 +201,7 @@ def setup_alert_subcommands(parent_node: CLINode) -> CLINode:
 
 		lines = [f"[Configured Social Media Alerts ({len(rows)}/5)]"]
 		for row in rows:
-			status = "Active" if row["is_enabled"] else "Disabled"
+			status = "Active" if row["enabled"] else "Disabled"
 			target_ch = ctx.guild.get_channel(int(row["target_channel_id"]))
 			ch_name = f"#{target_ch.name}" if target_ch else str(row["target_channel_id"])
 			creator = row["account_name"] or row["channel_account"]
@@ -262,12 +219,7 @@ def setup_alert_subcommands(parent_node: CLINode) -> CLINode:
 		if not target.strip().isdigit():
 			raise CLIParseError("Target must be a numeric alert ID.", enable_node)
 		alert_id = int(target.strip())
-		res = await ctx.bot.db.execute(
-			"UPDATE media_alerts SET is_enabled = true WHERE id = $1 AND guild_id = $2",
-			alert_id,
-			ctx.guild.id,
-		)
-		if res != "UPDATE 1":
+		if not await ctx.bot.api.alerts.set_enabled(ctx.guild.id, alert_id, True):
 			raise CLIParseError(f"Alert #{alert_id} was not found in this server.", enable_node)
 		return await ctx.send(content=f"```ansi\n[+] Alert #{alert_id} enabled\n```")
 
@@ -282,12 +234,7 @@ def setup_alert_subcommands(parent_node: CLINode) -> CLINode:
 		if not target.strip().isdigit():
 			raise CLIParseError("Target must be a numeric alert ID.", disable_node)
 		alert_id = int(target.strip())
-		res = await ctx.bot.db.execute(
-			"UPDATE media_alerts SET is_enabled = false WHERE id = $1 AND guild_id = $2",
-			alert_id,
-			ctx.guild.id,
-		)
-		if res != "UPDATE 1":
+		if not await ctx.bot.api.alerts.set_enabled(ctx.guild.id, alert_id, False):
 			raise CLIParseError(f"Alert #{alert_id} was not found in this server.", disable_node)
 		return await ctx.send(content=f"```ansi\n[-] Alert #{alert_id} disabled\n```")
 

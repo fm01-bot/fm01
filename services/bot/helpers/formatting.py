@@ -13,7 +13,6 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 
 import aiohttp
-import asyncpg
 import discord
 import discord.gateway
 import discord.http
@@ -34,7 +33,6 @@ _OPAQUE: tuple[type, ...] = (
 	discord.http.HTTPClient,
 	discord.gateway.DiscordWebSocket,
 	aiohttp.ClientSession,
-	asyncpg.Pool,
 )
 """Objects a template may print but never look inside: every path to a secret goes through one of them."""
 

@@ -11,7 +11,7 @@ from discord.ext import commands
 @pytest.fixture
 def cog() -> Info:
 	bot = MagicMock()
-	bot.db = AsyncMock()
+	bot.api.snapshots.get = AsyncMock(return_value=None)
 	return Info(bot)
 
 
@@ -97,17 +97,15 @@ async def test_unicode_emoji_and_garbage(cog, ctx):
 
 async def test_template_falls_back_to_a_snapshot_code(cog, ctx):
 	cog.client.fetch_template = AsyncMock(side_effect=discord.NotFound(MagicMock(status=404), "unknown template"))
-	cog.client.db.fetchrow.return_value = {"code": "abc"}
+	cog.client.api.snapshots.get.return_value = MagicMock()
 	with patch("cogs.info.Template.from_dict", AsyncMock(return_value="t")):
 		await cog.template.callback(cog, ctx, "ABCDEFG")
 	cog.client.fetch_template.assert_awaited_once_with("ABCDEFG")
-	cog.client.db.fetchrow.assert_awaited_once()
-	assert cog.client.db.fetchrow.call_args.args[1] == "abcdefg"
+	cog.client.api.snapshots.get.assert_awaited_once_with("abcdefg")
 	assert sent_key(ctx) == "info.template"
 
 
 async def test_unknown_template_is_a_bad_argument(cog, ctx):
-	cog.client.db.fetchrow.return_value = None
 	with pytest.raises(commands.BadArgument):
 		await cog.template.callback(cog, ctx, "!!")
 	cog.client.fetch_template.assert_not_called()

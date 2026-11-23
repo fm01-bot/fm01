@@ -10,14 +10,22 @@ from cogs.basic import Basic
 from cogs.config_subcommands.leave import setup_leave_subcommands
 from cogs.status import Status
 from core.clustering import ClusterConfig
+from core.settings import GuildSettings
 from discord.ext import commands
 from helpers.cli_parser import CLINode, CLIParseError
+from tests.fake_api import FakeGreetings
+
+from api import AfkToggled, GreetingConfig
 
 
 @pytest.fixture
 def mock_bot():
 	bot = MagicMock()
-	bot.db = AsyncMock()
+	bot.api.ping = AsyncMock()
+	bot.api.afk.toggle = AsyncMock(return_value=AfkToggled(away=True, previous_nick="Alice"))
+	bot.api.afk.back = AsyncMock()
+	bot.api.greetings = FakeGreetings()
+	bot.settings = GuildSettings(bot.event_bus)
 	bot.latency = 0.042
 	bot.get_shard = MagicMock(return_value=None)
 	bot.shard_count = 1
@@ -41,7 +49,7 @@ class TestBasicCommands:
 		# Run the ping command callback
 		await cog.ping.callback(cog, ctx)
 
-		mock_bot.db.execute.assert_called_once_with("SELECT 1")
+		mock_bot.api.ping.assert_awaited_once()
 		ctx.send.assert_called_once()
 		args, kwargs = ctx.send.call_args
 		assert args[0] == "ping"
@@ -185,11 +193,9 @@ class TestAFKCog:
 		ctx.author.edit = AsyncMock()
 		ctx.send = AsyncMock()
 
-		mock_bot.db.fetchrow.return_value = None
-
 		await cog.afk.callback(cog, ctx, reason="Studying for exams")
 
-		mock_bot.db.execute.assert_called()
+		mock_bot.api.afk.toggle.assert_awaited_once_with(123, 456, "Studying for exams", "Alice")
 		ctx.send.assert_called_once_with("afk.on")
 		assert (123, 456) in cog.afk_cache
 		assert cog.afk_cache[(123, 456)]["message"] == "Studying for exams"
@@ -205,7 +211,7 @@ class TestAFKCog:
 		await cog.afk.callback(cog, ctx, reason="Join my server discord.gg/malicious")
 
 		ctx.send.assert_called_once_with("afk.link")
-		mock_bot.db.execute.assert_not_called()
+		mock_bot.api.afk.toggle.assert_not_called()
 		assert (123, 456) not in cog.afk_cache
 
 	@pytest.mark.asyncio
@@ -228,7 +234,7 @@ class TestAFKCog:
 		await cog.check_afk(message)
 
 		assert (123, 456) not in cog.afk_cache
-		mock_bot.db.execute.assert_called_once()
+		mock_bot.api.afk.back.assert_awaited_once_with(123, 456)
 		message.author.edit.assert_called_once_with(nick="OldNick")
 		ctx.reply.assert_called_once_with("afk.off")
 
@@ -280,16 +286,17 @@ class TestLeaveConfigCommands:
 		enable_action = parser_action._subparsers_action.choices["enable"]
 		await enable_action.callback(ctx, channel="#goodbye", message="{user} has left!")
 
-		mock_bot.db.execute.assert_called_once()
+		assert mock_bot.api.greetings.configs[("leave", 123)] == GreetingConfig(
+			enabled=True, channel_id=999, message="{user} has left!"
+		)
 		assert "Leave messages enabled in #goodbye" in ctx.send.call_args[1]["content"]
 
 		# Execute disable
 		ctx.send.reset_mock()
-		mock_bot.db.execute.reset_mock()
 		disable_action = parser_action._subparsers_action.choices["disable"]
 		await disable_action.callback(ctx)
 
-		mock_bot.db.execute.assert_called_once()
+		assert mock_bot.api.greetings.configs[("leave", 123)].enabled is False
 		assert "Leave messages disabled" in ctx.send.call_args[1]["content"]
 
 	@pytest.mark.asyncio
@@ -315,17 +322,13 @@ class TestLeaveConfigCommands:
 
 		# Test setting message
 		await msg_action.callback(ctx, message="Bye bye {user}!")
-		mock_bot.db.execute.assert_called_once()
+		assert mock_bot.api.greetings.configs[("leave", 123)] == GreetingConfig(
+			enabled=True, channel_id=888, message="Bye bye {user}!"
+		)
 		assert "Leave message template updated" in ctx.send.call_args[1]["content"]
 
 		# Test status
 		ctx.send.reset_mock()
-		mock_bot.db.fetchrow.return_value = {
-			"guild_id": 123,
-			"is_on": True,
-			"channel": 888,
-			"message": "Bye bye {user}!",
-		}
 		status_action = parser_action._subparsers_action.choices["status"]
 		await status_action.callback(ctx)
 

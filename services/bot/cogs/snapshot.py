@@ -1,21 +1,35 @@
 import asyncio
-import datetime
-import json
-import uuid
+from typing import Any
 from uuid import UUID
 
 import aiohttp
-import asyncpg
 import discord
 from core import Bot, Context, group
 from discord.ext import commands
 from discord.utils import MISSING
 
+from api import SnapshotCreate
+
+
+def _json_keys(value: Any) -> Any:
+	"""Turn a payload's integer keys (role and channel IDs) into strings, as JSON stores them.
+
+	Args:
+		value: The payload, or a part of it.
+
+	Returns:
+		The same data with string keys.
+	"""
+	if isinstance(value, dict):
+		return {str(key): _json_keys(item) for key, item in value.items()}
+	if isinstance(value, list):
+		return [_json_keys(item) for item in value]
+	return value
+
 
 class Snapshot(commands.Cog, name="Snapshots"):
 	def __init__(self, client: Bot):
 		self.client = client
-		self.connection: asyncpg.Pool = client.db
 		self.custom_response = client.custom_response
 
 	@staticmethod
@@ -75,52 +89,35 @@ class Snapshot(commands.Cog, name="Snapshots"):
 
 		return payload
 
-	async def create_snapshot(self, ctx: Context) -> UUID | None:
-		assert ctx.guild is not None
-		"""Creates a snapshot and inserts it into the database.
+	async def create_snapshot(self, ctx: Context) -> UUID:
+		"""Save a snapshot of the guild through the API.
 
 		Args:
-			ctx (Context): The context to get the guild data from.
+			ctx: The context to get the guild data from.
 
 		Returns:
-			UUID: Code (`UUID`) if the snapshot was successful.
-
+			The code to restore it with.
 		"""
+		assert ctx.guild is not None
 		payload = await self.save(ctx)
-
-		code = uuid.uuid4()
-		row = await self.connection.fetchrow("SELECT * FROM snapshots WHERE code = $1", str(code))
-		while row:  # if the code already exists
-			code = uuid.uuid4()
-			row = await self.connection.fetchrow("SELECT * FROM snapshots WHERE code = $1", str(code))
-
-		await self.connection.execute(
-			"INSERT INTO snapshots(guild_id, name, payload, author_id, date, code) VALUES($1, $2, $3, $4, $5, $6)",
+		name = await self.custom_response("snapshot.strings.server_snapshot", ctx)
+		snapshot = await self.client.api.snapshots.create(
 			ctx.guild.id,
-			await self.custom_response("snapshot.strings.server_snapshot", ctx),
-			json.dumps(payload),
-			ctx.author.id,
-			datetime.datetime.now(tz=datetime.UTC),
-			str(code),
+			SnapshotCreate(name=str(name), author_id=ctx.author.id, payload=_json_keys(payload)),
 		)
-
-		return code
+		return UUID(snapshot.code)
 
 	async def get_snapshot(self, code: str | UUID) -> dict | None:
-		"""Gets a snapshot from the database.
+		"""Get a snapshot's payload.
 
 		Args:
-			code (Union[str, UUID]): The code of the snapshot.
+			code: The snapshot's code.
 
 		Returns:
-			dict: The snapshot's payload.
-
+			The payload, or ``None`` if there is no snapshot with that code.
 		"""
-		payload = await self.connection.fetchval("SELECT payload FROM snapshots WHERE code = $1", code)
-		if payload:
-			return json.loads(payload)
-		else:
-			return None
+		snapshot = await self.client.api.snapshots.get(str(code))
+		return snapshot.payload if snapshot else None
 
 	async def delete_all_channels(self, ctx: Context):
 		assert ctx.guild is not None

@@ -41,9 +41,9 @@ class Basic(commands.Cog, name="Basic"):
 
 	@command()
 	async def ping(self, ctx: Context):
-		# Database ping calculation
+		# API round trip (the API holds the database)
 		database_start = perf_counter()
-		await self.client.db.execute("SELECT 1")
+		await self.client.api.ping()
 		database = perf_counter() - database_start
 
 		# Discord routes DMs to shard 0.

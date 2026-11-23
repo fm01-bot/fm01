@@ -5,20 +5,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import discord
-from cogs.level import level_config_setting
+from cogs.level import LevelSettings
 from helpers.cli_parser import CLINode, CLIParseError
 
 from .helpers import resolve_channel, resolve_role
 
 if TYPE_CHECKING:
 	from core import Context
-
-
-async def _write_level_config(ctx: Context, query: str, *args: Any) -> None:
-	"""Fallback level_config write (Level cog not loaded); reported so the cached level config refreshes."""
-	assert ctx.guild is not None
-	await ctx.bot.db.execute(query, *args)
-	await level_config_setting(ctx.bot.settings).changed(ctx.guild.id)
 
 
 def setup_level_subcommands(parent_node: CLINode) -> CLINode:
@@ -36,19 +29,9 @@ def setup_level_subcommands(parent_node: CLINode) -> CLINode:
 
 	async def level_enable(ctx: Context, **kwargs: Any):
 		assert ctx.guild is not None
-		cog: Any = ctx.bot.get_cog("Level")
-		if cog:
-			await cog.enable_leveling(ctx.guild.id)
-		else:
-			await _write_level_config(
-				ctx,
-				"""
-				INSERT INTO level_config (guild_id, is_on)
-				VALUES ($1, true)
-				ON CONFLICT (guild_id) DO UPDATE SET is_on = true
-				""",
-				ctx.guild.id,
-			)
+		cog = LevelSettings(ctx.bot)
+		await cog.enable_leveling(ctx.guild.id)
+
 		return await ctx.send(content="```ansi\n[+] Leveling system enabled\n```")
 
 	enable_node.callback = level_enable
@@ -57,19 +40,9 @@ def setup_level_subcommands(parent_node: CLINode) -> CLINode:
 
 	async def level_disable(ctx: Context, **kwargs: Any):
 		assert ctx.guild is not None
-		cog: Any = ctx.bot.get_cog("Level")
-		if cog:
-			await cog.disable_leveling(ctx.guild.id)
-		else:
-			await _write_level_config(
-				ctx,
-				"""
-				INSERT INTO level_config (guild_id, is_on)
-				VALUES ($1, false)
-				ON CONFLICT (guild_id) DO UPDATE SET is_on = false
-				""",
-				ctx.guild.id,
-			)
+		cog = LevelSettings(ctx.bot)
+		await cog.disable_leveling(ctx.guild.id)
+
 		return await ctx.send(content="```ansi\n[-] Leveling system disabled\n```")
 
 	disable_node.callback = level_disable
@@ -131,35 +104,14 @@ def setup_level_subcommands(parent_node: CLINode) -> CLINode:
 			except ValueError:
 				raise CLIParseError("`--cooldown` must be a non-negative integer.", xp_node)
 
-		cog: Any = ctx.bot.get_cog("Level")
-		if cog:
-			cfg = await cog.get_guild_config(ctx.guild.id)
-			cur_min = min_val if min_val is not None else cfg.min_xp
-			cur_max = max_val if max_val is not None else cfg.max_xp
-			if cur_min > cur_max:
-				raise CLIParseError(f"Minimum XP ({cur_min}) cannot be greater than Maximum XP ({cur_max}).", xp_node)
+		cog = LevelSettings(ctx.bot)
+		cfg = await cog.get_guild_config(ctx.guild.id)
+		cur_min = min_val if min_val is not None else cfg.min_xp
+		cur_max = max_val if max_val is not None else cfg.max_xp
+		if cur_min > cur_max:
+			raise CLIParseError(f"Minimum XP ({cur_min}) cannot be greater than Maximum XP ({cur_max}).", xp_node)
 
-			await cog.update_xp_config(
-				ctx.guild.id, min_xp=min_val, max_xp=max_val, multiplier=mult_val, cooldown=cd_val
-			)
-		else:
-			await _write_level_config(
-				ctx,
-				"""
-				INSERT INTO level_config (guild_id, min_xp, max_xp, multiplier, cooldown)
-				VALUES ($1, COALESCE($2, 15), COALESCE($3, 25), COALESCE($4, 1.0), COALESCE($5, 60))
-				ON CONFLICT (guild_id) DO UPDATE SET
-					min_xp = COALESCE($2, level_config.min_xp),
-					max_xp = COALESCE($3, level_config.max_xp),
-					multiplier = COALESCE($4, level_config.multiplier),
-					cooldown = COALESCE($5, level_config.cooldown)
-				""",
-				ctx.guild.id,
-				min_val,
-				max_val,
-				mult_val,
-				cd_val,
-			)
+		await cog.update_xp_config(ctx.guild.id, min_xp=min_val, max_xp=max_val, multiplier=mult_val, cooldown=cd_val)
 
 		lines = ["[+] Leveling XP configuration updated:"]
 		if min_val is not None:
@@ -208,26 +160,9 @@ def setup_level_subcommands(parent_node: CLINode) -> CLINode:
 			if mode_clean is None:
 				mode_clean = "channel"
 
-		cog: Any = ctx.bot.get_cog("Level")
+		cog = LevelSettings(ctx.bot)
 		ch_id = target_channel.id if target_channel else None
-		if cog:
-			await cog.update_message_config(ctx.guild.id, mode=mode_clean, channel_id=ch_id, template=tmpl_text)
-		else:
-			await _write_level_config(
-				ctx,
-				"""
-				INSERT INTO level_config (guild_id, message_mode, message_channel, levelup_message)
-				VALUES ($1, COALESCE($2, 'current'), $3, $4)
-				ON CONFLICT (guild_id) DO UPDATE SET
-					message_mode = COALESCE($2, level_config.message_mode),
-					message_channel = COALESCE($3, level_config.message_channel),
-					levelup_message = COALESCE($4, level_config.levelup_message)
-				""",
-				ctx.guild.id,
-				mode_clean,
-				ch_id,
-				tmpl_text,
-			)
+		await cog.update_message_config(ctx.guild.id, mode=mode_clean, channel_id=ch_id, template=tmpl_text)
 
 		lines = ["[+] Level-up message configuration updated:"]
 		if mode_clean:
@@ -267,20 +202,8 @@ def setup_level_subcommands(parent_node: CLINode) -> CLINode:
 		):
 			raise CLIParseError("You can only reward roles below your own top role.", rewards_add_node)
 
-		cog: Any = ctx.bot.get_cog("Level")
-		if cog:
-			await cog.add_role_reward(ctx.guild.id, lvl_int, target_role.id)
-		else:
-			await ctx.bot.db.execute(
-				"""
-				INSERT INTO level_roles (guild_id, level, role_id)
-				VALUES ($1, $2, $3)
-				ON CONFLICT (guild_id, level, role_id) DO NOTHING
-				""",
-				ctx.guild.id,
-				lvl_int,
-				target_role.id,
-			)
+		cog = LevelSettings(ctx.bot)
+		await cog.add_role_reward(ctx.guild.id, lvl_int, target_role.id)
 
 		return await ctx.send(content=f"```ansi\n[+] Added reward: @{target_role.name} at Level {lvl_int}\n```")
 
@@ -301,21 +224,8 @@ def setup_level_subcommands(parent_node: CLINode) -> CLINode:
 			raise CLIParseError("Level must be a valid integer.", rewards_rm_node)
 
 		target_role = resolve_role(ctx.guild, role) if role else None
-		cog: Any = ctx.bot.get_cog("Level")
-		if cog:
-			await cog.remove_role_reward(ctx.guild.id, lvl_int, target_role.id if target_role else None)
-		else:
-			if target_role:
-				await ctx.bot.db.execute(
-					"DELETE FROM level_roles WHERE guild_id = $1 AND level = $2 AND role_id = $3",
-					ctx.guild.id,
-					lvl_int,
-					target_role.id,
-				)
-			else:
-				await ctx.bot.db.execute(
-					"DELETE FROM level_roles WHERE guild_id = $1 AND level = $2", ctx.guild.id, lvl_int
-				)
+		cog = LevelSettings(ctx.bot)
+		await cog.remove_role_reward(ctx.guild.id, lvl_int, target_role.id if target_role else None)
 
 		return await ctx.send(content=f"```ansi\n[-] Removed role reward(s) for Level {lvl_int}\n```")
 
@@ -332,20 +242,8 @@ def setup_level_subcommands(parent_node: CLINode) -> CLINode:
 			raise CLIParseError("Please specify `true` (stack) or `false` (replace previous).", rewards_stack_node)
 
 		is_stack = stack.lower() in {"true", "yes", "1"}
-		cog: Any = ctx.bot.get_cog("Level")
-		if cog:
-			await cog.set_stack_roles(ctx.guild.id, is_stack)
-		else:
-			await _write_level_config(
-				ctx,
-				"""
-				INSERT INTO level_config (guild_id, stack_roles)
-				VALUES ($1, $2)
-				ON CONFLICT (guild_id) DO UPDATE SET stack_roles = $2
-				""",
-				ctx.guild.id,
-				is_stack,
-			)
+		cog = LevelSettings(ctx.bot)
+		await cog.set_stack_roles(ctx.guild.id, is_stack)
 
 		mode_str = (
 			"Stackable (keep all previous unlocked roles)"
@@ -360,9 +258,10 @@ def setup_level_subcommands(parent_node: CLINode) -> CLINode:
 
 	async def rewards_list(ctx: Context, **kwargs: Any):
 		assert ctx.guild is not None
-		rows = await ctx.bot.db.fetch(
-			"SELECT level, role_id FROM level_roles WHERE guild_id = $1 ORDER BY level ASC", ctx.guild.id
-		)
+		rows = [
+			{"level": level, "role_id": role_id}
+			for level, role_id in await LevelSettings(ctx.bot).get_role_rewards(ctx.guild.id)
+		]
 		if not rows:
 			return await ctx.send(content="```ansi\n[!] No role rewards configured for this server.\n```")
 
@@ -388,19 +287,8 @@ def setup_level_subcommands(parent_node: CLINode) -> CLINode:
 		if not target_channel:
 			raise CLIParseError(f"Channel `{channel}` was not found.", ch_ignore_node)
 
-		cog: Any = ctx.bot.get_cog("Level")
-		if cog:
-			await cog.set_channel_ignored(ctx.guild.id, target_channel.id, True)
-		else:
-			await ctx.bot.db.execute(
-				"""
-				INSERT INTO level_channel_overrides (guild_id, channel_id, is_ignored)
-				VALUES ($1, $2, true)
-				ON CONFLICT (guild_id, channel_id) DO UPDATE SET is_ignored = true
-				""",
-				ctx.guild.id,
-				target_channel.id,
-			)
+		cog = LevelSettings(ctx.bot)
+		await cog.set_channel_ignored(ctx.guild.id, target_channel.id, True)
 
 		return await ctx.send(content=f"```ansi\n[-] Ignored channel #{target_channel.name} from earning XP\n```")
 
@@ -417,19 +305,8 @@ def setup_level_subcommands(parent_node: CLINode) -> CLINode:
 		if not target_channel:
 			raise CLIParseError(f"Channel `{channel}` was not found.", ch_unignore_node)
 
-		cog: Any = ctx.bot.get_cog("Level")
-		if cog:
-			await cog.set_channel_ignored(ctx.guild.id, target_channel.id, False)
-		else:
-			await ctx.bot.db.execute(
-				"""
-				INSERT INTO level_channel_overrides (guild_id, channel_id, is_ignored)
-				VALUES ($1, $2, false)
-				ON CONFLICT (guild_id, channel_id) DO UPDATE SET is_ignored = false
-				""",
-				ctx.guild.id,
-				target_channel.id,
-			)
+		cog = LevelSettings(ctx.bot)
+		await cog.set_channel_ignored(ctx.guild.id, target_channel.id, False)
 
 		return await ctx.send(content=f"```ansi\n[+] Unignored channel #{target_channel.name}\n```")
 
@@ -456,20 +333,8 @@ def setup_level_subcommands(parent_node: CLINode) -> CLINode:
 		except ValueError:
 			raise CLIParseError("Multiplier must be a positive number.", ch_mult_node)
 
-		cog: Any = ctx.bot.get_cog("Level")
-		if cog:
-			await cog.set_channel_multiplier(ctx.guild.id, target_channel.id, mult_val)
-		else:
-			await ctx.bot.db.execute(
-				"""
-				INSERT INTO level_channel_overrides (guild_id, channel_id, multiplier)
-				VALUES ($1, $2, $3)
-				ON CONFLICT (guild_id, channel_id) DO UPDATE SET multiplier = $3
-				""",
-				ctx.guild.id,
-				target_channel.id,
-				mult_val,
-			)
+		cog = LevelSettings(ctx.bot)
+		await cog.set_channel_multiplier(ctx.guild.id, target_channel.id, mult_val)
 
 		return await ctx.send(content=f"```ansi\n[+] XP multiplier in #{target_channel.name} set to {mult_val}x\n```")
 
@@ -479,9 +344,11 @@ def setup_level_subcommands(parent_node: CLINode) -> CLINode:
 
 	async def channel_list(ctx: Context, **kwargs: Any):
 		assert ctx.guild is not None
-		rows = await ctx.bot.db.fetch(
-			"SELECT channel_id, multiplier, is_ignored FROM level_channel_overrides WHERE guild_id = $1", ctx.guild.id
-		)
+		overrides = await LevelSettings(ctx.bot).overrides.get(ctx.guild.id)
+		rows = [
+			{"channel_id": channel_id, "multiplier": multiplier, "is_ignored": ignored}
+			for channel_id, (multiplier, ignored) in overrides.channels.items()
+		]
 		if not rows:
 			return await ctx.send(content="```ansi\n[!] No channel overrides configured for this server.\n```")
 
@@ -512,19 +379,8 @@ def setup_level_subcommands(parent_node: CLINode) -> CLINode:
 		if not target_role:
 			raise CLIParseError(f"Role `{role}` was not found.", role_ignore_node)
 
-		cog: Any = ctx.bot.get_cog("Level")
-		if cog:
-			await cog.set_role_ignored(ctx.guild.id, target_role.id, True)
-		else:
-			await ctx.bot.db.execute(
-				"""
-				INSERT INTO level_role_overrides (guild_id, role_id, is_ignored)
-				VALUES ($1, $2, true)
-				ON CONFLICT (guild_id, role_id) DO UPDATE SET is_ignored = true
-				""",
-				ctx.guild.id,
-				target_role.id,
-			)
+		cog = LevelSettings(ctx.bot)
+		await cog.set_role_ignored(ctx.guild.id, target_role.id, True)
 
 		return await ctx.send(content=f"```ansi\n[-] Ignored role @{target_role.name} from earning XP\n```")
 
@@ -541,19 +397,8 @@ def setup_level_subcommands(parent_node: CLINode) -> CLINode:
 		if not target_role:
 			raise CLIParseError(f"Role `{role}` was not found.", role_unignore_node)
 
-		cog: Any = ctx.bot.get_cog("Level")
-		if cog:
-			await cog.set_role_ignored(ctx.guild.id, target_role.id, False)
-		else:
-			await ctx.bot.db.execute(
-				"""
-				INSERT INTO level_role_overrides (guild_id, role_id, is_ignored)
-				VALUES ($1, $2, false)
-				ON CONFLICT (guild_id, role_id) DO UPDATE SET is_ignored = false
-				""",
-				ctx.guild.id,
-				target_role.id,
-			)
+		cog = LevelSettings(ctx.bot)
+		await cog.set_role_ignored(ctx.guild.id, target_role.id, False)
 
 		return await ctx.send(content=f"```ansi\n[+] Unignored role @{target_role.name}\n```")
 
@@ -578,20 +423,8 @@ def setup_level_subcommands(parent_node: CLINode) -> CLINode:
 		except ValueError:
 			raise CLIParseError("Multiplier must be a positive number.", role_mult_node)
 
-		cog: Any = ctx.bot.get_cog("Level")
-		if cog:
-			await cog.set_role_multiplier(ctx.guild.id, target_role.id, mult_val)
-		else:
-			await ctx.bot.db.execute(
-				"""
-				INSERT INTO level_role_overrides (guild_id, role_id, multiplier)
-				VALUES ($1, $2, $3)
-				ON CONFLICT (guild_id, role_id) DO UPDATE SET multiplier = $3
-				""",
-				ctx.guild.id,
-				target_role.id,
-				mult_val,
-			)
+		cog = LevelSettings(ctx.bot)
+		await cog.set_role_multiplier(ctx.guild.id, target_role.id, mult_val)
 
 		return await ctx.send(content=f"```ansi\n[+] XP multiplier for @{target_role.name} set to {mult_val}x\n```")
 
@@ -601,9 +434,11 @@ def setup_level_subcommands(parent_node: CLINode) -> CLINode:
 
 	async def role_list(ctx: Context, **kwargs: Any):
 		assert ctx.guild is not None
-		rows = await ctx.bot.db.fetch(
-			"SELECT role_id, multiplier, is_ignored FROM level_role_overrides WHERE guild_id = $1", ctx.guild.id
-		)
+		overrides = await LevelSettings(ctx.bot).overrides.get(ctx.guild.id)
+		rows = [
+			{"role_id": role_id, "multiplier": multiplier, "is_ignored": ignored}
+			for role_id, (multiplier, ignored) in overrides.roles.items()
+		]
 		if not rows:
 			return await ctx.send(content="```ansi\n[!] No role overrides configured for this server.\n```")
 
@@ -625,30 +460,16 @@ def setup_level_subcommands(parent_node: CLINode) -> CLINode:
 
 	async def level_show(ctx: Context, **kwargs: Any):
 		assert ctx.guild is not None
-		cog: Any = ctx.bot.get_cog("Level")
-		cfg = await cog.get_guild_config(ctx.guild.id) if cog else None
-
-		if not cfg:
-			row = await ctx.bot.db.fetchrow("SELECT * FROM level_config WHERE guild_id = $1", ctx.guild.id)
-			is_on = row["is_on"] if row else True
-			mult = float(row["multiplier"]) if row else 1.0
-			min_xp = int(row["min_xp"]) if row else 15
-			max_xp = int(row["max_xp"]) if row else 25
-			cooldown = int(row["cooldown"]) if row else 60
-			mode = row["message_mode"] if row else "current"
-			ch_id = int(row["message_channel"]) if row and row["message_channel"] else None
-			msg_tmpl = row["levelup_message"] if row and row["levelup_message"] else "(Default: localized)"
-			stack = row["stack_roles"] if row else True
-		else:
-			is_on = cfg.is_on
-			mult = cfg.multiplier
-			min_xp = cfg.min_xp
-			max_xp = cfg.max_xp
-			cooldown = cfg.cooldown
-			mode = cfg.message_mode
-			ch_id = cfg.message_channel
-			msg_tmpl = cfg.levelup_message if cfg.levelup_message else "(Default: localized)"
-			stack = cfg.stack_roles
+		cfg = await LevelSettings(ctx.bot).get_guild_config(ctx.guild.id)
+		is_on = cfg.is_on
+		mult = cfg.multiplier
+		min_xp = cfg.min_xp
+		max_xp = cfg.max_xp
+		cooldown = cfg.cooldown
+		mode = cfg.message_mode
+		ch_id = cfg.message_channel
+		msg_tmpl = cfg.levelup_message if cfg.levelup_message else "(Default: localized)"
+		stack = cfg.stack_roles
 
 		ch_obj = ctx.guild.get_channel(ch_id) if ch_id else None
 		ch_str = f"#{ch_obj.name}" if ch_obj else "(None)"

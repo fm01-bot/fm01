@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime
 from types import SimpleNamespace
 from typing import Any, cast
 from unittest.mock import AsyncMock, MagicMock
@@ -12,6 +13,8 @@ from cogs.log import LogConfig, Logging
 from cogs.snapshot import Snapshot
 from core.clustering import LocalEventBus
 from core.settings import GuildSettings
+
+from api import Snapshot as ApiSnapshot
 
 
 def _role(role_id: int, name: str, position: int) -> MagicMock:
@@ -65,21 +68,37 @@ async def test_save_captures_roles_channels_and_overwrites():
 	assert channel["overwrites"][1] == {"allow": allow.value, "deny": deny.value, "role": "@everyone"}
 
 
-@pytest.mark.db
-async def test_create_then_get_round_trips_the_payload(db):
+async def test_create_sends_the_payload_with_json_keys_and_returns_the_code():
 	bot = MagicMock()
-	bot.db = db
 	bot.custom_response = AsyncMock(return_value="Server snapshot")
+	code = "0b1c7d3e-8f00-4a6b-9c1d-2e3f4a5b6c7d"
+	bot.api.snapshots.create = AsyncMock(
+		side_effect=lambda guild_id, snapshot: ApiSnapshot(
+			code=code, guild_id=guild_id, date=datetime.datetime.now(tz=datetime.UTC), **snapshot.model_dump()
+		)
+	)
 	cog = Snapshot(bot)
-	ctx = _snapshot_ctx()
 
-	code = await cog.create_snapshot(ctx)
+	created = await cog.create_snapshot(_snapshot_ctx())
 
-	assert code is not None
-	stored = await cog.get_snapshot(str(code))
-	assert stored is not None
-	assert stored["roles"]["2"]["name"] == "Mods"  # JSON keys come back as strings
-	assert await cog.get_snapshot("00000000-0000-0000-0000-000000000000") is None
+	assert str(created) == code
+	assert bot.api.snapshots.create.await_args is not None
+	guild_id, sent = bot.api.snapshots.create.await_args.args
+	assert guild_id == 42
+	assert (sent.name, sent.author_id) == ("Server snapshot", 7)
+	assert sent.payload["roles"]["2"]["name"] == "Mods"  # role IDs become JSON object keys
+	assert sent.payload["channels"]["10"]["overwrites"]["1"]["role"] == "@everyone"
+
+
+async def test_get_returns_the_payload_or_none():
+	bot = MagicMock()
+	payload = {"roles": {}, "channels": {}}
+	stored = ApiSnapshot(code="abc", guild_id=1, name="x", author_id=2, date=datetime.datetime.now(), payload=payload)
+	bot.api.snapshots.get = AsyncMock(side_effect=lambda code: stored if code == "abc" else None)
+	cog = Snapshot(bot)
+
+	assert await cog.get_snapshot("abc") == payload
+	assert await cog.get_snapshot("nope") is None
 
 
 # --- Logging ---------------------------------------------------------------
@@ -89,10 +108,10 @@ GUILD = 5
 
 @pytest.fixture
 def log_cog() -> Logging:
-	db = MagicMock()
-	db.fetchrow = AsyncMock(return_value=None)
+	api = SimpleNamespace(log=SimpleNamespace(get=AsyncMock(return_value=None)))
 	bot = SimpleNamespace(
-		settings=GuildSettings(lambda: db, LocalEventBus()),
+		api=api,
+		settings=GuildSettings(LocalEventBus()),
 		message_logging_guilds=set(),
 		custom_response=MagicMock(),
 		session=None,

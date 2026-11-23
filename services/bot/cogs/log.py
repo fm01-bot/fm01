@@ -13,9 +13,12 @@ from args.channel import convert_to_custom_channel
 from discord.ext import commands
 from helpers import custom_response
 
+from api import LOG_SETTING, GuildLogConfig
+from api import LogConfig as StoredLogConfig
+
 if TYPE_CHECKING:
-	import asyncpg
 	from core import Bot
+	from core.api import ApiClient
 	from core.settings import GuildSetting, GuildSettings
 
 logger = getLogger(__name__)
@@ -118,6 +121,28 @@ class LogConfig:
 		"""The modules in effect, with ``*`` expanded."""
 		return LOG_MODULES if ALL_MODULES in self.modules else self.modules & LOG_MODULES
 
+	@classmethod
+	def from_stored(cls, guild_id: int, stored: StoredLogConfig) -> LogConfig:
+		"""Build a config from the one the API stores."""
+		return cls(
+			guild_id=guild_id,
+			is_on=stored.enabled,
+			channel_id=stored.channel_id,
+			channels=dict(stored.channels),
+			modules=frozenset(stored.modules),
+			webhook_url=stored.webhook_url,
+		)
+
+	def to_stored(self) -> StoredLogConfig:
+		"""The config as the API stores it."""
+		return StoredLogConfig(
+			enabled=self.is_on,
+			channel_id=self.channel_id,
+			channels=dict(self.channels),
+			modules=sorted(self.modules),
+			webhook_url=self.webhook_url,
+		)
+
 	def is_enabled(self, event: str) -> bool:
 		return self.is_on and event in self.enabled_modules
 
@@ -139,40 +164,15 @@ class LogConfig:
 		return replace(self, modules=(base | frozenset(added)) - removed)
 
 
-async def _load_log_config(db: asyncpg.Pool, guild_id: int) -> LogConfig | None:
-	row = await db.fetchrow("SELECT * FROM log WHERE guild_id = $1", guild_id)
-	return LogConfig.from_row(row) if row else None
-
-
-async def _load_all_log_configs(db: asyncpg.Pool) -> dict[int, LogConfig | None]:
-	return {cfg.guild_id: cfg for cfg in map(LogConfig.from_row, await db.fetch("SELECT * FROM log"))}
-
-
-async def _save_log_config(db: asyncpg.Pool, guild_id: int, cfg: LogConfig | None) -> None:
-	if cfg is None:
-		await db.execute("DELETE FROM log WHERE guild_id = $1", guild_id)
-		return
-	await db.execute(
-		"""
-		INSERT INTO log (guild_id, is_on, channel, modules, channels, webhook)
-		VALUES ($1, $2, $3, $4, $5, $6)
-		ON CONFLICT (guild_id) DO UPDATE
-		SET is_on = EXCLUDED.is_on, channel = EXCLUDED.channel, modules = EXCLUDED.modules,
-		    channels = EXCLUDED.channels, webhook = EXCLUDED.webhook
-		""",
-		guild_id,
-		cfg.is_on,
-		cfg.channel_id,
-		sorted(cfg.modules),
-		dict(cfg.channels),
-		cfg.webhook_url,
-	)
+def _from_guild(stored: GuildLogConfig) -> LogConfig:
+	return LogConfig.from_stored(stored.guild_id, stored)
 
 
 class LogHost(Protocol):
 	"""What `LogSettings` needs from the bot."""
 
 	settings: GuildSettings
+	api: ApiClient
 	message_logging_guilds: set[int]
 
 
@@ -190,12 +190,21 @@ class LogSettings:
 			else:
 				bot.message_logging_guilds.discard(guild_id)
 
-		self.setting: GuildSetting[LogConfig | None] = bot.settings.add(
-			"log",
-			_load_log_config,
-			_save_log_config,
-			load_all=_load_all_log_configs,
-			on_change=track_message_logging,
+		async def load(guild_id: int) -> LogConfig | None:
+			stored = await bot.api.log.get(guild_id)
+			return LogConfig.from_stored(guild_id, stored) if stored else None
+
+		async def save(guild_id: int, cfg: LogConfig | None) -> None:
+			if cfg is None:
+				await bot.api.log.delete(guild_id)
+			else:
+				await bot.api.log.set(guild_id, cfg.to_stored())
+
+		async def load_all() -> dict[int, LogConfig | None]:
+			return {stored.guild_id: _from_guild(stored) for stored in await bot.api.log.all()}
+
+		self.setting: GuildSetting[LogConfig | None] = bot.settings.add_remote(
+			LOG_SETTING, load, save, load_all=load_all, on_change=track_message_logging
 		)
 
 	async def get(self, guild_id: int) -> LogConfig | None:

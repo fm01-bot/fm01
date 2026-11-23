@@ -157,9 +157,9 @@ class Info(commands.Cog, name="Information"):
 			except discord.NotFound:
 				pass
 
-		template_code = await self.client.db.fetchrow("SELECT * FROM snapshots WHERE code = $1", template.lower())
-		if template_code:
-			return await ctx.send("info.template", template=await Template.from_dict(self.client, template_code))
+		snapshot = await self.client.api.snapshots.get(template.lower())
+		if snapshot:
+			return await ctx.send("info.template", template=await Template.from_dict(self.client, dict(snapshot)))
 		raise commands.BadArgument("template")
 
 

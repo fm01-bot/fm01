@@ -13,121 +13,58 @@ from discord.ext import commands
 from helpers.custom_response import KWARG_MAPPING
 from helpers.formatting import SafeFormatter
 
+from api import GreetingConfig, GreetingKind, GreetingUpdate
+
 if TYPE_CHECKING:
-	import asyncpg
 	from core import Bot
-	from core.settings import GuildSetting
+	from core.api import ApiClient
+	from core.settings import GuildSetting, GuildSettings
 
 logger = logging.getLogger(__name__)
 
 
-async def _load_join_config(db: asyncpg.Pool, guild_id: int) -> dict[str, Any] | None:
-	row = await db.fetchrow("SELECT * FROM join_config WHERE guild_id = $1", guild_id)
-	return dict(row) if row else None
+def greeting_setting(
+	settings: GuildSettings, api: ApiClient, kind: GreetingKind
+) -> GuildSetting[GreetingConfig | None]:
+	"""Register a guild's join or leave configuration, stored behind the API (usable without the cog loaded).
+
+	Args:
+		settings: The registry to add it to.
+		api: The API client it loads through.
+		kind: Join or leave messages.
+
+	Returns:
+		The setting. ``None`` for guilds that never configured it.
+	"""
+
+	async def load(guild_id: int) -> GreetingConfig | None:
+		return await api.greetings.get(kind, guild_id)
+
+	return settings.add_remote(kind, load, None)
 
 
-async def _load_leave_config(db: asyncpg.Pool, guild_id: int) -> dict[str, Any] | None:
-	row = await db.fetchrow("SELECT * FROM leave_config WHERE guild_id = $1", guild_id)
-	return dict(row) if row else None
+async def update_greeting(bot: Bot, kind: GreetingKind, guild_id: int, changes: GreetingUpdate) -> GreetingConfig:
+	"""Change a guild's join or leave configuration and cache what the API stored.
+
+	Args:
+		bot: The bot.
+		kind: Join or leave messages.
+		guild_id: The guild.
+		changes: The changes. ``None`` fields keep their value; a new configuration starts on.
+
+	Returns:
+		The stored configuration.
+	"""
+	config = await bot.api.greetings.update(kind, guild_id, changes)
+	greeting_setting(bot.settings, bot.api, kind).remember(guild_id, config)
+	return config
 
 
 class JoinLeave(commands.Cog, name="JoinLeave"):
 	def __init__(self, client: Bot):
 		self.client = client
-		self.join: GuildSetting[dict[str, Any] | None] = client.settings.add("join", _load_join_config)
-		self.leave: GuildSetting[dict[str, Any] | None] = client.settings.add("leave", _load_leave_config)
-
-	async def get_join_config(self, guild_id: int) -> dict[str, Any] | None:
-		return await self.join.get(guild_id)
-
-	async def get_leave_config(self, guild_id: int) -> dict[str, Any] | None:
-		return await self.leave.get(guild_id)
-
-	async def set_join(self, guild_id: int, channel_id: int | None, message: str | None = None) -> None:
-		if message:
-			await self.client.db.execute(
-				"""
-				INSERT INTO join_config (guild_id, is_on, channel, message)
-				VALUES ($1, true, $2, $3)
-				ON CONFLICT (guild_id) DO UPDATE
-				SET is_on = true, channel = COALESCE($2, join_config.channel), message = $3
-				""",
-				guild_id,
-				channel_id,
-				message,
-			)
-		else:
-			await self.client.db.execute(
-				"""
-				INSERT INTO join_config (guild_id, is_on, channel)
-				VALUES ($1, true, $2)
-				ON CONFLICT (guild_id) DO UPDATE
-				SET is_on = true, channel = COALESCE($2, join_config.channel)
-				""",
-				guild_id,
-				channel_id,
-			)
-		await self.join.changed(guild_id)
-
-	async def set_leave(self, guild_id: int, channel_id: int | None, message: str | None = None) -> None:
-		if message:
-			await self.client.db.execute(
-				"""
-				INSERT INTO leave_config (guild_id, is_on, channel, message)
-				VALUES ($1, true, $2, $3)
-				ON CONFLICT (guild_id) DO UPDATE
-				SET is_on = true, channel = COALESCE($2, leave_config.channel), message = $3
-				""",
-				guild_id,
-				channel_id,
-				message,
-			)
-		else:
-			await self.client.db.execute(
-				"""
-				INSERT INTO leave_config (guild_id, is_on, channel)
-				VALUES ($1, true, $2)
-				ON CONFLICT (guild_id) DO UPDATE
-				SET is_on = true, channel = COALESCE($2, leave_config.channel)
-				""",
-				guild_id,
-				channel_id,
-			)
-		await self.leave.changed(guild_id)
-
-	async def disable_join(self, guild_id: int) -> None:
-		await self.client.db.execute("UPDATE join_config SET is_on = false WHERE guild_id = $1", guild_id)
-		await self.join.changed(guild_id)
-
-	async def disable_leave(self, guild_id: int) -> None:
-		await self.client.db.execute("UPDATE leave_config SET is_on = false WHERE guild_id = $1", guild_id)
-		await self.leave.changed(guild_id)
-
-	async def set_join_message(self, guild_id: int, channel_id: int, message: str) -> None:
-		await self.client.db.execute(
-			"""
-			INSERT INTO join_config (guild_id, is_on, channel, message)
-			VALUES ($1, true, $2, $3)
-			ON CONFLICT (guild_id) DO UPDATE SET message = $3
-			""",
-			guild_id,
-			channel_id,
-			message,
-		)
-		await self.join.changed(guild_id)
-
-	async def set_leave_message(self, guild_id: int, channel_id: int, message: str) -> None:
-		await self.client.db.execute(
-			"""
-			INSERT INTO leave_config (guild_id, is_on, channel, message)
-			VALUES ($1, true, $2, $3)
-			ON CONFLICT (guild_id) DO UPDATE SET message = $3
-			""",
-			guild_id,
-			channel_id,
-			message,
-		)
-		await self.leave.changed(guild_id)
+		self.join: GuildSetting[GreetingConfig | None] = greeting_setting(client.settings, client.api, "join")
+		self.leave: GuildSetting[GreetingConfig | None] = greeting_setting(client.settings, client.api, "leave")
 
 	def format_message(
 		self, template: str, member: discord.Member, channel: discord.abc.Messageable | None = None, **extra: Any
@@ -176,16 +113,16 @@ class JoinLeave(commands.Cog, name="JoinLeave"):
 		if member.bot:
 			return
 
-		cfg = await self.get_join_config(member.guild.id)
-		if not cfg or not cfg.get("is_on") or not cfg.get("channel") or not cfg.get("message"):
+		cfg = await self.join.get(member.guild.id)
+		if not cfg or not cfg.enabled or not cfg.channel_id or not cfg.message:
 			return
 
-		channel_id = int(cfg["channel"])
+		channel_id = cfg.channel_id
 		channel = member.guild.get_channel(channel_id)
 		if not channel or not isinstance(channel, discord.abc.Messageable):
 			return
 
-		content = self.format_message(str(cfg["message"]), member, channel=channel)
+		content = self.format_message(cfg.message, member, channel=channel)
 
 		try:
 			await channel.send(content)
@@ -197,16 +134,16 @@ class JoinLeave(commands.Cog, name="JoinLeave"):
 		if member.bot:
 			return
 
-		cfg = await self.get_leave_config(member.guild.id)
-		if not cfg or not cfg.get("is_on") or not cfg.get("channel") or not cfg.get("message"):
+		cfg = await self.leave.get(member.guild.id)
+		if not cfg or not cfg.enabled or not cfg.channel_id or not cfg.message:
 			return
 
-		channel_id = int(cfg["channel"])
+		channel_id = cfg.channel_id
 		channel = member.guild.get_channel(channel_id)
 		if not channel or not isinstance(channel, discord.abc.Messageable):
 			return
 
-		content = self.format_message(str(cfg["message"]), member, channel=channel)
+		content = self.format_message(cfg.message, member, channel=channel)
 
 		try:
 			await channel.send(content)

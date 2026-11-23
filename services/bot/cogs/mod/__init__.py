@@ -549,6 +549,6 @@ class Cases(commands.Cog, name="Cases"):
 
 
 async def setup(client: Bot):
-	cases = CaseStore(client, client.db, retention_setting(client.settings).get)
+	cases = CaseStore(client)
 	await client.add_cog(Moderation(client, cases))
 	await client.add_cog(Cases(client, cases))

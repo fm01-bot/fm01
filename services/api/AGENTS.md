@@ -6,7 +6,7 @@ Guidelines for AI agents and tools working on the fm01 backend API. Terms (Inter
 
 ## 1. Scope
 
-- The only service that is meant to talk to PostgreSQL. Tables move here from the bot one domain at a time; until a domain moves, the bot still queries its tables directly. Owns the schema: `services/migrations/` belongs to the API.
+- The only service that talks to PostgreSQL; the bot has no database connection. Owns the schema: `services/migrations/` belongs to the API.
 - Three parts, separated by path prefix and by authentication:
   - **Internal API** (`/internal/...`): called only by the bot, with `Authorization: Bearer $API_INTERNAL_TOKEN`. The bot sends `X-Fm01-Origin` so it can skip the change events it caused.
   - **Dashboard API** (`/dashboard/...`): called only by the dashboard's server (Next.js), with a dashboard session token. Never called from the browser.
@@ -34,6 +34,8 @@ app/
 ├── settings/         # store.py (prefix, locale), routes.py (Internal + Dashboard API)
 ├── bear_trap/        # store.py (bear trap), routes.py (Internal + Dashboard API)
 ├── starboard/        # store.py (boards, stars, entries), routes.py (Internal + Dashboard API)
+├── greetings/ automod/ log/ moderation/ tickets/ leveling/   # guild configurations and their records (Internal API)
+├── afk/ snapshots/ shop/ giveaways/ alerts/                    # member-facing features (Internal API)
 └── dashboard/        # discord.py (OAuth2/REST), sessions.py, access.py (guild manager rule), routes.py
 tests/                # One file per area; conftest.py has the database, fake Redis and fake Discord
 ```

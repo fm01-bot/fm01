@@ -4,12 +4,10 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock
 
-import asyncpg
 import discord
-import pytest
 from cogs.economy import InsufficientFunds, Shop
 
-from api import Balance, Wallet
+from api import Balance, ShopItem, Wallet
 
 GUILD = 1
 ALICE = 10
@@ -47,28 +45,21 @@ def _buy_ctx(add_roles: AsyncMock) -> MagicMock:
 	return ctx
 
 
-def _shop(db: asyncpg.Pool, ledger: FakeLedger) -> Shop:
+VIP = ShopItem(name="VIP", description="d", price=100, role_id=5, creator_id=1)
+
+
+def _shop(ledger: FakeLedger) -> Shop:
 	bot = MagicMock()
-	bot.db = db
 	bot.api.economy = ledger
+	bot.api.shop.get = AsyncMock(side_effect=lambda guild_id, name: VIP if name.lower() == "vip" else None)
 	return Shop(bot)
 
 
-async def _add_vip(db: asyncpg.Pool) -> None:
-	await db.execute(
-		"INSERT INTO shop (item_name, item_description, item_price, role, guild_id, creator_id) "
-		"VALUES ('VIP', 'd', 100, 5, $1, 1)",
-		GUILD,
-	)
-
-
-@pytest.mark.db
-async def test_buy_charges_then_grants(db):
-	await _add_vip(db)
+async def test_buy_charges_then_grants():
 	ledger = FakeLedger()
 	await ledger.add_money(GUILD, ALICE, 150)
 	ctx = _buy_ctx(AsyncMock())
-	shop = _shop(db, ledger)
+	shop = _shop(ledger)
 
 	await shop.buy.callback(shop, ctx, "vip")
 
@@ -77,11 +68,9 @@ async def test_buy_charges_then_grants(db):
 	assert ctx.send.call_args.args[0] == "shop.buy.success"
 
 
-@pytest.mark.db
-async def test_buy_without_enough_cash_grants_nothing(db):
-	await _add_vip(db)
+async def test_buy_without_enough_cash_grants_nothing():
 	ctx = _buy_ctx(AsyncMock())
-	shop = _shop(db, FakeLedger())
+	shop = _shop(FakeLedger())
 
 	await shop.buy.callback(shop, ctx, "vip")
 
@@ -89,14 +78,12 @@ async def test_buy_without_enough_cash_grants_nothing(db):
 	assert ctx.send.call_args.args[0] == "shop.buy.errors.balance"
 
 
-@pytest.mark.db
-async def test_buy_refunds_when_the_role_cannot_be_given(db):
+async def test_buy_refunds_when_the_role_cannot_be_given():
 	"""Regression: the role used to be granted before charging, so a failed charge meant a free role."""
-	await _add_vip(db)
 	ledger = FakeLedger()
 	await ledger.add_money(GUILD, ALICE, 150)
 	ctx = _buy_ctx(AsyncMock(side_effect=discord.Forbidden(MagicMock(status=403), "missing permissions")))
-	shop = _shop(db, ledger)
+	shop = _shop(ledger)
 
 	await shop.buy.callback(shop, ctx, "vip")
 

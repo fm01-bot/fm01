@@ -6,7 +6,7 @@ Guidelines for AI agents and tools working on the fm01 database migrations servi
 
 ## 1. Scope
 
-- Owns the PostgreSQL schema for fm01, versioned with Alembic. The schema belongs to the API (`services/api/`), the only service meant to talk to PostgreSQL; tables the bot still queries directly move to the API one domain at a time.
+- Owns the PostgreSQL schema for fm01, versioned with Alembic. The schema belongs to the API (`services/api/`), the only service that talks to PostgreSQL.
 - Runs as a one-shot container (`migrations` in the root `compose.yml`). The API and the bot depend on it with `service_completed_successfully`.
 - Must not import bot or API code. `env.py` and the revisions depend only on `alembic`, `sqlalchemy` and `asyncpg`.
 

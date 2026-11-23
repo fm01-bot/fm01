@@ -17,13 +17,12 @@ def mock_ctx():
 	ctx.guild.id = 12345
 	ctx.guild.preferred_locale = discord.Locale.american_english
 	ctx.bot = MagicMock()
-	ctx.bot.db = AsyncMock()
 	ctx.bot.event_bus = MagicMock()
 	ctx.bot.event_bus.publish = AsyncMock()
 	ctx.bot.api = MagicMock()
 	ctx.bot.api.settings.locale = AsyncMock(return_value=None)
 	ctx.bot.api.settings.set_locale = AsyncMock()
-	ctx.bot.settings = GuildSettings(lambda: ctx.bot.db, ctx.bot.event_bus)
+	ctx.bot.settings = GuildSettings(ctx.bot.event_bus)
 	ctx.bot.locale_override = locale_override_setting(ctx.bot.settings, ctx.bot.api)
 	ctx.bot.locale_cache = ctx.bot.locale_override.cache
 	ctx.send = AsyncMock()
