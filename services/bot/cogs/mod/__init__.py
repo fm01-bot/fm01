@@ -120,6 +120,20 @@ def _target_error(ctx: Context, member: discord.Member, action: str, *, bot_acts
 	return None
 
 
+async def _guild_member(guild: discord.Guild, user_id: int) -> discord.Member | None:
+	"""Find a member from the cache, or from Discord: members aren't chunked at startup, so most aren't cached.
+
+	Returns:
+		The member, or ``None`` if the user isn't in the guild.
+	"""
+	if member := guild.get_member(user_id):
+		return member
+	try:
+		return await guild.fetch_member(user_id)
+	except discord.NotFound:
+		return None
+
+
 _CASE_PERMISSIONS: dict[CaseType, str] = {
 	CaseType.BAN: "ban_members",
 	CaseType.SOFTBAN: "ban_members",
@@ -295,7 +309,7 @@ class Moderation(commands.GroupCog, name="Moderation", group_name="mod"):
 		if user == ctx.me:
 			await ctx.send("mod.ban.errors.bot")
 			return
-		if (member := ctx.guild.get_member(user.id)) and (error := _target_error(ctx, member, "ban")):
+		if (member := await _guild_member(ctx.guild, user.id)) and (error := _target_error(ctx, member, "ban")):
 			await ctx.send(error)
 			return
 		ban = Ban(

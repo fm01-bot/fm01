@@ -441,6 +441,7 @@ class TestBanCommand:
 		target_user.id = 999
 		ctx.guild.id = 123
 		ctx.guild.get_member.return_value = None  # not a member, so no role hierarchy applies
+		ctx.guild.fetch_member = AsyncMock(side_effect=discord.NotFound(MagicMock(status=404), "Unknown Member"))
 		ctx.author.id = 456
 		ctx.message.id = 789
 		ctx.message.reference = None
@@ -467,6 +468,7 @@ class TestBanCommand:
 		target_user.id = 999
 		ctx.guild.id = 123
 		ctx.guild.get_member.return_value = None  # not a member, so no role hierarchy applies
+		ctx.guild.fetch_member = AsyncMock(side_effect=discord.NotFound(MagicMock(status=404), "Unknown Member"))
 		ctx.author.id = 456
 		ctx.message.id = 789
 		ctx.message.reference = None
@@ -492,6 +494,7 @@ class TestBanCommand:
 		target_user.id = 999
 		ctx.guild.id = 123
 		ctx.guild.get_member.return_value = None  # not a member, so no role hierarchy applies
+		ctx.guild.fetch_member = AsyncMock(side_effect=discord.NotFound(MagicMock(status=404), "Unknown Member"))
 		ctx.author.id = 456
 		ctx.message.id = 789
 		ctx.message.reference = None
@@ -517,6 +520,7 @@ class TestBanCommand:
 		target_user.id = 999
 		ctx.guild.id = 123
 		ctx.guild.get_member.return_value = None  # not a member, so no role hierarchy applies
+		ctx.guild.fetch_member = AsyncMock(side_effect=discord.NotFound(MagicMock(status=404), "Unknown Member"))
 		ctx.author.id = 456
 		ctx.message.id = 789
 		ctx.message.reference = None

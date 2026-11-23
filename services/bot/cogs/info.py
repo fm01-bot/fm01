@@ -99,6 +99,9 @@ class Info(commands.Cog, name="Information"):
 			address = ipaddress.ip_address(ip_addr)
 		except ValueError:
 			raise commands.BadArgument("ip")
+		if getattr(address, "scope_id", None) is not None:
+			# A scope ID (`fe80::1%eth0`) is free text, so `?` or `#` in it would rewrite the URL; ipinfo can't use it.
+			raise commands.BadArgument("ip")
 		await ctx.defer()  # slow: calls ipinfo.io
 		try:
 			ip_json = await self.client.request(f"https://ipinfo.io/{address}/json")

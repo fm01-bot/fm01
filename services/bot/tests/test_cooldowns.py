@@ -33,6 +33,23 @@ async def test_second_hit_reports_the_time_left():
 	assert await cooldowns.hit("daily:2", 86400) is None
 
 
+async def test_a_cooldown_that_expires_mid_hit_starts_a_new_one():
+	redis = FakeRedis()
+	redis.keys["fm01:cooldown:work:1"] = 1
+	real_pttl = redis.pttl
+
+	async def pttl(name: str) -> int:
+		redis.keys.pop(name, None)  # expires between SET NX and PTTL
+		redis.pttl = real_pttl
+		return await real_pttl(name)
+
+	redis.pttl = pttl
+	cooldowns = SharedCooldowns(cast("aioredis.Redis", redis))
+
+	assert await cooldowns.hit("work:1", 3600) is None
+	assert redis.keys["fm01:cooldown:work:1"] == 3600 * 1000
+
+
 async def test_hook_raises_command_on_cooldown():
 	@shared_cooldown(60)
 	async def callback(cog, ctx): ...

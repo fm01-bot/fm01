@@ -361,6 +361,21 @@ async def test_ban_checks_the_hierarchy_of_members(mod_cog, store, mock_ctx):
 	ctx.send.assert_awaited_once_with("mod.ban.errors.hierarchy")
 
 
+async def test_ban_fetches_uncached_members_to_check_the_hierarchy(mod_cog, store, mock_ctx):
+	ctx = _hierarchy_ctx(mock_ctx, author_role=5, bot_role=10)
+	member = _target(ctx, 7)
+	ctx.guild.get_member.return_value = None
+	ctx.guild.fetch_member = AsyncMock(return_value=member)
+	user = MagicMock(spec=discord.User)
+	user.id = member.id
+
+	await mod_cog.ban.callback(mod_cog, ctx, user, None, reason="r")
+
+	ctx.guild.fetch_member.assert_awaited_once_with(member.id)
+	store.open.assert_not_awaited()
+	ctx.send.assert_awaited_once_with("mod.ban.errors.hierarchy")
+
+
 async def test_mute_refuses_administrators(mod_cog, store, mock_ctx):
 	ctx = _hierarchy_ctx(mock_ctx, author_role=9, bot_role=10)
 	member = _target(ctx, 5, administrator=True)

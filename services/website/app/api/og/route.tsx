@@ -31,11 +31,15 @@ function clamp(value: string | null, fallback: string, max: number) {
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
-    if (!hasValidOgSignature(searchParams.get('title') ?? '', searchParams.get('description') ?? '', searchParams.get('sig'))) {
+    const titleParam = searchParams.get('title');
+    const descriptionParam = searchParams.get('description');
+    // Plain /api/og draws the default card (the layout's image), which has no text of the requester's to sign.
+    const isDefault = titleParam === null && descriptionParam === null;
+    if (!isDefault && !hasValidOgSignature(titleParam ?? '', descriptionParam ?? '', searchParams.get('sig'))) {
         return new Response(null, { status: 404 });
     }
-    const title = clamp(searchParams.get('title'), 'fm01bot', 70);
-    const description = clamp(searchParams.get('description'), 'Your all-in-one Discord bot.', 160);
+    const title = clamp(titleParam, 'fm01bot', 70);
+    const description = clamp(descriptionParam, 'Your all-in-one Discord bot.', 160);
 
     // Highlight the last word of the title, like the page headers do.
     const words = title.split(' ');

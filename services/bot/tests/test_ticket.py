@@ -1,3 +1,4 @@
+import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import discord
@@ -471,6 +472,52 @@ async def test_ticket_create_limit_exceeded():
 	interaction.followup.send.assert_called_once()
 	sent_content = interaction.followup.send.call_args[1].get("content", "")
 	assert "already have" in sent_content
+
+
+@pytest.mark.asyncio
+async def test_ticket_creations_by_one_member_never_overlap():
+	"""A submit that arrives while the lock passes from one waiter to the next must still wait its turn."""
+	cog = Ticket(MagicMock())
+	release_first = asyncio.Event()
+	start_third = asyncio.Event()
+	running = peak = calls = 0
+
+	async def create(interaction, topic, description):
+		nonlocal running, peak, calls
+		calls += 1
+		running += 1
+		peak = max(peak, running)
+		if calls == 1:
+			await release_first.wait()
+			start_third.set()  # wakes the third submit just before the lock wakes the second
+		else:
+			await asyncio.sleep(0)
+		running -= 1
+
+	cog._create_ticket = create
+	interaction = MagicMock(spec=discord.Interaction)
+	interaction.guild = MagicMock()
+	interaction.guild.id = 1
+	interaction.user = MagicMock(spec=discord.Member)
+	interaction.user.id = 2
+	interaction.response = MagicMock()
+	interaction.response.defer = AsyncMock()
+
+	async def third():
+		await start_third.wait()
+		await cog.handle_ticket_create(interaction, "t", "d")
+
+	tasks = [asyncio.create_task(cog.handle_ticket_create(interaction, "t", "d"))]
+	await asyncio.sleep(0)
+	tasks.append(asyncio.create_task(cog.handle_ticket_create(interaction, "t", "d")))
+	tasks.append(asyncio.create_task(third()))
+	await asyncio.sleep(0)
+	release_first.set()
+	await asyncio.gather(*tasks)
+
+	assert calls == 3
+	assert peak == 1
+	assert not cog._create_locks and not cog._create_users
 
 
 @pytest.mark.asyncio
