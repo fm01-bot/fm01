@@ -23,6 +23,13 @@ from api.automod import (
 	AUTOMOD_SETTING,
 	AutoModConfig,
 )
+from api.blacklist import (
+	BLACKLIST_CHANGED,
+	BlacklistAdd,
+	BlacklistChanged,
+	BlacklistEntry,
+	BlacklistKind,
+)
 from api.bear_trap import (
 	BEAR_TRAP_SETTING,
 	BearTrap,
@@ -173,6 +180,7 @@ __all__ = (
 	"ALL_LOG_MODULES",
 	"AUTOMOD_SETTING",
 	"BEAR_TRAP_SETTING",
+	"BLACKLIST_CHANGED",
 	"EVENTS_CHANNEL",
 	"GIVEAWAY_RETENTION_DAYS",
 	"HEALTH_KEY",
@@ -212,6 +220,10 @@ __all__ = (
 	"BearTrapKicks",
 	"BearTrapMessage",
 	"BearTrapState",
+	"BlacklistAdd",
+	"BlacklistChanged",
+	"BlacklistEntry",
+	"BlacklistKind",
 	"CaseClosed",
 	"CaseCreate",
 	"CaseFilter",

@@ -37,7 +37,7 @@ export interface paths {
         put?: never;
         /**
          * Logout
-         * @description Sign out and revoke the user's Discord tokens.
+         * @description Sign out and revoke the user's Discord tokens. Blacklisted users may too.
          */
         post: operations["logout"];
         delete?: never;
@@ -364,6 +364,50 @@ export interface paths {
         put: operations["internal_alert_last_media"];
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/blacklist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Internal Blacklist
+         * @description List every blacklisted user and guild, oldest first.
+         */
+        get: operations["internal_blacklist"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/blacklist/{kind}/{target_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Internal Blacklist Add
+         * @description Blacklist a user or guild. Blacklisting it again replaces the reason and who added it.
+         */
+        put: operations["internal_blacklist_add"];
+        post?: never;
+        /**
+         * Internal Blacklist Remove
+         * @description Take a user or guild off the blacklist.
+         */
+        delete: operations["internal_blacklist_remove"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2189,6 +2233,47 @@ export interface components {
             message_id?: string | null;
         };
         /**
+         * BlacklistAdd
+         * @description Who blacklists the target, and why.
+         */
+        BlacklistAdd: {
+            /**
+             * Created By
+             * @example 1234567890123456789
+             */
+            created_by: string;
+            /** Reason */
+            reason?: string | null;
+        };
+        /**
+         * BlacklistEntry
+         * @description A blacklisted user or guild.
+         */
+        BlacklistEntry: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Created By
+             * @example 1234567890123456789
+             */
+            created_by: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "user" | "guild";
+            /** Reason */
+            reason?: string | null;
+            /**
+             * Target Id
+             * @example 1234567890123456789
+             */
+            target_id: string;
+        };
+        /**
          * CaseClosed
          * @description What closing a case did, following the guild's retention.
          */
@@ -2397,7 +2482,7 @@ export interface components {
          * @description Why a request failed. Clients branch on this, never on the message.
          * @enum {string}
          */
-        ErrorCode: "invalid_request" | "unauthorized" | "forbidden" | "not_found" | "insufficient_funds" | "same_account" | "invalid_channel" | "invalid_emoji" | "starboard_limit" | "starboard_name_taken" | "starboard_tier_taken" | "shop_limit" | "shop_item_taken" | "giveaway_limit" | "alert_limit" | "rate_limited" | "discord_unavailable";
+        ErrorCode: "invalid_request" | "unauthorized" | "forbidden" | "not_found" | "blacklisted" | "insufficient_funds" | "same_account" | "invalid_channel" | "invalid_emoji" | "starboard_limit" | "starboard_name_taken" | "starboard_tier_taken" | "shop_limit" | "shop_item_taken" | "giveaway_limit" | "alert_limit" | "rate_limited" | "discord_unavailable";
         /**
          * GiveawayCreate
          * @description A giveaway to start.
@@ -4489,6 +4574,128 @@ export interface operations {
                 "application/json": components["schemas"]["AlertMedia"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_blacklist: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BlacklistEntry"][];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_blacklist_add: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: "user" | "guild";
+                target_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BlacklistAdd"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BlacklistEntry"];
+                };
+            };
+            /** @description The request failed. `code` says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description The API or Discord failed. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    internal_blacklist_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: "user" | "guild";
+                target_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             204: {

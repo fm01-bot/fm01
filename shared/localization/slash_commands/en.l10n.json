@@ -93,6 +93,50 @@
     "name": "ban",
     "usage": "ban [user] (duration) (reason)"
   },
+  "blacklist": {
+    "desc": "List blacklisted users and servers (dev-only)",
+    "fallback": "list",
+    "name": "blacklist",
+    "usage": "blacklist"
+  },
+  "blacklist_add": {
+    "args": {
+      "kind": {
+        "desc": "Whether the target is a user or a server",
+        "guild": "Server",
+        "name": "kind",
+        "user": "User"
+      },
+      "reason": {
+        "desc": "Why they are blacklisted",
+        "name": "reason"
+      },
+      "target": {
+        "desc": "The user's or server's ID",
+        "name": "target"
+      }
+    },
+    "desc": "Bar a user or server from the bot's commands and dashboard (dev-only)",
+    "name": "add",
+    "usage": "blacklist add [kind] [target] (reason)"
+  },
+  "blacklist_remove": {
+    "args": {
+      "kind": {
+        "desc": "Whether the target is a user or a server",
+        "guild": "Server",
+        "name": "kind",
+        "user": "User"
+      },
+      "target": {
+        "desc": "The user's or server's ID",
+        "name": "target"
+      }
+    },
+    "desc": "Take a user or server off the blacklist (dev-only)",
+    "name": "remove",
+    "usage": "blacklist remove [kind] [target]"
+  },
   "botinfo": {
     "desc": "Information about the bot",
     "name": "bot"

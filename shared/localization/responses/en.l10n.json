@@ -312,6 +312,10 @@
         }
       ]
     },
+    "blacklisted": {
+      "content": "You can't use this bot here.",
+      "ephemeral": true
+    },
     "bot_missing_permissions": {
       "embeds": [
         {

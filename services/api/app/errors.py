@@ -15,6 +15,7 @@ _STATUS: dict[ErrorCode, int] = {
 	ErrorCode.UNAUTHORIZED: 401,
 	ErrorCode.FORBIDDEN: 403,
 	ErrorCode.NOT_FOUND: 404,
+	ErrorCode.BLACKLISTED: 403,
 	ErrorCode.INSUFFICIENT_FUNDS: 409,
 	ErrorCode.SAME_ACCOUNT: 422,
 	ErrorCode.INVALID_CHANNEL: 422,

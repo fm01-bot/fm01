@@ -62,6 +62,8 @@ The words this repository (bot, API, website and dashboard) uses for its own con
 
 **Status block**: a fixed group of `SHARDS_PER_CLUSTER` consecutive shards: block `n` holds shards `n * size` up to `(n + 1) * size - 1`. The status page's "clusters" are status blocks, not processes, so history stays comparable across restarts. A clustered bot process leases one whole free block (`RedisShardCoordinator`); `SHARD_IDS` overrides that. A standalone bot is one block of every shard.
 
+**Blacklist**: users and guilds the bot's owners (`owner_ids`) barred with the dev-only `blacklist` command (`blacklist` table, `app/blacklist/store.py`). A blacklisted user can't run commands anywhere or use the Dashboard API (signing in is refused; signing out still works); in a blacklisted guild nobody can run commands, and the dashboard neither lists nor configures it. Owners are never refused. The API announces each change as a `BLACKLIST_CHANGED` event; every bot instance keeps the whole blacklist in memory (`core/blacklist.py`) and checks it before each command. Blacklisted text commands get no answer; slash commands get `errors.blacklisted`.
+
 **Snowflake**: a Discord ID. Always a string on the wire (JavaScript numbers lose precision on them), an integer inside Python.
 
 ## Decisions

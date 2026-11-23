@@ -18,6 +18,7 @@ from app.alerts import routes as alert_routes
 from app.auth import require_internal
 from app.automod import routes as automod_routes
 from app.bear_trap import routes as bear_trap_routes
+from app.blacklist import routes as blacklist_routes
 from app.config import Settings
 from app.dashboard import routes as dashboard_routes
 from app.economy import routes as economy_routes
@@ -108,6 +109,7 @@ def create_app(config: Settings | None = None, state_factory: StateFactory = bui
 		shop_routes,
 		giveaway_routes,
 		alert_routes,
+		blacklist_routes,
 	):
 		internal.include_router(routes.internal)
 

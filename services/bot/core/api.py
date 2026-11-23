@@ -29,6 +29,9 @@ from api import (
 	BearTrapKicks,
 	BearTrapMessage,
 	BearTrapState,
+	BlacklistAdd,
+	BlacklistEntry,
+	BlacklistKind,
 	CaseClosed,
 	CaseCreate,
 	CaseFilter,
@@ -106,6 +109,7 @@ __all__ = (
 	"ApiUnavailable",
 	"AutoModApi",
 	"BearTrapApi",
+	"BlacklistApi",
 	"CasesApi",
 	"EconomyApi",
 	"GiveawaysApi",
@@ -187,6 +191,7 @@ class ApiClient:
 		self.shop = ShopApi(self)
 		self.giveaways = GiveawaysApi(self)
 		self.alerts = AlertsApi(self)
+		self.blacklist = BlacklistApi(self)
 
 	async def ping(self) -> None:
 		"""Check that the API is up, e.g. to time a round trip.
@@ -1744,3 +1749,49 @@ class AlertsApi:
 		path = f"/guilds/{guild_id}/alerts/{alert_id}/enabled"
 		body = AlertEnabled(enabled=enabled)
 		return await _or_none(self._client.request("PUT", path, MediaAlert, body=body)) is not None
+
+
+class BlacklistApi:
+	"""Blacklist operations. Every method can also raise `ApiUnavailable`.
+
+	Args:
+		client: The API client.
+	"""
+
+	def __init__(self, client: ApiClient) -> None:
+		self._client = client
+
+	async def entries(self) -> list[BlacklistEntry]:
+		"""List every blacklisted user and guild, oldest first.
+
+		Returns:
+			The entries.
+		"""
+		return await self._client.request("GET", "/blacklist", list[BlacklistEntry])
+
+	async def add(self, kind: BlacklistKind, target_id: int, created_by: int, reason: str | None) -> BlacklistEntry:
+		"""Blacklist a user or guild. Blacklisting it again replaces the reason and who added it.
+
+		Args:
+			kind: Whether the target is a user or a guild.
+			target_id: The user or guild.
+			created_by: The bot owner adding it.
+			reason: Why, if given.
+
+		Returns:
+			The entry.
+		"""
+		body = BlacklistAdd(created_by=created_by, reason=reason)
+		return await self._client.request("PUT", f"/blacklist/{kind}/{target_id}", BlacklistEntry, body=body)
+
+	async def remove(self, kind: BlacklistKind, target_id: int) -> bool:
+		"""Take a user or guild off the blacklist.
+
+		Args:
+			kind: Whether the target is a user or a guild.
+			target_id: The user or guild.
+
+		Returns:
+			Whether it was blacklisted.
+		"""
+		return await _or_none(self._client.send("DELETE", f"/blacklist/{kind}/{target_id}")) is not None

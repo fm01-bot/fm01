@@ -22,6 +22,7 @@ from helpers import custom_response, seconds_to_text
 
 from core import Command, Context, SlashCommandLocalizer, slash_localization, update_slash_localizations
 from core.api import ApiClient, ApiUnavailable
+from core.blacklist import Blacklist, Blacklisted
 from core.clustering import (
 	ClusterConfig,
 	EventBus,
@@ -135,6 +136,8 @@ class Bot(commands.AutoShardedBot):
 		"""Shards that received READY (or resumed) and haven't disconnected since."""
 		origin = uuid.uuid4().hex
 		self.api = ApiClient(os.getenv("API_URL", "http://localhost:8000"), os.getenv("API_INTERNAL_TOKEN", ""), origin)
+		self.blacklist = Blacklist(self.api)
+		self.add_check(self.blacklist.check)
 		self.settings = GuildSettings(self.event_bus, origin)
 		self.prefix: GuildSetting[Prefix] = prefix_setting(self.settings, self.api)
 		self.locale_override: GuildSetting[str | None] = locale_override_setting(self.settings, self.api)
@@ -237,6 +240,7 @@ class Bot(commands.AutoShardedBot):
 
 		await self.load_cogs()
 		await self.settings.preload()
+		await self.blacklist.load()
 		await self.tree.set_translator(SlashCommandLocalizer())
 		self.session = aiohttp.ClientSession(
 			connector=aiohttp.TCPConnector(resolver=aiohttp.ThreadedResolver(), family=socket.AF_INET)
@@ -245,6 +249,8 @@ class Bot(commands.AutoShardedBot):
 		self.logger.debug(f"Initial setup hook complete in {end:.2f}s")
 
 	async def _on_cluster_event(self, event: dict[str, Any]) -> None:
+		if self.blacklist.handle_event(event):
+			return
 		await self.settings.handle_event(event)
 
 	async def on_message(self, message: discord.Message) -> None:
@@ -407,6 +413,12 @@ class Bot(commands.AutoShardedBot):
 
 		if isinstance(error, commands.HybridCommandError):
 			error = error.original
+
+		if isinstance(error, Blacklisted):
+			# Text commands are ignored silently; an unanswered interaction would show Discord's own error instead.
+			if ctx.interaction is not None:
+				await ctx.send("errors.blacklisted")
+			return
 
 		root: BaseException = error
 		while isinstance(root, (commands.CommandInvokeError, app_commands.CommandInvokeError)):
