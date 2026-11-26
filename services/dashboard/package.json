@@ -3,8 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "schemas": "uv run --directory ../api python -m app.openapi ../../shared/schemas/openapi/openapi.json && openapi-typescript ../../shared/schemas/openapi/openapi.json -o ../../shared/schemas/ts/api.d.ts",
+    "dev": "pnpm schemas && next dev",
+    "build": "pnpm schemas && next build",
     "start": "next start",
     "lint": "eslint"
   },
@@ -21,6 +22,7 @@
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
+    "openapi-typescript": "7.13.0",
     "tailwindcss": "4.3.3",
     "typescript": "^5"
   },

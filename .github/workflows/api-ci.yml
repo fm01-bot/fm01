@@ -62,11 +62,8 @@ jobs:
         env:
           REQUIRE_DB_TESTS: "1"
 
-      - name: Verify generated schemas are up to date
+      # The output is gitignored; this only checks that the schema and its TS types still generate.
+      - name: Generate schemas
         run: |
           uv run python -m app.openapi ../../shared/schemas/openapi/openapi.json
           npx --yes openapi-typescript@7.13.0 ../../shared/schemas/openapi/openapi.json -o ../../shared/schemas/ts/api.d.ts
-          git diff --exit-code -- ../../shared/schemas || {
-            echo "::error::shared/schemas is out of date; run 'just schemas' and commit the result"
-            exit 1
-          }

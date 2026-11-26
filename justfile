@@ -38,7 +38,7 @@ test *ARGS:
 dev:
   uv run uvicorn app.main:app --reload --port 8000
 
-# Regenerates shared/schemas/openapi/openapi.json and the TypeScript types in shared/schemas/ts/
+# Generates shared/schemas/openapi/openapi.json and the TypeScript types in shared/schemas/ts/ (both gitignored)
 [working-directory: 'services/api']
 schemas:
   uv run python -m app.openapi ../../shared/schemas/openapi/openapi.json

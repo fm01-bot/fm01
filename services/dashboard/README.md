@@ -1,5 +1,17 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## API types
+
+`pnpm dev` and `pnpm build` generate the API's TypeScript types first (needs `uv`, like the rest of the repo). Run `pnpm schemas` to regenerate them on their own, for example after changing an API route while `pnpm dev` is running. Import them with:
+
+```ts
+import type { components } from "@fm01/api";
+
+type ErrorBody = components["schemas"]["ErrorBody"];
+```
+
+The generated files (`shared/schemas/openapi/`, `shared/schemas/ts/`) are gitignored.
+
 ## Getting Started
 
 First, run the development server:
