@@ -37,8 +37,15 @@ jobs:
     name: Move issue card
     if: github.event_name == 'pull_request_target' || github.event.ref_type == 'branch'
     runs-on: ubuntu-latest
+    env:
+      HAS_TOKEN: ${{ secrets.PROJECT_TOKEN != '' }}
     steps:
+      - name: Skip without PROJECT_TOKEN
+        if: env.HAS_TOKEN != 'true'
+        run: echo "::warning::PROJECT_TOKEN secret is not set, so the project board was not updated."
+
       - name: Update project status
+        if: env.HAS_TOKEN == 'true'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.PROJECT_TOKEN }}
