@@ -1,10 +1,8 @@
 """A helper for converting stuff."""
 
-import discord
-
 from .regex import TIME
 
-__all__ = ("convert_to_query", "seconds_to_text", "text_to_emoji", "text_to_seconds")
+__all__ = ("seconds_to_text", "text_to_emoji", "text_to_seconds")
 
 
 def text_to_seconds(time: str, base: int = 0) -> int:
@@ -141,47 +139,6 @@ def seconds_to_text(seconds: int) -> str:
 			seconds %= value
 
 	return time.strip()
-
-
-def convert_to_query(table: str, guild: discord.Guild | None = None, limit: int | None = None, **filters):
-	"""Converts a set of filters to an SQL query.
-
-	Args:
-		table: The table to get the results from.
-		guild: The guild to get the results from.
-		limit: The number of results to return. If ``None``, all results will be returned.
-		**filters: The conditions to filter the results by.
-
-	Returns:
-		tuple[str, list[Any]]: The query string and the query parameters.
-
-	"""
-	processed_filters = {}
-	for key, value in filters.items():
-		if isinstance(value, (discord.User, discord.Guild, discord.Member, discord.Message)):
-			processed_filters[f"{key}_id"] = value.id
-		else:
-			processed_filters[key] = value
-
-	if guild is not None:
-		processed_filters["guild_id"] = guild.id
-
-	# Construct WHERE clause from processed filters
-	where_clauses = []
-	query_parameters = []
-	for idx, (key, value) in enumerate(processed_filters.items(), start=1):
-		if not key.isidentifier():
-			raise ValueError(f"Invalid column identifier: '{key}'")
-		where_clauses.append(f'"{key}" = ${idx}')
-		query_parameters.append(value)
-
-	where_statement = " AND ".join(where_clauses) if where_clauses else "1=1"
-	query = f'SELECT * FROM "{table}" WHERE {where_statement}'
-	if limit is not None:
-		query += f" LIMIT ${len(query_parameters) + 1}"
-		query_parameters.append(limit)
-
-	return query, query_parameters
 
 
 def text_to_emoji(text: str) -> list[str]:

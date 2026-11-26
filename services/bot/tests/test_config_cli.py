@@ -22,7 +22,7 @@ def test_split_args():
 
 def test_short_flags_and_clustering():
 	parser = CLIParser("app")
-	cmd = parser.root.add_subcommand("ls")
+	cmd = parser.root.create_subcommand("ls")
 	cmd.add_option("all", "a", is_flag=True)
 	cmd.add_option("long", "l", is_flag=True)
 
@@ -38,7 +38,7 @@ def test_short_flags_and_clustering():
 
 def test_short_flag_with_value():
 	parser = CLIParser("app")
-	cmd = parser.root.add_subcommand("zip")
+	cmd = parser.root.create_subcommand("zip")
 	cmd.add_option("exclude", "x")
 
 	# zip -x "*node_modules*"
@@ -52,8 +52,8 @@ def test_short_flag_with_value():
 
 def test_docker_compose_up_d():
 	parser = CLIParser("docker")
-	compose = parser.root.add_subcommand("compose")
-	up = compose.add_subcommand("up")
+	compose = parser.root.create_subcommand("compose")
+	up = compose.create_subcommand("up")
 	up.add_option("detach", "d", is_flag=True)
 
 	node, opts = parser.parse(["compose", "up", "-d"])

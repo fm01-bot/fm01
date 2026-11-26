@@ -50,10 +50,10 @@ export default function Container({ lang }: { lang?: MainPageLangJson["features"
                 <span className="server-title">fm01 <FontAwesomeIcon icon={faChevronDown} /></span>
                 <div className="channel-list">
                     {
-                        lang?.channels?.map((c, i) => {
+                        lang.channels.map((c, i) => {
                             return (
                                 <span
-                                    onClick={() => { setActive(i); console.log(i) }}
+                                    onClick={() => setActive(i)}
                                     key={`cl-${i}`}
                                     className={`channel-name ${active == i ? "is-active" : ""}`}>
                                     <span>#</span>
@@ -89,7 +89,7 @@ export default function Container({ lang }: { lang?: MainPageLangJson["features"
                 </div>
                 <div className="channel-content">
                     {
-                        lang?.channels?.map((c, i) => {
+                        lang.channels.map((c, i) => {
                             return (
                                 <div key={`c-${i}`} className={`channel-pane ${active == i ? "is-active" : ""}`}>
                                     <Channel key={`c-${i}`} {...c} />

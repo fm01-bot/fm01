@@ -8,23 +8,12 @@ from typing import Any
 import asyncpg
 from api import BEAR_TRAP_SETTING, BearTrapKicks, BearTrapMessage, BearTrapState, GuildBearTrap
 
+from app.db import snowflake
 from app.events import Announcer
 
 __all__ = ("BearTrapStore",)
 
 _COLUMNS = "channel_id, message_channel_id, message_id, kicks"
-
-
-def _id(value: Any) -> int | None:
-	"""Convert a ``numeric`` snowflake column to an ``int``.
-
-	Args:
-		value: The column value.
-
-	Returns:
-		The snowflake, or ``None`` for ``NULL``.
-	"""
-	return None if value is None else int(value)
 
 
 def _state(row: Mapping[str, Any] | None) -> BearTrapState:
@@ -39,9 +28,9 @@ def _state(row: Mapping[str, Any] | None) -> BearTrapState:
 	if row is None:
 		return BearTrapState()
 	return BearTrapState(
-		channel_id=_id(row["channel_id"]),
-		message_channel_id=_id(row["message_channel_id"]),
-		message_id=_id(row["message_id"]),
+		channel_id=snowflake(row["channel_id"]),
+		message_channel_id=snowflake(row["message_channel_id"]),
+		message_id=snowflake(row["message_id"]),
 		kicks=row["kicks"],
 	)
 

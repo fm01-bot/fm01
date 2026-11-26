@@ -99,7 +99,6 @@ def setup_ticket_subcommands(parent_node: CLINode) -> CLINode:
 		if not target_channel or not isinstance(target_channel, discord.abc.Messageable):
 			raise CLIParseError("Target channel could not be resolved.", panel_node)
 
-		# Check bot permissions in target channel
 		if isinstance(target_channel, discord.TextChannel) and ctx.guild.me:
 			perms = target_channel.permissions_for(ctx.guild.me)
 			if not perms.send_messages or not perms.embed_links:
@@ -108,7 +107,6 @@ def setup_ticket_subcommands(parent_node: CLINode) -> CLINode:
 					panel_node,
 				)
 
-		# Build view
 		ticket_cog: Any = ctx.bot.get_cog("Ticket")
 		if ticket_cog and hasattr(ticket_cog, "create_launcher_view"):
 			view = await ticket_cog.create_launcher_view(ctx.guild, button_label=button)
@@ -124,7 +122,6 @@ def setup_ticket_subcommands(parent_node: CLINode) -> CLINode:
 
 			view = TicketLauncherView(button_label=btn_label)
 
-		# Build message payload with localized defaults or custom overrides
 		send_kwargs: dict[str, Any] = {"view": view}
 		if title or description:
 			panel_title = title or "Support Tickets"

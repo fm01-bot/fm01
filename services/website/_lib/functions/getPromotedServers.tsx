@@ -53,17 +53,7 @@ export async function getPromotedServers() {
         }
     ]
 
-    {/**
-        TODO: Write DB function to get list of promoted servers
-        
-        JSON type:
-        {
-            count: number,
-            name: string,
-            invite: string,
-            icon: string
-        }
-    */}
+    // TODO: Write DB function to get list of promoted servers (shape: PromotedServersJson)
 
     return {
         SERVERS

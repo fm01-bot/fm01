@@ -137,7 +137,6 @@ class RedisShardCoordinator(ShardCoordinator):
 			else:
 				current_owner = await self.redis.get(key)
 				if current_owner and current_owner.decode("utf-8") == self.cluster_id:  # type: ignore
-					# We already own the lease from previous run/reboot
 					await self.redis.expire(key, self.lease_ttl)
 					claimed.append(shard_id)
 					logger.info(f"Cluster {self.cluster_id} reclaimed existing lease on shard {shard_id}")

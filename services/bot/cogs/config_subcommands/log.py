@@ -26,7 +26,7 @@ def setup_log_subcommands(parent_node: CLINode) -> CLINode:
 
 		if ch_raw:
 			target_channel = resolve_channel(ctx.guild, ch_raw)
-			if not target_channel or not isinstance(target_channel, discord.abc.Messageable):
+			if not isinstance(target_channel, discord.abc.Messageable):
 				raise CLIParseError(f"Channel `{ch_raw}` was not found or is not a valid text channel.", enable_node)
 		else:
 			existing_cfg = await LogSettings(ctx.bot).get(ctx.guild.id)
@@ -63,11 +63,11 @@ def setup_log_subcommands(parent_node: CLINode) -> CLINode:
 		if not ch_raw:
 			raise CLIParseError("Please specify a channel via `--channel #name` or `#name`.", channel_node)
 		target_channel = resolve_channel(ctx.guild, ch_raw)
-		if not target_channel or not isinstance(target_channel, discord.abc.Messageable):
+		if not isinstance(target_channel, discord.abc.Messageable):
 			raise CLIParseError(f"Channel `{ch_raw}` was not found or is not a valid text channel.", channel_node)
 
 		await LogSettings(ctx.bot).set_default_channel(ctx.guild.id, target_channel.id)
-		ch_name = getattr(target_channel, "name", str(target_channel.id))
+		ch_name = target_channel.name
 		return await ctx.send(content=f"```ansi\n[+] Default log channel set to #{ch_name}\n```")
 
 	channel_node.callback = log_channel

@@ -14,9 +14,6 @@ export default function Footer({ lang }: { lang: FooterLangJson }) {
     const { theme, setTheme } = useTheme()
     const currentYear = new Date().getFullYear();
 
-
-
-
     const LINK_LANG: Record<string, string> = {
         "https://github.fm01.bot": lang.links.github,
         "https://support.fm01.bot": "FAQ",
@@ -67,8 +64,7 @@ export default function Footer({ lang }: { lang: FooterLangJson }) {
         {
             "title": lang.links.title,
             "keys": LINKS,
-            "lang": LINK_LANG,
-            "names": null
+            "lang": LINK_LANG
         },
         {
             "title": "Legal",

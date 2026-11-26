@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Coroutine
-from typing import Any, ClassVar, Literal, Self, TypeVar
+from typing import Any, ClassVar, Literal, Self
 
 import discord
 from discord import app_commands
@@ -11,10 +11,7 @@ from discord.utils import MISSING
 from core import slash_localization
 from core.slash_localization import command_key
 
-__all__ = ("HybridCommand", "HybridGroup", "command", "group")
-
-T = TypeVar("T")
-CogT = TypeVar("CogT")
+__all__ = ("command", "group")
 
 CommandCallback = Callable[..., Any]
 
@@ -77,8 +74,6 @@ type Permission = Literal[
 	"view_creator_monetization_analytics",
 	"view_guild_insights",
 ]
-
-__all__ = ("command", "group")
 
 
 def _normalize_l10n_message(message: str | app_commands.locale_str | None, fallback: str) -> str:
@@ -403,12 +398,10 @@ def command(
 
 		base = l10n_key or name or func.__name__  # type: ignore
 
-		text_description = description or command_key(base, "desc")
-
-		cmd = HybridCommand(
+		return HybridCommand(
 			func,
 			name=name or base,
-			description=text_description,
+			description=description or command_key(base, "desc"),
 			usage=usage,
 			with_app_command=with_app_command,
 			permissions=permissions or [],
@@ -422,8 +415,6 @@ def command(
 			aliases=aliases or [],
 			**kwargs,
 		)
-
-		return cmd
 
 	return decorator
 
@@ -450,12 +441,10 @@ def group(
 
 		base = l10n_key or name or func.__name__  # type: ignore
 
-		text_description = description or command_key(base, "desc")
-
-		result = HybridGroup(
+		return HybridGroup(
 			func,
 			name=name or base,
-			description=text_description,
+			description=description or command_key(base, "desc"),
 			with_app_command=with_app_command,
 			permissions=permissions or [],
 			nsfw=nsfw,
@@ -469,7 +458,5 @@ def group(
 			usage=usage,
 			**kwargs,
 		)
-
-		return result
 
 	return decorator

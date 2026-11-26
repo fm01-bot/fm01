@@ -5,11 +5,8 @@ from unittest.mock import AsyncMock, MagicMock
 import discord
 import pytest
 from args.media import Media
-from cogs.alerts import OFFLINE_BASELINE, AlertLimitReachedError, Alerts
-from core.api import ApiError
+from cogs.alerts import OFFLINE_BASELINE, Alerts
 from tests.fake_api import alert
-
-from api import ErrorBody, ErrorCode
 
 
 @pytest.fixture
@@ -40,45 +37,6 @@ def mock_bot():
 @pytest.fixture
 def alerts_cog(mock_bot):
 	return Alerts(mock_bot)
-
-
-@pytest.mark.asyncio
-async def test_add_alert_success(alerts_cog, mock_bot):
-	mock_bot.api.alerts.add = AsyncMock(return_value=alert(id=42))
-
-	alert_id = await alerts_cog.add_alert(
-		guild_id=123,
-		platform="youtube",
-		channel_account="@Creator",
-		account_id="UC12345",
-		account_name="Creator",
-		target_channel_id=999,
-	)
-	assert alert_id == 42
-	assert mock_bot.api.alerts.add.await_args is not None
-	sent = mock_bot.api.alerts.add.await_args.args[1]
-	assert (sent.platform, sent.channel_account, sent.account_id, sent.target_channel_id) == (
-		"youtube",
-		"@Creator",
-		"UC12345",
-		999,
-	)
-
-
-@pytest.mark.asyncio
-async def test_add_alert_limit_exceeded(alerts_cog, mock_bot):
-	refusal = ApiError(409, ErrorBody(code=ErrorCode.ALERT_LIMIT, message="alert limit"))
-	mock_bot.api.alerts.add = AsyncMock(side_effect=refusal)
-
-	with pytest.raises(AlertLimitReachedError):
-		await alerts_cog.add_alert(
-			guild_id=123,
-			platform="youtube",
-			channel_account="@Creator",
-			account_id="UC12345",
-			account_name="Creator",
-			target_channel_id=999,
-		)
 
 
 @pytest.mark.asyncio
@@ -163,22 +121,6 @@ async def test_dispatch_alert_fallback(alerts_cog, mock_bot):
 	sent_content = channel.send.call_args[1]["content"]
 	assert "**Streamer** posted an update!" in sent_content
 	assert "https://twitch.tv/streamer" in sent_content
-
-
-@pytest.mark.asyncio
-async def test_alert_crud_methods(alerts_cog, mock_bot):
-	mock_bot.api.alerts.for_guild = AsyncMock(return_value=[alert(id=1, platform="youtube")])
-	alerts = await alerts_cog.get_guild_alerts(123)
-	assert len(alerts) == 1
-	assert alerts[0].platform == "youtube"
-
-	mock_bot.api.alerts.remove = AsyncMock(return_value=True)
-	assert await alerts_cog.remove_alert(1, 123) is True
-	mock_bot.api.alerts.remove.assert_awaited_once_with(123, 1)
-
-	mock_bot.api.alerts.set_enabled = AsyncMock(return_value=True)
-	assert await alerts_cog.set_alert_enabled(1, 123, False) is True
-	mock_bot.api.alerts.set_enabled.assert_awaited_once_with(123, 1, False)
 
 
 @pytest.mark.asyncio

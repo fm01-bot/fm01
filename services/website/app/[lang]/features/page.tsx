@@ -26,8 +26,6 @@ type PageProps = {
     params: Promise<{ lang: string }>;
 };
 
-/* ---------- Data ---------- */
-
 type Dictionary = Awaited<ReturnType<typeof getDictionary>>;
 type FeaturesLang = Dictionary['features'];
 
@@ -42,8 +40,6 @@ const MORE_ICONS: Record<keyof FeaturesLang['more']['items'], IconDefinition> = 
     snapshots: faClockRotateLeft,
 };
 
-
-/* ---------- Building blocks ---------- */
 
 function DiscordPanel({
     channel,
@@ -103,8 +99,6 @@ function FeatureCopy({
         </div>
     );
 }
-
-/* ---------- Page ---------- */
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const { lang } = await params;

@@ -1,5 +1,5 @@
 import { ButtonColors, ButtonType } from "@/_lib/types/MessageLang"
-import { faArrowUpRightFromSquare, faBoxOpen, faLink } from "@fortawesome/free-solid-svg-icons"
+import { faArrowUpRightFromSquare } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import Link from "next/link"
 

@@ -53,23 +53,8 @@ export default function Header({ lang, code }: { lang: WebLangJson["header"], co
                 <div className="actions">
                     <div className="langlight">
 
-                        {/* FIX: Replaced 'inset-0' with explicit negative offsets to bleed under the border */}
                         <div className={`absolute hidden laptop:block -top-px -bottom-px -left-0.5 right-0 -z-10 rounded-2xl bg-primary/50 backdrop-blur-xl pointer-events-none`}></div>
 
-                        {/* 2. Desktop Theme Toggle */}
-                        {/* <div className="theme" onClick={() => {
-                            console.log("asd");
-                            if (theme === "system") setTheme("light");
-                            if (theme === "light") setTheme("dark");
-                            if (theme === "dark") setTheme("system")
-                        }}>
-                            <FontAwesomeIcon
-                                icon={theme === "system" ? faDesktop : theme === "light" ? faSun : faMoon}
-                                className="w-4 h-4 cursor-pointer"
-                            />
-                        </div> */}
-
-                        {/* 3. Desktop Lang Select */}
                         <div className="hidden laptop:block">
                             <LangSelector currentLangCode={code} />
                         </div>
@@ -81,9 +66,6 @@ export default function Header({ lang, code }: { lang: WebLangJson["header"], co
                     </div>
 
 
-                    {/* Desktop Dashboard Button */}
-
-                    {/* Mobile Menu Wrapper */}
                     <div className="mobile-menu">
                         <div className="burger-class">
                             <input
@@ -108,7 +90,7 @@ export default function Header({ lang, code }: { lang: WebLangJson["header"], co
                                 ))}
                             </div>
                             <div className="flex flex-row gap-4">
-                                <LangSelector currentLangCode={code} mobileMenu={[isMenuOpen, setIsMenuOpen]} />
+                                <LangSelector currentLangCode={code} />
                             </div>
                         </div>
                     </div>

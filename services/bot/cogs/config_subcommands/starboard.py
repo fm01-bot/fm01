@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Awaitable
 from typing import TYPE_CHECKING, Any
 
 import discord
@@ -74,7 +75,7 @@ def setup_starboard_subcommands(parent_node: CLINode) -> CLINode:
 			raise CLIParseError("The maximum age is a number of days, or `off`.", at)
 		return int(raw)
 
-	async def write(ctx: Context, at: CLINode, operation: Any) -> Any:
+	async def write[T](ctx: Context, at: CLINode, operation: Awaitable[T]) -> T:
 		assert ctx.guild is not None
 		try:
 			result = await operation

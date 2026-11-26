@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import inspect
+import re
 import shlex
 from collections.abc import Callable, Sequence
 from typing import Any, NoReturn
@@ -16,7 +17,6 @@ class CLIParseError(Exception):
 		super().__init__(message)
 		self.message = message
 		self.node = node
-		self.parser = node
 
 
 class HelpRequested(Exception):
@@ -26,7 +26,6 @@ class HelpRequested(Exception):
 		super().__init__(help_text)
 		self.help_text = help_text
 		self.node = node
-		self.parser = node
 
 
 class CLINode(argparse.ArgumentParser):
@@ -42,7 +41,6 @@ class CLINode(argparse.ArgumentParser):
 		return self.prog.split()[-1]
 
 	def _print_message(self, message: str, file: Any = None) -> None:
-		# Suppress printing directly to stdout/stderr
 		pass
 
 	def exit(self, status: int = 0, message: str | None = None) -> NoReturn:
@@ -52,8 +50,6 @@ class CLINode(argparse.ArgumentParser):
 
 	def error(self, message: str) -> NoReturn:
 		if "invalid choice:" in message:
-			import re
-
 			match = re.search(r"invalid choice:\s*('[^']+'|\S+)\s*\((?:choose from\s*)?([^)]+)\)", message)
 			if match:
 				choice, choices = match.groups()
@@ -131,23 +127,6 @@ class CLINode(argparse.ArgumentParser):
 		subparser.set_defaults(_active_parser=subparser)
 		return subparser
 
-	def add_subcommand(
-		self, child_or_name: CLINode | str, description: str = "", callback: Callable[..., Any] | None = None
-	) -> CLINode:
-		"""Add or create a child subcommand parser."""
-		if isinstance(child_or_name, CLINode):
-			return child_or_name
-		return self.create_subcommand(child_or_name, description=description, callback=callback)
-
-	def subcommand(self, name: str, description: str = "") -> Callable[[Callable[..., Any]], CLINode]:
-		"""Decorator to register a subcommand callback."""
-
-		def decorator(func: Callable[..., Any]) -> CLINode:
-			desc = description or (func.__doc__ or "").strip()
-			return self.create_subcommand(name, description=desc, callback=func)
-
-		return decorator
-
 	def get_positional_placeholders(self) -> list[str]:
 		"""Return formatted placeholder strings for positional arguments."""
 		parts: list[str] = []
@@ -182,6 +161,17 @@ class CLINode(argparse.ArgumentParser):
 					ph = f"<{a.dest}>"
 				res.append((f"{flag} {ph}", flag, help_text))
 		return res
+
+
+def _unique_choices(choices: list[tuple[str, str]]) -> list[tuple[str, str]]:
+	"""Drops empty and repeated values, keeping the first 25 (Discord's autocomplete limit)."""
+	seen: set[str] = set()
+	unique: list[tuple[str, str]] = []
+	for label, value in choices:
+		if label and value and value not in seen:
+			seen.add(value)
+			unique.append((label, value))
+	return unique[:25]
 
 
 class CLIParser:
@@ -243,7 +233,7 @@ class CLIParser:
 			prefix_path = []
 
 		presets: list[tuple[list[str], str, CLINode]] = []
-		sub = getattr(node, "_subparsers_action", None)
+		sub = node._subparsers_action
 		choices: dict[str, CLINode] = sub.choices if sub else {}
 
 		pos = node.get_positional_placeholders()
@@ -269,7 +259,7 @@ class CLIParser:
 		curr = self.root
 		consumed: list[str] = []
 		for t in tokens:
-			sub = getattr(curr, "_subparsers_action", None)
+			sub = curr._subparsers_action
 			if sub and t in sub.choices:
 				curr = sub.choices[t]
 				consumed.append(t)
@@ -279,7 +269,7 @@ class CLIParser:
 
 	def autocomplete(self, current: str) -> list[tuple[str, str]]:
 		"""Generate (label, value) choices for slash command autocomplete presets."""
-		sub = getattr(self.root, "_subparsers_action", None)
+		sub = self.root._subparsers_action
 		root_choices: dict[str, CLINode] = sub.choices if sub else {}
 
 		clean = current.strip()
@@ -288,7 +278,7 @@ class CLIParser:
 
 		parts = clean.split()
 
-		# 1. Empty or typing a single word without trailing space (not yet entered into category)
+		# Empty, or typing a single word without trailing space (not yet entered into category)
 		if not clean or (len(parts) == 1 and not current.endswith(" ")):
 			results: list[tuple[str, str]] = []
 			token = clean.lower()
@@ -319,15 +309,9 @@ class CLIParser:
 					full_val = f"{token} {full_rel}".strip()
 					results.append((full_val[:100], full_val[:100]))
 
-			seen: set[str] = set()
-			unique_results: list[tuple[str, str]] = []
-			for lbl, val in results:
-				if val not in seen and lbl and val:
-					seen.add(val)
-					unique_results.append((lbl, val))
-			return unique_results[:25]
+			return _unique_choices(results)
 
-		# 2. Inside a command string (category entered with trailing space or args)
+		# Inside a command string (category entered with trailing space or args)
 		first_token = parts[0].lower() if parts else ""
 		if first_token in root_choices:
 			cat_node = root_choices[first_token]
@@ -386,15 +370,9 @@ class CLIParser:
 						if (val[:100], val[:100]) not in sub_results:
 							sub_results.append((val[:100], val[:100]))
 
-			seen_sub: set[str] = set()
-			unique_sub: list[tuple[str, str]] = []
-			for lbl, val in sub_results:
-				if val not in seen_sub and lbl and val:
-					seen_sub.add(val)
-					unique_sub.append((lbl, val))
-			return unique_sub[:25]
+			return _unique_choices(sub_results)
 
-		# 3. Not starting with category -> Global search
+		# Not starting with a category: global search
 		query = clean.lower()
 		all_presets = self.collect_presets(self.root, [])
 		global_results: list[tuple[str, str]] = []
@@ -405,10 +383,4 @@ class CLIParser:
 			if query in full_cmd.lower():
 				global_results.append((full_cmd[:100], full_cmd[:100]))
 
-		seen_global: set[str] = set()
-		unique_global: list[tuple[str, str]] = []
-		for lbl, val in global_results:
-			if val not in seen_global and lbl and val:
-				seen_global.add(val)
-				unique_global.append((lbl, val))
-		return unique_global[:25]
+		return _unique_choices(global_results)

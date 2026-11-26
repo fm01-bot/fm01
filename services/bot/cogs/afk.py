@@ -39,7 +39,7 @@ class AFK(commands.Cog):
 		if data and data.get("previous_nick"):
 			try:
 				await ctx.author.edit(nick=data["previous_nick"])
-			except (discord.Forbidden, discord.HTTPException):
+			except discord.HTTPException:
 				pass
 		await ctx.reply("afk.off")
 
@@ -92,7 +92,7 @@ class AFK(commands.Cog):
 			try:
 				if isinstance(ctx.author, discord.Member):
 					await ctx.author.edit(nick=toggled.previous_nick)
-			except (discord.Forbidden, discord.HTTPException):
+			except discord.HTTPException:
 				pass
 			return await ctx.send("afk.off")
 		else:
@@ -103,7 +103,7 @@ class AFK(commands.Cog):
 					nick = nick[:32]
 				if isinstance(ctx.author, discord.Member):
 					await ctx.author.edit(nick=nick)
-			except (discord.Forbidden, discord.HTTPException):
+			except discord.HTTPException:
 				pass
 			return await ctx.send("afk.on")
 

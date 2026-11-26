@@ -35,7 +35,7 @@ from helpers.formatting import SafeFormatter, StrictFormatter
 if TYPE_CHECKING:
 	from core.bot import Bot
 
-__all__ = ("DEFAULT_COLOR", "DEFAULT_EMBED_COLOR", "LOCALIZATION_ROOT", "RESPONSES_PATH", "CustomResponse")
+__all__ = ("DEFAULT_COLOR", "LOCALIZATION_ROOT", "RESPONSES_PATH", "CustomResponse")
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,6 @@ LOCALIZATION_ROOT = Path(__file__).resolve().parent.parent.parent.parent / "shar
 RESPONSES_PATH = LOCALIZATION_ROOT / "responses"
 
 DEFAULT_COLOR = 0x6094EB
-DEFAULT_EMBED_COLOR = DEFAULT_COLOR
 
 KWARG_MAPPING = {
 	discord.Guild: Guild.from_guild,
@@ -88,6 +87,11 @@ def _parse_color(color: Any) -> discord.Color | int | None:
 				if callable(color_fn):
 					return color_fn()
 	return None
+
+
+def _action_rows(items: Sequence[discord.ui.Item]) -> list[discord.ui.ActionRow]:
+	"""Pack items into action rows of up to 5, Discord's limit per row."""
+	return [discord.ui.ActionRow(*items[i : i + 5]) for i in range(0, len(items), 5)]
 
 
 def _parse_button_style(style: Any) -> discord.ButtonStyle:
@@ -160,7 +164,7 @@ class CustomResponse:
 		"""A class to handle custom responses with localization.
 
 		Args:
-			client: The client object with a ``db`` attribute.
+			client: The bot.
 			name: The name of the cog that uses this class.
 
 		"""
@@ -284,10 +288,8 @@ class CustomResponse:
 				):
 					pending_row.append(ci)
 				else:
-					if pending_row:
-						for i in range(0, len(pending_row), 5):
-							children.append(discord.ui.ActionRow(*pending_row[i : i + 5]))
-						pending_row = []
+					children.extend(_action_rows(pending_row))
+					pending_row = []
 					if (
 						isinstance(ci, discord.ui.Separator)
 						and children
@@ -295,9 +297,7 @@ class CustomResponse:
 					):
 						continue
 					children.append(ci)
-			if pending_row:
-				for i in range(0, len(pending_row), 5):
-					children.append(discord.ui.ActionRow(*pending_row[i : i + 5]))
+			children.extend(_action_rows(pending_row))
 
 			return discord.ui.Container(*children, accent_color=accent, spoiler=spoiler)
 
@@ -354,11 +354,9 @@ class CustomResponse:
 
 		elif raw_type in (1, "action_row"):
 			row_children = [
-				CustomResponse.convert_component(c)
-				for c in comp.get("components", [])
-				if CustomResponse.convert_component(c) is not None
+				item for c in comp.get("components", []) if (item := CustomResponse.convert_component(c)) is not None
 			]
-			return discord.ui.ActionRow(*row_children)  # type: ignore
+			return discord.ui.ActionRow(*row_children)
 
 		elif raw_type in (2, "button"):
 			return discord.ui.Button(
@@ -457,16 +455,12 @@ class CustomResponse:
 					pending_row: list[discord.ui.Item] = []
 					for item in items:
 						if isinstance(item, discord.ui.ActionRow):
-							if pending_row:
-								for i in range(0, len(pending_row), 5):
-									action_rows.append(discord.ui.ActionRow(*pending_row[i : i + 5]))
-								pending_row = []
+							action_rows.extend(_action_rows(pending_row))
+							pending_row = []
 							action_rows.append(item)
 						else:
 							pending_row.append(item)
-					if pending_row:
-						for i in range(0, len(pending_row), 5):
-							action_rows.append(discord.ui.ActionRow(*pending_row[i : i + 5]))
+					action_rows.extend(_action_rows(pending_row))
 
 					if container is not None:
 						for ar in action_rows:
@@ -535,7 +529,7 @@ class CustomResponse:
 		convert_components: bool = True,
 		**kwargs,
 	) -> Any:
-		"""Returns a custom message from the database, or if not found, returns the default message.
+		"""Returns the localized message ``name``, formatted with ``kwargs``.
 
 		Args:
 			name: The name of the message.

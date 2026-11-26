@@ -883,3 +883,33 @@ async def test_fallback_transcript_escapes_names_and_filenames():
 	assert "<script>" not in result
 	assert "<img" not in result
 	assert "&lt;script&gt;" in result
+
+
+@pytest.mark.asyncio
+async def test_ticket_buttons_reach_the_cog_on_the_sharded_bot():
+	from core.bot import Bot
+
+	cog = MagicMock(spec=Ticket)
+	cog.handle_close_action = AsyncMock()
+	client = MagicMock(spec=Bot)
+	client.get_cog.return_value = cog
+	interaction = MagicMock(spec=discord.Interaction)
+	interaction.client = client
+
+	await ActiveTicketControlsView().close_btn.callback(interaction)
+
+	cog.handle_close_action.assert_awaited_once_with(interaction)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("action", ["handle_save_action", "handle_close_action"])
+async def test_ticket_action_in_uncached_channel_answers_unavailable(action):
+	cog = Ticket(MagicMock())
+	cog.send_response = AsyncMock()
+	interaction = MagicMock(spec=discord.Interaction)
+	interaction.guild = MagicMock()
+	interaction.channel = MagicMock(spec=discord.PartialMessageable)
+
+	await getattr(cog, action)(interaction)
+
+	cog.send_response.assert_awaited_once_with("ticket.errors.unavailable", interaction, ephemeral=True)

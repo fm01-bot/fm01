@@ -49,12 +49,10 @@ def update_slash_localizations():
 	).glob("*.l10n.json"):
 		lang = file_path.stem.removesuffix(".l10n")
 		try:
-			data = json.loads(Path(file_path).read_text(encoding="utf-8"))
+			data = json.loads(file_path.read_text(encoding="utf-8"))
 			if not isinstance(data, dict):
 				raise TypeError(f"Expected dict in {file_path}, got {type(data).__name__}")
-			if lang not in slash_localizations:
-				slash_localizations[lang] = {}
-			slash_localizations[lang].update(data)
+			slash_localizations.setdefault(lang, {}).update(data)
 		except json.JSONDecodeError as e:
 			logger.warning(f"Failed to load {file_path}: {e}")
 	global slash_command_localization
@@ -72,14 +70,13 @@ class SlashCommandLocalizer(app_commands.Translator):
 	async def translate(
 		self, string: app_commands.locale_str, locale: discord.Locale | str, context: app_commands.TranslationContext
 	) -> str | None:
-		if slash_command_localization:
-			if str(locale).startswith("en"):
-				# we hate subcultures and don't differentiate
-				# between american and british english
-				locale = "en"
-			key = string.extras.get("key") or string.extras.get("l10n_key") or string.message
-			if key == "…" or key == "...":
-				return None
-
-			return lookup(key, str(locale))
-		return None
+		if not slash_command_localization:
+			return None
+		if str(locale).startswith("en"):
+			# we hate subcultures and don't differentiate
+			# between american and british english
+			locale = "en"
+		key = string.extras.get("key") or string.extras.get("l10n_key") or string.message
+		if key in ("…", "..."):
+			return None
+		return lookup(key, str(locale))

@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-from unittest.mock import MagicMock
-
-import discord
 import pytest
-from helpers.convert import convert_to_query, seconds_to_text, text_to_emoji, text_to_seconds
+from helpers.convert import seconds_to_text, text_to_emoji, text_to_seconds
 
 
 class TestTextToSeconds:
@@ -71,38 +68,6 @@ class TestSecondsToText:
 		# 1 year + 10 seconds
 		total_year = (60 * 60 * 24 * 365) + 10
 		assert seconds_to_text(total_year) == "1y 10s"
-
-
-class TestConvertToQuery:
-	def test_with_guild_filter(self):
-		guild = MagicMock(spec=discord.Guild)
-		guild.id = 987654321
-		query, params = convert_to_query("cases", guild=guild)
-		assert query == 'SELECT * FROM "cases" WHERE "guild_id" = $1'
-		assert params == [987654321]
-
-	def test_with_discord_objects_conversion(self):
-		user = MagicMock(spec=discord.User)
-		user.id = 1111
-		member = MagicMock(spec=discord.Member)
-		member.id = 2222
-		message = MagicMock(spec=discord.Message)
-		message.id = 3333
-
-		query, params = convert_to_query("cases", user=user, moderator=member, target_message=message)
-		assert '"user_id" = $1' in query
-		assert '"moderator_id" = $2' in query
-		assert '"target_message_id" = $3' in query
-		assert params == [1111, 2222, 3333]
-
-	def test_with_limit(self):
-		query, params = convert_to_query("cases", state=True, limit=10)
-		assert query == 'SELECT * FROM "cases" WHERE "state" = $1 LIMIT $2'
-		assert params == [True, 10]
-
-	def test_invalid_column_identifier(self):
-		with pytest.raises(ValueError, match="Invalid column identifier"):
-			convert_to_query("cases", **{"invalid-column!": "val"})  # the type error is expected
 
 
 class TestTextToEmoji:

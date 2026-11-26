@@ -19,11 +19,22 @@ SUPPORTED_FEATURES = ("phrase", "link", "invite", "spam", "mention", "lines")
 async def _get_cog_and_config(ctx: Context, node: CLINode) -> tuple[AutoMod, AutoModConfig]:
 	if not ctx.guild:
 		raise CLIParseError("This command can only be used in a server.", node)
-	cog: Any = ctx.bot.get_cog("AutoMod")
-	if not cog:
+	from cogs.automod import AutoMod
+
+	cog = ctx.bot.get_cog("AutoMod")
+	if not isinstance(cog, AutoMod):
 		raise CLIParseError("AutoMod module is not currently loaded.", node)
 	config = await cog.get_config(ctx.guild.id)
 	return cog, config
+
+
+def _bypass_scope(config: AutoModConfig, feature: str | None) -> tuple[dict[str, list[int]], str]:
+	"""The bypass lists a bypass command edits (the feature's, or the global ones) and a label naming them."""
+	bypasses = config.settings.setdefault("bypasses", {})
+	empty = {"channels": [], "categories": [], "users": [], "roles": []}
+	if feature:
+		return bypasses.setdefault("features", {}).setdefault(feature, empty), f"feature `{feature}`"
+	return bypasses.setdefault("global", empty), "global"
 
 
 def _validate_feature(feature: str | None, node: CLINode) -> str | None:
@@ -523,32 +534,7 @@ def setup_automod_subcommands(parent_node: CLINode) -> CLINode:
 		feat = _validate_feature(feature, bypass_add_node)
 		cog, config = await _get_cog_and_config(ctx, bypass_add_node)
 
-		if feat:
-			dest = (
-				config.settings.setdefault("bypasses", {})
-				.setdefault("features", {})
-				.setdefault(
-					feat,
-					{
-						"channels": [],
-						"categories": [],
-						"users": [],
-						"roles": [],
-					},
-				)
-			)
-			scope_label = f"feature `{feat}`"
-		else:
-			dest = config.settings.setdefault("bypasses", {}).setdefault(
-				"global",
-				{
-					"channels": [],
-					"categories": [],
-					"users": [],
-					"roles": [],
-				},
-			)
-			scope_label = "global"
+		dest, scope_label = _bypass_scope(config, feat)
 
 		added_items = []
 		if channel:
@@ -613,32 +599,7 @@ def setup_automod_subcommands(parent_node: CLINode) -> CLINode:
 		feat = _validate_feature(feature, bypass_remove_node)
 		cog, config = await _get_cog_and_config(ctx, bypass_remove_node)
 
-		if feat:
-			dest = (
-				config.settings.setdefault("bypasses", {})
-				.setdefault("features", {})
-				.setdefault(
-					feat,
-					{
-						"channels": [],
-						"categories": [],
-						"users": [],
-						"roles": [],
-					},
-				)
-			)
-			scope_label = f"feature `{feat}`"
-		else:
-			dest = config.settings.setdefault("bypasses", {}).setdefault(
-				"global",
-				{
-					"channels": [],
-					"categories": [],
-					"users": [],
-					"roles": [],
-				},
-			)
-			scope_label = "global"
+		dest, scope_label = _bypass_scope(config, feat)
 
 		removed_items = []
 		if channel:

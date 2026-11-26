@@ -4,8 +4,6 @@ const dictionaries = {
     hu: () => import('@shared/localization/website/hu.json').then((module) => module.default),
 }
 
-export const languages = ['hu', 'en'];
-
 export type Locale = keyof typeof dictionaries
 
 export const hasLocale = (locale: string): locale is Locale =>

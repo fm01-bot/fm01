@@ -124,14 +124,7 @@ class DiscordClient:
 		Raises:
 			ApiError: ``discord_unavailable`` if Discord fails.
 		"""
-		try:
-			await self._get(f"/guilds/{guild_id}", f"Bot {self._bot_token}", user_call=False)
-		except ApiError as exc:
-			# Discord answers 403 (Missing Access) for a guild the bot isn't in, and 404 for an unknown guild.
-			if exc.code in (ErrorCode.FORBIDDEN, ErrorCode.NOT_FOUND):
-				return False
-			raise
-		return True
+		return await self._bot_get(f"/guilds/{guild_id}") is not None
 
 	async def guild_channel(self, guild_id: int, channel_id: int) -> dict[str, Any] | None:
 		"""Look up a channel as the bot, if it belongs to a guild.
@@ -146,13 +139,10 @@ class DiscordClient:
 		Raises:
 			ApiError: ``discord_unavailable`` if Discord fails.
 		"""
-		try:
-			channel = await self._get(f"/channels/{channel_id}", f"Bot {self._bot_token}", user_call=False)
-		except ApiError as exc:
-			if exc.code in (ErrorCode.FORBIDDEN, ErrorCode.NOT_FOUND):
-				return None
-			raise
-		return channel if str(channel.get("guild_id")) == str(guild_id) else None
+		channel = await self._bot_get(f"/channels/{channel_id}")
+		if channel is None or str(channel.get("guild_id")) != str(guild_id):
+			return None
+		return channel
 
 	async def guild_emoji(self, guild_id: int, emoji_id: int) -> dict[str, Any] | None:
 		"""Look up a custom emoji of a guild as the bot.
@@ -167,9 +157,24 @@ class DiscordClient:
 		Raises:
 			ApiError: ``discord_unavailable`` if Discord fails.
 		"""
+		return await self._bot_get(f"/guilds/{guild_id}/emojis/{emoji_id}")
+
+	async def _bot_get(self, path: str) -> dict[str, Any] | None:
+		"""Send a GET request to Discord as the bot.
+
+		Args:
+			path: The path under the base URL.
+
+		Returns:
+			The JSON body, or ``None`` if Discord answers 403 or 404.
+
+		Raises:
+			ApiError: ``discord_unavailable`` if Discord fails.
+		"""
 		try:
-			return await self._get(f"/guilds/{guild_id}/emojis/{emoji_id}", f"Bot {self._bot_token}", user_call=False)
+			return await self._get(path, f"Bot {self._bot_token}", user_call=False)
 		except ApiError as exc:
+			# Discord answers 403 (Missing Access) for a resource the bot can't see, and 404 for an unknown one.
 			if exc.code in (ErrorCode.FORBIDDEN, ErrorCode.NOT_FOUND):
 				return None
 			raise

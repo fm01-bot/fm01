@@ -35,7 +35,7 @@ def setup_leave_subcommands(parent_node: CLINode) -> CLINode:
 
 		if ch_raw:
 			target_channel = resolve_channel(ctx.guild, ch_raw)
-			if not target_channel or not isinstance(target_channel, discord.abc.Messageable):
+			if not isinstance(target_channel, discord.abc.Messageable):
 				raise CLIParseError(f"Channel `{ch_raw}` was not found or is not a valid text channel.", enable_node)
 		else:
 			config = await greeting_setting(ctx.bot.settings, ctx.bot.api, "leave").get(ctx.guild.id)

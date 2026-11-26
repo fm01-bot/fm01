@@ -22,10 +22,8 @@ export default function CommandScroller() {
                 }}
             >
 
-                { }
                 <div className="flex flex-col gap-4 py-4 animate-[scroll-vertical_25s_linear_infinite] hover:[animation-play-state:paused]">
 
-                    { }
                     {[...commandsData, ...commandsData].map((cmd, index) => (
                         <div
                             key={index}
@@ -43,7 +41,6 @@ export default function CommandScroller() {
                 </div>
             </div>
 
-            { }
             <style>{`
                 @keyframes scroll-vertical {
                     0% { transform: translateY(0); }

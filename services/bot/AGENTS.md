@@ -65,7 +65,7 @@ Dataclasses decorated with `@dataclass(slots=True)` that wrap Discord objects (e
 
 - `custom_response.py` (`CustomResponse`): Core localization interpolation engine. Translates dot-delimited message keys, formats embed dictionaries, and maps Discord models via `KWARG_MAPPING` to `args/` wrappers.
 - `cli_parser.py`: Robust command-line parsing engine powering the `?!config` tree.
-- `convert.py`: Converters for time durations, colors, booleans, and channel lookups.
+- `convert.py`: Converters between durations and text (`10m` and back), and text to regional indicator emoji.
 - `leveling.py` & `level_card.py`: Level math algorithms and Pillow-based rank card canvas generation.
 - `regex.py` & `random_helper.py`: Compiled pattern matching and randomization helpers.
 

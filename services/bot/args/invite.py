@@ -39,31 +39,12 @@ class Invite:
 			uses=invite.uses,
 		)
 
-	@classmethod
-	def from_audit_log_diff(cls, audit_data: discord.AuditLogDiff):
-		return cls(
-			code=audit_data.code,
-			url=f"https://discord.gg/{audit_data.code}",
-			_inviter=audit_data.inviter,
-			_created_at=None,  # Not available in audit log diff for deletes
-			_max_age=audit_data.max_age,
-			max_uses=audit_data.max_uses,
-			temporary=audit_data.temporary,
-			_channel=audit_data.channel,
-			uses=audit_data.uses,
-		)
-
 	@property
 	def max_age(self) -> FormatDateTime | None:
-		"""The invite's max age as a relative timestamp or a human-readable duration."""
-		if not self._max_age or self._max_age == 0:
+		"""When the invite expires, as a relative timestamp. ``None`` if it never does."""
+		if not self._max_age or not self._created_at:
 			return None
-
-		if self._created_at:
-			expires = self._created_at + datetime.timedelta(seconds=self._max_age)
-			return FormatDateTime(expires, "R")
-
-		return None
+		return FormatDateTime(self._created_at + datetime.timedelta(seconds=self._max_age), "R")
 
 	expires = max_age
 

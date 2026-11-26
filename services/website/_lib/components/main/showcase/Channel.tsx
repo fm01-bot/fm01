@@ -2,11 +2,7 @@ import { ChannelType } from '@/_lib/types/MainPageLang';
 import Message from './Message';
 import '@lib/css/main/showcase.css';
 
-export default function Channel({
-    title,
-    description,
-    messages
-}: ChannelType) {
+export default function Channel({ messages }: ChannelType) {
     return (
         <div className='message-container'>
             {

@@ -97,23 +97,18 @@ class Voice(commands.GroupCog, name="Voice", group_name="voice"):
 		if not member.guild or not member.guild.voice_client:
 			return
 		player = cast(LuminPlayer, member.guild.voice_client)
-		if not player or not player.channel:
+		if not player.channel or any(not m.bot for m in player.channel.members):
 			return
 
-		# Disconnect if no non-bot members remain in the bot's voice channel
-		non_bot_members = [m for m in player.channel.members if not m.bot]
-		if len(non_bot_members) == 0:
-			await player.disconnect()
-			if player.home:
-				ch = member.guild.get_channel(player.home)
-				if ch and isinstance(ch, discord.TextChannel):
-					msg = await self.client.custom_response.get_message(
-						"voice.listener.disconnected_empty", member.guild
-					)
-					if isinstance(msg, dict):
-						await ch.send(**msg)
-					elif isinstance(msg, str):
-						await ch.send(msg)
+		await player.disconnect()
+		ch = member.guild.get_channel(player.home) if player.home else None
+		if not isinstance(ch, discord.TextChannel):
+			return
+		msg = await self.client.custom_response.get_message("voice.listener.disconnected_empty", member.guild)
+		if isinstance(msg, dict):
+			await ch.send(**msg)
+		elif isinstance(msg, str):
+			await ch.send(msg)
 
 	@command(user=False)
 	async def play(self, ctx: Context, *, query: str):

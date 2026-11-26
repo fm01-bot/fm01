@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import datetime
-import json
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field, replace
 from logging import getLogger
@@ -77,7 +76,6 @@ LOG_MODULES: frozenset[str] = frozenset(
 		"on_poll_vote_remove",
 	}
 )
-AVAILABLE_MODULES = LOG_MODULES
 
 
 ALL_MODULES = "*"
@@ -97,24 +95,6 @@ class LogConfig:
 	channels: Mapping[str, int] = field(default_factory=dict)
 	modules: frozenset[str] = frozenset({ALL_MODULES})
 	webhook_url: str | None = None
-
-	@classmethod
-	def from_row(cls, row: Mapping[str, Any]) -> LogConfig:
-		"""Build a config from a ``log`` row."""
-		raw_channels = row.get("channels") or {}
-		if isinstance(raw_channels, str):
-			try:
-				raw_channels = json.loads(raw_channels)
-			except (json.JSONDecodeError, TypeError, ValueError):
-				raw_channels = {}
-		return cls(
-			guild_id=int(row["guild_id"]),
-			is_on=bool(row["is_on"]),
-			channel_id=int(row["channel"]) if row.get("channel") else None,
-			channels={str(k): int(v) for k, v in raw_channels.items() if v} if isinstance(raw_channels, dict) else {},
-			modules=frozenset(row.get("modules") or ()),
-			webhook_url=row.get("webhook"),
-		)
 
 	@property
 	def enabled_modules(self) -> frozenset[str]:
@@ -291,7 +271,7 @@ async def _find_audit_entry(
 			if channel and extra_channel is not None and getattr(extra_channel, "id", None) != channel.id:
 				continue
 			return entry
-	except (discord.Forbidden, discord.HTTPException):
+	except discord.HTTPException:
 		pass
 	return None
 
@@ -316,7 +296,7 @@ def _format_overwrite_diff(
 	for target in all_targets:
 		old = before.get(target)
 		new = after.get(target)
-		name = target.mention if hasattr(target, "mention") else str(target)
+		name = target.mention if isinstance(target, (discord.Role, discord.Member)) else str(target)
 
 		if old is None and new is not None:
 			lines.append(f"**+** Overwrite added for {name}")
@@ -356,7 +336,7 @@ class Logging(commands.Cog, name="Logging"):
 			return
 
 		channel = guild.get_channel_or_thread(channel_id)
-		if not channel or not isinstance(channel, discord.abc.Messageable):
+		if not isinstance(channel, discord.abc.Messageable):
 			return
 
 		payload = await self.custom_response.get_message(key, guild, convert_embeds=True, **kwargs)
@@ -378,7 +358,7 @@ class Logging(commands.Cog, name="Logging"):
 
 		try:
 			await channel.send(**payload)
-		except (discord.Forbidden, discord.HTTPException):
+		except discord.HTTPException:
 			logger.debug(f"Failed to send log in {channel_id} for guild {guild.id}")
 
 	@commands.Cog.listener()
@@ -581,9 +561,6 @@ class Logging(commands.Cog, name="Logging"):
 	async def on_guild_channel_pins_update(
 		self, channel: discord.abc.GuildChannel | discord.Thread, last_pin: datetime.datetime | None
 	):
-		if not hasattr(channel, "guild") or not channel.guild:
-			return
-
 		last_pin_str = discord.utils.format_dt(last_pin, "R") if last_pin else "None"
 
 		await self._send(
@@ -655,7 +632,6 @@ class Logging(commands.Cog, name="Logging"):
 	async def on_member_update(self, before: discord.Member, after: discord.Member):
 		guild = after.guild
 
-		# role changes
 		if before.roles != after.roles:
 			added = set(after.roles) - set(before.roles)
 			removed = set(before.roles) - set(after.roles)
@@ -677,7 +653,6 @@ class Logging(commands.Cog, name="Logging"):
 					removed=removed_str,
 				)
 
-		# nickname change
 		if before.nick != after.nick:
 			entry = await _find_audit_entry(guild, discord.AuditLogAction.member_update, after)
 			updated_by = _user_arg(entry.user) if entry and entry.user else _UnknownActor()
@@ -692,7 +667,6 @@ class Logging(commands.Cog, name="Logging"):
 				after_nick=after.nick or "None",
 			)
 
-		# timeout added or updated
 		if after.timed_out_until != before.timed_out_until:
 			entry = await _find_audit_entry(guild, discord.AuditLogAction.member_update, after)
 			reason = entry.reason if entry else None
@@ -718,7 +692,6 @@ class Logging(commands.Cog, name="Logging"):
 					removed_by=removed_by,
 				)
 
-		# server avatar change
 		if before.guild_avatar != after.guild_avatar:
 			await self._send(guild, "on_member_update", "log.on_member_update.avatar", member=after)
 
@@ -750,7 +723,6 @@ class Logging(commands.Cog, name="Logging"):
 	):
 		guild = member.guild
 
-		# join
 		if not before.channel and after.channel:
 			await self._send(
 				guild,
@@ -759,8 +731,6 @@ class Logging(commands.Cog, name="Logging"):
 				member=member,
 				channel=convert_to_custom_channel(after.channel),
 			)
-
-		# leave
 		elif before.channel and not after.channel:
 			await self._send(
 				guild,
@@ -769,8 +739,6 @@ class Logging(commands.Cog, name="Logging"):
 				member=member,
 				channel=convert_to_custom_channel(before.channel),
 			)
-
-		# move
 		elif before.channel and after.channel and before.channel != after.channel:
 			await self._send(
 				guild,
@@ -781,7 +749,6 @@ class Logging(commands.Cog, name="Logging"):
 				after_channel=convert_to_custom_channel(after.channel),
 			)
 
-		# server deafen / undeafen
 		if before.deaf != after.deaf:
 			await self._send(
 				guild,
@@ -791,7 +758,6 @@ class Logging(commands.Cog, name="Logging"):
 				channel=convert_to_custom_channel(after.channel or before.channel),
 			)
 
-		# server mute / unmute
 		if before.mute != after.mute:
 			await self._send(
 				guild,

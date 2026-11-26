@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
 
 import discord
@@ -13,8 +12,6 @@ from .config_subcommands import register_all_subcommands
 
 if TYPE_CHECKING:
 	from core import Bot, Context
-
-logger = logging.getLogger(__name__)
 
 
 class Config(commands.Cog, name="Config"):
@@ -41,9 +38,6 @@ class Config(commands.Cog, name="Config"):
 				err_msg += f"\n{e.node.format_help()}\n"
 			err_msg += "```"
 			return await ctx.send(content=err_msg)
-		except Exception as e:
-			logger.exception(f"Unexpected error executing config command with args `{trimmed}`")
-			return await ctx.send(content=f"```ansi\nError: {e}\n```")
 
 	@config_command.autocomplete("flags_and_args")
 	async def config_autocomplete(
