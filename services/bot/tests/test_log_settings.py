@@ -130,7 +130,7 @@ async def test_per_event_channels_and_webhook_round_trip(bots):
 
 def test_wildcard_rows_from_the_old_config_fallback_log_everything():
 	"""Rows written with modules = ARRAY['*'] (the column default) used to log nothing."""
-	cfg = LogConfig.from_row({"guild_id": 1, "is_on": True, "channel": 2, "modules": ["*"], "channels": {}})
+	cfg = LogConfig(guild_id=1, is_on=True, channel_id=2, modules=frozenset({"*"}))
 
 	assert cfg.is_enabled("on_member_join")
 	assert cfg.logs_messages

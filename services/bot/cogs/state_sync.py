@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 from logging import getLogger
 from typing import TYPE_CHECKING, Any
 
@@ -51,17 +50,18 @@ class StateSync(commands.Cog, name="StateSync"):
 
 	def __init__(self, client: Bot) -> None:
 		self.client = client
-		self._sync_lock = asyncio.Lock()
+
+	async def _sync_channels(self, guild: discord.Guild) -> None:
+		await self.client.state_store.set_channels(guild.id, [format_channel(c) for c in guild.channels])
+
+	async def _sync_roles(self, guild: discord.Guild) -> None:
+		await self.client.state_store.set_roles(guild.id, [format_role(r) for r in guild.roles])
 
 	async def _sync_guild(self, guild: discord.Guild) -> None:
 		try:
-			guild_data = format_guild(guild)
-			channels_data = [format_channel(c) for c in guild.channels]
-			roles_data = [format_role(r) for r in guild.roles]
-
-			await self.client.state_store.set_guild(guild.id, guild_data)
-			await self.client.state_store.set_channels(guild.id, channels_data)
-			await self.client.state_store.set_roles(guild.id, roles_data)
+			await self.client.state_store.set_guild(guild.id, format_guild(guild))
+			await self._sync_channels(guild)
+			await self._sync_roles(guild)
 			await self.client.state_store.add_bot_guild(guild.id)
 		except Exception:
 			logger.exception(f"Failed to sync state projection for guild {guild.id}")
@@ -90,39 +90,27 @@ class StateSync(commands.Cog, name="StateSync"):
 
 	@commands.Cog.listener()
 	async def on_guild_channel_create(self, channel: discord.abc.GuildChannel) -> None:
-		if channel.guild:
-			channels_data = [format_channel(c) for c in channel.guild.channels]
-			await self.client.state_store.set_channels(channel.guild.id, channels_data)
+		await self._sync_channels(channel.guild)
 
 	@commands.Cog.listener()
 	async def on_guild_channel_delete(self, channel: discord.abc.GuildChannel) -> None:
-		if channel.guild:
-			channels_data = [format_channel(c) for c in channel.guild.channels]
-			await self.client.state_store.set_channels(channel.guild.id, channels_data)
+		await self._sync_channels(channel.guild)
 
 	@commands.Cog.listener()
 	async def on_guild_channel_update(self, _before: discord.abc.GuildChannel, after: discord.abc.GuildChannel) -> None:
-		if after.guild:
-			channels_data = [format_channel(c) for c in after.guild.channels]
-			await self.client.state_store.set_channels(after.guild.id, channels_data)
+		await self._sync_channels(after.guild)
 
 	@commands.Cog.listener()
 	async def on_guild_role_create(self, role: discord.Role) -> None:
-		if role.guild:
-			roles_data = [format_role(r) for r in role.guild.roles]
-			await self.client.state_store.set_roles(role.guild.id, roles_data)
+		await self._sync_roles(role.guild)
 
 	@commands.Cog.listener()
 	async def on_guild_role_delete(self, role: discord.Role) -> None:
-		if role.guild:
-			roles_data = [format_role(r) for r in role.guild.roles]
-			await self.client.state_store.set_roles(role.guild.id, roles_data)
+		await self._sync_roles(role.guild)
 
 	@commands.Cog.listener()
 	async def on_guild_role_update(self, _before: discord.Role, after: discord.Role) -> None:
-		if after.guild:
-			roles_data = [format_role(r) for r in after.guild.roles]
-			await self.client.state_store.set_roles(after.guild.id, roles_data)
+		await self._sync_roles(after.guild)
 
 
 async def setup(client: Bot) -> None:

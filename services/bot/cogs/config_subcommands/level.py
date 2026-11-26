@@ -14,6 +14,19 @@ if TYPE_CHECKING:
 	from core import Context
 
 
+def _parse_number[N: (int, float)](
+	raw: str, cast: type[N], node: CLINode, error: str, *, allow_zero: bool = False
+) -> N:
+	"""Parse a positive number (or a non-negative one with ``allow_zero``), raising ``error`` otherwise."""
+	try:
+		value = cast(raw)
+	except ValueError:
+		raise CLIParseError(error, node) from None
+	if value < 0 or (value == 0 and not allow_zero):
+		raise CLIParseError(error, node)
+	return value
+
+
 def setup_level_subcommands(parent_node: CLINode) -> CLINode:
 	"""Set up leveling configuration subcommands on the CLI parser root.
 
@@ -73,36 +86,17 @@ def setup_level_subcommands(parent_node: CLINode) -> CLINode:
 		cd_val: int | None = None
 
 		if min is not None:
-			try:
-				min_val = int(min)
-				if min_val < 1:
-					raise ValueError
-			except ValueError:
-				raise CLIParseError("`--min` must be a positive integer greater than 0.", xp_node)
-
+			min_val = _parse_number(min, int, xp_node, "`--min` must be a positive integer greater than 0.")
 		if max is not None:
-			try:
-				max_val = int(max)
-				if max_val < 1:
-					raise ValueError
-			except ValueError:
-				raise CLIParseError("`--max` must be a positive integer greater than 0.", xp_node)
-
+			max_val = _parse_number(max, int, xp_node, "`--max` must be a positive integer greater than 0.")
 		if multiplier is not None:
-			try:
-				mult_val = float(multiplier)
-				if mult_val <= 0:
-					raise ValueError
-			except ValueError:
-				raise CLIParseError("`--multiplier` must be a positive number greater than 0.", xp_node)
-
+			mult_val = _parse_number(
+				multiplier, float, xp_node, "`--multiplier` must be a positive number greater than 0."
+			)
 		if cooldown is not None:
-			try:
-				cd_val = int(cooldown)
-				if cd_val < 0:
-					raise ValueError
-			except ValueError:
-				raise CLIParseError("`--cooldown` must be a non-negative integer.", xp_node)
+			cd_val = _parse_number(
+				cooldown, int, xp_node, "`--cooldown` must be a non-negative integer.", allow_zero=True
+			)
 
 		cog = LevelSettings(ctx.bot)
 		cfg = await cog.get_guild_config(ctx.guild.id)
@@ -155,7 +149,7 @@ def setup_level_subcommands(parent_node: CLINode) -> CLINode:
 		target_channel: discord.abc.GuildChannel | discord.Thread | None = None
 		if channel:
 			target_channel = resolve_channel(ctx.guild, channel)
-			if not target_channel or not isinstance(target_channel, discord.abc.Messageable):
+			if not isinstance(target_channel, discord.abc.Messageable):
 				raise CLIParseError(f"Channel `{channel}` was not found or is not a valid text channel.", msg_node)
 			if mode_clean is None:
 				mode_clean = "channel"
@@ -186,12 +180,7 @@ def setup_level_subcommands(parent_node: CLINode) -> CLINode:
 		if not level or not role:
 			raise CLIParseError("Usage: `config level rewards add <level> <role>`", rewards_add_node)
 
-		try:
-			lvl_int = int(level)
-			if lvl_int < 1:
-				raise ValueError
-		except ValueError:
-			raise CLIParseError("Level must be a positive integer greater than 0.", rewards_add_node)
+		lvl_int = _parse_number(level, int, rewards_add_node, "Level must be a positive integer greater than 0.")
 
 		target_role = resolve_role(ctx.guild, role)
 		if not target_role:
@@ -258,18 +247,15 @@ def setup_level_subcommands(parent_node: CLINode) -> CLINode:
 
 	async def rewards_list(ctx: Context, **kwargs: Any):
 		assert ctx.guild is not None
-		rows = [
-			{"level": level, "role_id": role_id}
-			for level, role_id in await LevelSettings(ctx.bot).get_role_rewards(ctx.guild.id)
-		]
-		if not rows:
+		rewards = await LevelSettings(ctx.bot).get_role_rewards(ctx.guild.id)
+		if not rewards:
 			return await ctx.send(content="```ansi\n[!] No role rewards configured for this server.\n```")
 
 		lines = ["[+] Level Role Rewards:"]
-		for r in rows:
-			role_obj = ctx.guild.get_role(int(r["role_id"]))
-			role_name = f"@{role_obj.name}" if role_obj else f"(Deleted role ID: {r['role_id']})"
-			lines.append(f"  Level {r['level']}: {role_name}")
+		for level, role_id in rewards:
+			role_obj = ctx.guild.get_role(role_id)
+			role_name = f"@{role_obj.name}" if role_obj else f"(Deleted role ID: {role_id})"
+			lines.append(f"  Level {level}: {role_name}")
 		return await ctx.send(content="```ansi\n" + "\n".join(lines) + "\n```")
 
 	rewards_list_node.callback = rewards_list
@@ -326,12 +312,7 @@ def setup_level_subcommands(parent_node: CLINode) -> CLINode:
 		if not target_channel:
 			raise CLIParseError(f"Channel `{channel}` was not found.", ch_mult_node)
 
-		try:
-			mult_val = float(multiplier)
-			if mult_val <= 0:
-				raise ValueError
-		except ValueError:
-			raise CLIParseError("Multiplier must be a positive number.", ch_mult_node)
+		mult_val = _parse_number(multiplier, float, ch_mult_node, "Multiplier must be a positive number.")
 
 		cog = LevelSettings(ctx.bot)
 		await cog.set_channel_multiplier(ctx.guild.id, target_channel.id, mult_val)
@@ -345,22 +326,18 @@ def setup_level_subcommands(parent_node: CLINode) -> CLINode:
 	async def channel_list(ctx: Context, **kwargs: Any):
 		assert ctx.guild is not None
 		overrides = await LevelSettings(ctx.bot).overrides.get(ctx.guild.id)
-		rows = [
-			{"channel_id": channel_id, "multiplier": multiplier, "is_ignored": ignored}
-			for channel_id, (multiplier, ignored) in overrides.channels.items()
-		]
-		if not rows:
+		if not overrides.channels:
 			return await ctx.send(content="```ansi\n[!] No channel overrides configured for this server.\n```")
 
 		lines = ["[+] Channel Overrides:"]
-		for r in rows:
-			ch_obj = ctx.guild.get_channel_or_thread(int(r["channel_id"]))
-			ch_name = f"#{ch_obj.name}" if ch_obj else f"(Unknown channel ID: {r['channel_id']})"
+		for channel_id, (multiplier, ignored) in overrides.channels.items():
+			ch_obj = ctx.guild.get_channel_or_thread(channel_id)
+			ch_name = f"#{ch_obj.name}" if ch_obj else f"(Unknown channel ID: {channel_id})"
 			status_parts = []
-			if r["is_ignored"]:
+			if ignored:
 				status_parts.append("IGNORED")
-			if float(r["multiplier"]) != 1.0:
-				status_parts.append(f"{float(r['multiplier'])}x multiplier")
+			if multiplier != 1.0:
+				status_parts.append(f"{multiplier}x multiplier")
 			lines.append(f"  {ch_name}: {', '.join(status_parts) if status_parts else 'Normal'}")
 		return await ctx.send(content="```ansi\n" + "\n".join(lines) + "\n```")
 
@@ -416,12 +393,7 @@ def setup_level_subcommands(parent_node: CLINode) -> CLINode:
 		if not target_role:
 			raise CLIParseError(f"Role `{role}` was not found.", role_mult_node)
 
-		try:
-			mult_val = float(multiplier)
-			if mult_val <= 0:
-				raise ValueError
-		except ValueError:
-			raise CLIParseError("Multiplier must be a positive number.", role_mult_node)
+		mult_val = _parse_number(multiplier, float, role_mult_node, "Multiplier must be a positive number.")
 
 		cog = LevelSettings(ctx.bot)
 		await cog.set_role_multiplier(ctx.guild.id, target_role.id, mult_val)
@@ -435,22 +407,18 @@ def setup_level_subcommands(parent_node: CLINode) -> CLINode:
 	async def role_list(ctx: Context, **kwargs: Any):
 		assert ctx.guild is not None
 		overrides = await LevelSettings(ctx.bot).overrides.get(ctx.guild.id)
-		rows = [
-			{"role_id": role_id, "multiplier": multiplier, "is_ignored": ignored}
-			for role_id, (multiplier, ignored) in overrides.roles.items()
-		]
-		if not rows:
+		if not overrides.roles:
 			return await ctx.send(content="```ansi\n[!] No role overrides configured for this server.\n```")
 
 		lines = ["[+] Role Overrides:"]
-		for r in rows:
-			role_obj = ctx.guild.get_role(int(r["role_id"]))
-			role_name = f"@{role_obj.name}" if role_obj else f"(Unknown role ID: {r['role_id']})"
+		for role_id, (multiplier, ignored) in overrides.roles.items():
+			role_obj = ctx.guild.get_role(role_id)
+			role_name = f"@{role_obj.name}" if role_obj else f"(Unknown role ID: {role_id})"
 			status_parts = []
-			if r["is_ignored"]:
+			if ignored:
 				status_parts.append("IGNORED")
-			if float(r["multiplier"]) != 1.0:
-				status_parts.append(f"{float(r['multiplier'])}x multiplier")
+			if multiplier != 1.0:
+				status_parts.append(f"{multiplier}x multiplier")
 			lines.append(f"  {role_name}: {', '.join(status_parts) if status_parts else 'Normal'}")
 		return await ctx.send(content="```ansi\n" + "\n".join(lines) + "\n```")
 
@@ -461,30 +429,19 @@ def setup_level_subcommands(parent_node: CLINode) -> CLINode:
 	async def level_show(ctx: Context, **kwargs: Any):
 		assert ctx.guild is not None
 		cfg = await LevelSettings(ctx.bot).get_guild_config(ctx.guild.id)
-		is_on = cfg.is_on
-		mult = cfg.multiplier
-		min_xp = cfg.min_xp
-		max_xp = cfg.max_xp
-		cooldown = cfg.cooldown
-		mode = cfg.message_mode
-		ch_id = cfg.message_channel
-		msg_tmpl = cfg.levelup_message if cfg.levelup_message else "(Default: localized)"
-		stack = cfg.stack_roles
-
-		ch_obj = ctx.guild.get_channel(ch_id) if ch_id else None
+		ch_obj = ctx.guild.get_channel(cfg.message_channel) if cfg.message_channel else None
 		ch_str = f"#{ch_obj.name}" if ch_obj else "(None)"
-		mode_str = mode.value if hasattr(mode, "value") else str(mode)
 
 		lines = [
 			"=== Leveling System Configuration ===",
-			f"Status:          {'Enabled' if is_on else 'Disabled'}",
-			f"XP Range:        {min_xp} - {max_xp} XP",
-			f"Global Mult:     {mult}x",
-			f"Cooldown:        {cooldown}s",
-			f"Level-up Mode:   {mode_str}",
+			f"Status:          {'Enabled' if cfg.is_on else 'Disabled'}",
+			f"XP Range:        {cfg.min_xp} - {cfg.max_xp} XP",
+			f"Global Mult:     {cfg.multiplier}x",
+			f"Cooldown:        {cfg.cooldown}s",
+			f"Level-up Mode:   {cfg.message_mode.value}",
 			f"Target Channel:  {ch_str}",
-			f"Message:         {msg_tmpl}",
-			f"Role Stacking:   {'Enabled (stack)' if stack else 'Disabled (replace previous)'}",
+			f"Message:         {cfg.levelup_message or '(Default: localized)'}",
+			f"Role Stacking:   {'Enabled (stack)' if cfg.stack_roles else 'Disabled (replace previous)'}",
 		]
 		return await ctx.send(content="```ansi\n" + "\n".join(lines) + "\n```")
 

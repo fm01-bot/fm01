@@ -1,4 +1,4 @@
-from io import StringIO
+from io import BytesIO
 from logging import getLogger
 from pathlib import Path
 from time import perf_counter
@@ -171,7 +171,7 @@ class Admin(commands.GroupCog, name="admin"):
 			return
 		listing = f"**{len(entries)}** blacklisted:\n" + "\n".join(_format_entry(entry) for entry in entries)
 		if len(listing) > 2000:
-			file = discord.File(StringIO(listing), filename="blacklist.txt")  # type: ignore # StringIO is supported
+			file = discord.File(BytesIO(listing.encode()), filename="blacklist.txt")
 			await ctx.reply(content=f"**{len(entries)}** blacklisted, listed in the file.", file=file)
 			return
 		await ctx.reply(content=listing, allowed_mentions=discord.AllowedMentions.none())

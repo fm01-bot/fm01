@@ -384,7 +384,7 @@ class Level(commands.Cog, name="Level"):
 					if role and role not in member.roles:
 						try:
 							await member.add_roles(role, reason=await self._reward_reason(member, "reason", level=lvl))
-						except (discord.Forbidden, discord.HTTPException):
+						except discord.HTTPException:
 							logger.warning(f"Failed to add role {role.name} to {member.name} in {member.guild.name}")
 		else:
 			unlocked = [r for r in rewards if r[0] <= new_level]
@@ -404,7 +404,7 @@ class Level(commands.Cog, name="Level"):
 						await member.remove_roles(
 							*roles_to_remove, reason=await self._reward_reason(member, "replace_reason")
 						)
-					except (discord.Forbidden, discord.HTTPException):
+					except discord.HTTPException:
 						pass
 
 				if highest_role and highest_role not in member.roles:
@@ -412,7 +412,7 @@ class Level(commands.Cog, name="Level"):
 						await member.add_roles(
 							highest_role, reason=await self._reward_reason(member, "reason", level=highest_lvl)
 						)
-					except (discord.Forbidden, discord.HTTPException):
+					except discord.HTTPException:
 						logger.warning(
 							f"Failed to add highest role {highest_role.name} to {member.name} in {member.guild.name}"
 						)
@@ -440,6 +440,13 @@ class Level(commands.Cog, name="Level"):
 		if not target_channel:
 			target_channel = message.channel
 
+		async def send(*args: Any, **kwargs: Any) -> None:
+			try:
+				await target_channel.send(*args, **kwargs)
+			except discord.HTTPException:
+				guild_id = message.guild.id if message.guild else 0
+				logger.warning(f"Failed to send level-up message in guild {guild_id}")
+
 		if config.levelup_message:
 			text = (
 				config.levelup_message.replace("{user.mention}", message.author.mention)
@@ -449,11 +456,7 @@ class Level(commands.Cog, name="Level"):
 				.replace("{level}", str(new_level))
 				.replace("{xp}", f"{total_xp:,}")
 			)
-			try:
-				await target_channel.send(text)
-			except (discord.Forbidden, discord.HTTPException):
-				guild_id = message.guild.id if message.guild else 0
-				logger.warning(f"Failed to send level-up message in guild {guild_id}")
+			await send(text)
 			return
 
 		payload = await self.client.custom_response.get_message(
@@ -463,17 +466,9 @@ class Level(commands.Cog, name="Level"):
 			send_kwargs = dict(payload)
 			if getattr(target_channel, "id", None) != getattr(message.channel, "id", None):
 				send_kwargs.pop("reference", None)
-			try:
-				await target_channel.send(**send_kwargs)
-			except (discord.Forbidden, discord.HTTPException):
-				guild_id = message.guild.id if message.guild else 0
-				logger.warning(f"Failed to send level-up message in guild {guild_id}")
+			await send(**send_kwargs)
 		else:
-			try:
-				await target_channel.send(str(payload))
-			except (discord.Forbidden, discord.HTTPException):
-				guild_id = message.guild.id if message.guild else 0
-				logger.warning(f"Failed to send level-up message in guild {guild_id}")
+			await send(str(payload))
 
 	@commands.Cog.listener("on_message")
 	async def on_message_xp(self, message: discord.Message) -> None:

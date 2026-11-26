@@ -92,6 +92,17 @@ class TicketModal(discord.ui.Modal):
 		await self.cog.send_response("ticket.modal.error", interaction, ephemeral=True)
 
 
+def _ticket_cog(interaction: discord.Interaction) -> Ticket | None:
+	client = interaction.client
+	cog = client.get_cog("Ticket") if isinstance(client, commands.Bot) else None
+	return cog if isinstance(cog, Ticket) else None
+
+
+def _label(text: object, default: str) -> str:
+	"""A button label from a localized string, or ``default`` if the key is missing."""
+	return str(text) if text and not str(text).startswith("localizer") else default
+
+
 class TicketLauncherView(discord.ui.View):
 	def __init__(self, button_label: str = "Open Ticket"):
 		super().__init__(timeout=None)
@@ -104,7 +115,7 @@ class TicketLauncherView(discord.ui.View):
 		emoji="🎫",
 	)
 	async def open_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-		cog: Ticket | None = interaction.client.get_cog("Ticket")  # type: ignore
+		cog = _ticket_cog(interaction)
 		if not cog:
 			payload = await interaction.client.custom_response.get_message(  # type: ignore
 				"ticket.errors.unavailable", interaction
@@ -136,7 +147,7 @@ class ActiveTicketControlsView(discord.ui.View):
 		emoji="📦",
 	)
 	async def archive_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-		cog: Ticket | None = interaction.client.get_cog("Ticket")  # type: ignore
+		cog = _ticket_cog(interaction)
 		if cog:
 			await cog.handle_archive_action(interaction)
 
@@ -147,7 +158,7 @@ class ActiveTicketControlsView(discord.ui.View):
 		emoji="📪",
 	)
 	async def close_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-		cog: Ticket | None = interaction.client.get_cog("Ticket")  # type: ignore
+		cog = _ticket_cog(interaction)
 		if cog:
 			await cog.handle_close_action(interaction)
 
@@ -158,7 +169,7 @@ class ActiveTicketControlsView(discord.ui.View):
 		emoji="💾",
 	)
 	async def save_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-		cog: Ticket | None = interaction.client.get_cog("Ticket")  # type: ignore
+		cog = _ticket_cog(interaction)
 		if cog:
 			await cog.handle_save_action(interaction)
 
@@ -183,7 +194,7 @@ class ArchivedTicketControlsView(discord.ui.View):
 		emoji="📪",
 	)
 	async def close_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-		cog: Ticket | None = interaction.client.get_cog("Ticket")  # type: ignore
+		cog = _ticket_cog(interaction)
 		if cog:
 			await cog.handle_close_action(interaction)
 
@@ -194,7 +205,7 @@ class ArchivedTicketControlsView(discord.ui.View):
 		emoji="🔁",
 	)
 	async def reopen_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-		cog: Ticket | None = interaction.client.get_cog("Ticket")  # type: ignore
+		cog = _ticket_cog(interaction)
 		if cog:
 			await cog.handle_reopen_action(interaction)
 
@@ -205,7 +216,7 @@ class ArchivedTicketControlsView(discord.ui.View):
 		emoji="💾",
 	)
 	async def save_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-		cog: Ticket | None = interaction.client.get_cog("Ticket")  # type: ignore
+		cog = _ticket_cog(interaction)
 		if cog:
 			await cog.handle_save_action(interaction)
 
@@ -231,7 +242,7 @@ class Ticket(commands.Cog, name="Ticket"):
 				button_label = str(panel_data["button"])
 			if not button_label:
 				lbl = await self.bot.custom_response.get_message("ticket.buttons.open", guild)
-				button_label = str(lbl) if lbl and not str(lbl).startswith("localizer") else "Open Ticket"
+				button_label = _label(lbl, "Open Ticket")
 		return TicketLauncherView(button_label=button_label)
 
 	async def create_controls_view(
@@ -242,21 +253,17 @@ class Ticket(commands.Cog, name="Ticket"):
 			reopen_lbl = await self.bot.custom_response.get_message("ticket.buttons.reopen", guild)
 			save_lbl = await self.bot.custom_response.get_message("ticket.buttons.save", guild)
 			return ArchivedTicketControlsView(
-				close_label=str(close_lbl) if close_lbl and not str(close_lbl).startswith("localizer") else "Close",
-				reopen_label=str(reopen_lbl)
-				if reopen_lbl and not str(reopen_lbl).startswith("localizer")
-				else "Reopen",
-				save_label=str(save_lbl)
-				if save_lbl and not str(save_lbl).startswith("localizer")
-				else "Save Transcript",
+				close_label=_label(close_lbl, "Close"),
+				reopen_label=_label(reopen_lbl, "Reopen"),
+				save_label=_label(save_lbl, "Save Transcript"),
 			)
 		arch_lbl = await self.bot.custom_response.get_message("ticket.buttons.archive", guild)
 		close_lbl = await self.bot.custom_response.get_message("ticket.buttons.close", guild)
 		save_lbl = await self.bot.custom_response.get_message("ticket.buttons.save", guild)
 		return ActiveTicketControlsView(
-			archive_label=str(arch_lbl) if arch_lbl and not str(arch_lbl).startswith("localizer") else "Archive",
-			close_label=str(close_lbl) if close_lbl and not str(close_lbl).startswith("localizer") else "Close",
-			save_label=str(save_lbl) if save_lbl and not str(save_lbl).startswith("localizer") else "Save Transcript",
+			archive_label=_label(arch_lbl, "Archive"),
+			close_label=_label(close_lbl, "Close"),
+			save_label=_label(save_lbl, "Save Transcript"),
 		)
 
 	async def send_response(
@@ -293,17 +300,7 @@ class Ticket(commands.Cog, name="Ticket"):
 			if target.response.is_done():
 				return await target.followup.send(**send_kwargs, ephemeral=ephemeral)
 			return await target.response.send_message(**send_kwargs, ephemeral=ephemeral)
-		elif hasattr(target, "response") and hasattr(target, "followup"):
-			target_any: Any = target
-			if target_any.response.is_done():
-				return await target_any.followup.send(**send_kwargs, ephemeral=ephemeral)
-			return await target_any.response.send_message(**send_kwargs, ephemeral=ephemeral)
-		elif isinstance(target, discord.abc.Messageable):
-			return await target.send(**send_kwargs)
-		elif hasattr(target, "send"):
-			msg_any: Any = target
-			return await msg_any.send(**send_kwargs)
-		return None
+		return await target.send(**send_kwargs)
 
 	async def _string(self, key: str, guild: discord.Guild, **kwargs: Any) -> str:
 		text = await self.bot.custom_response.get_message(f"ticket.strings.{key}", guild, **kwargs)
@@ -439,7 +436,6 @@ class Ticket(commands.Cog, name="Ticket"):
 					"ticket.errors.already_open", interaction, count=count, limit=max_tickets, ephemeral=True
 				)
 
-		# Determine category
 		category: discord.CategoryChannel | None = None
 		if cfg and cfg.category_id:
 			cat = interaction.guild.get_channel(cfg.category_id)
@@ -540,7 +536,7 @@ class Ticket(commands.Cog, name="Ticket"):
 
 		if cfg and cfg.log_channel_id:
 			log_ch = interaction.guild.get_channel(cfg.log_channel_id)
-			if log_ch and isinstance(log_ch, discord.abc.Messageable):
+			if isinstance(log_ch, discord.abc.Messageable):
 				try:
 					await self.send_response(
 						"ticket.logs.created",
@@ -614,7 +610,7 @@ class Ticket(commands.Cog, name="Ticket"):
 		cfg = await self.get_ticket_config(interaction.guild.id)
 		if cfg and cfg.log_channel_id:
 			log_ch = interaction.guild.get_channel(cfg.log_channel_id)
-			if log_ch and isinstance(log_ch, discord.abc.Messageable):
+			if isinstance(log_ch, discord.abc.Messageable):
 				try:
 					await self.send_response(
 						"ticket.logs.archived",
@@ -681,7 +677,7 @@ class Ticket(commands.Cog, name="Ticket"):
 		cfg = await self.get_ticket_config(interaction.guild.id)
 		if cfg and cfg.log_channel_id:
 			log_ch = interaction.guild.get_channel(cfg.log_channel_id)
-			if log_ch and isinstance(log_ch, discord.abc.Messageable):
+			if isinstance(log_ch, discord.abc.Messageable):
 				try:
 					await self.send_response(
 						"ticket.logs.reopened",
@@ -696,7 +692,7 @@ class Ticket(commands.Cog, name="Ticket"):
 
 	async def handle_save_action(self, interaction: discord.Interaction):
 		assert interaction.guild is not None
-		if not interaction.channel:
+		if not isinstance(interaction.channel, (discord.abc.GuildChannel, discord.Thread)):
 			return
 
 		ticket = await self.get_ticket(interaction.channel.id)
@@ -709,15 +705,15 @@ class Ticket(commands.Cog, name="Ticket"):
 		if not interaction.response.is_done():
 			await interaction.response.defer()
 
-		transcript = await self.export_transcript(interaction.channel, ticket.id)  # type: ignore
+		transcript = await self.export_transcript(interaction.channel, ticket.id)
 
-		ch_name = getattr(interaction.channel, "name", "ticket")
+		ch_name = interaction.channel.name
 		file_to_send = discord.File(io.BytesIO(transcript.encode("utf-8")), filename=f"transcript-{ch_name}.html")
 
 		cfg = await self.get_ticket_config(interaction.guild.id)
 		if cfg and cfg.log_channel_id:
 			log_ch = interaction.guild.get_channel(cfg.log_channel_id)
-			if log_ch and isinstance(log_ch, discord.abc.Messageable):
+			if isinstance(log_ch, discord.abc.Messageable):
 				log_file = discord.File(io.BytesIO(transcript.encode("utf-8")), filename=f"transcript-{ch_name}.html")
 				try:
 					await self.send_response(
@@ -740,7 +736,7 @@ class Ticket(commands.Cog, name="Ticket"):
 
 	async def handle_close_action(self, interaction: discord.Interaction):
 		assert interaction.guild is not None
-		if not interaction.channel:
+		if not isinstance(interaction.channel, (discord.abc.GuildChannel, discord.Thread)):
 			return
 
 		ticket = await self.get_ticket(interaction.channel.id)
@@ -768,16 +764,16 @@ class Ticket(commands.Cog, name="Ticket"):
 			interaction,
 		)
 
-		transcript = await self.export_transcript(interaction.channel, ticket.id)  # type: ignore
+		transcript = await self.export_transcript(interaction.channel, ticket.id)
 
 		await self.bot.api.tickets.close(interaction.guild.id, ticket.id, interaction.user.id)
 
-		ch_name = getattr(interaction.channel, "name", "ticket")
+		ch_name = interaction.channel.name
 		cfg = await self.get_ticket_config(interaction.guild.id)
 
 		if cfg and cfg.log_channel_id:
 			log_ch = interaction.guild.get_channel(cfg.log_channel_id)
-			if log_ch and isinstance(log_ch, discord.abc.Messageable):
+			if isinstance(log_ch, discord.abc.Messageable):
 				log_file = discord.File(io.BytesIO(transcript.encode("utf-8")), filename=f"transcript-{ch_name}.html")
 				try:
 					await self.send_response(
@@ -798,7 +794,7 @@ class Ticket(commands.Cog, name="Ticket"):
 			if not opener:
 				try:
 					opener = await self.bot.fetch_user(ticket.user_id)
-				except (discord.HTTPException, discord.NotFound):
+				except discord.HTTPException:
 					opener = None
 			if opener:
 				dm_file = discord.File(io.BytesIO(transcript.encode("utf-8")), filename=f"transcript-{ch_name}.html")
@@ -810,7 +806,7 @@ class Ticket(commands.Cog, name="Ticket"):
 						channel_name=ch_name,
 						file=dm_file,
 					)
-				except (discord.Forbidden, discord.HTTPException) as e:
+				except discord.HTTPException as e:
 					logger.debug(f"Could not DM user {ticket.user_id}: {e}")
 
 		if isinstance(interaction.channel, discord.abc.GuildChannel):

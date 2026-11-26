@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import collections
 import datetime
-import json
 import logging
 import re
 import time
@@ -64,25 +63,6 @@ class AutoModConfig:
 			},
 		)
 		actions.setdefault("features", {})
-
-	def to_dict(self) -> dict[str, Any]:
-		return {"guild_id": self.guild_id, "is_on": self.is_on, "settings": self.settings}
-
-	@classmethod
-	def from_row(cls, row: dict[str, Any] | None, guild_id: int) -> AutoModConfig:
-		if not row:
-			return cls(guild_id=guild_id, is_on=False, settings={})
-		settings_raw = row.get("settings")
-		if isinstance(settings_raw, str):
-			try:
-				settings = json.loads(settings_raw)
-			except (json.JSONDecodeError, TypeError):
-				settings = {}
-		elif isinstance(settings_raw, dict):
-			settings = settings_raw
-		else:
-			settings = {}
-		return cls(guild_id=guild_id, is_on=bool(row.get("is_on", False)), settings=settings)
 
 	def is_feature_enabled(self, feature: str) -> bool:
 		if not self.is_on:
@@ -153,39 +133,20 @@ class AutoMod(commands.Cog, name="AutoMod"):
 			return False
 
 		bypasses = config.settings.get("bypasses", {})
-		glob = bypasses.get("global", {})
-
-		# Global user bypass
-		if member.id in glob.get("users", []):
-			return True
-
-		# Global role bypass
 		member_role_ids = {r.id for r in member.roles}
-		if member_role_ids.intersection(glob.get("roles", [])):
-			return True
-
-		# Global channel bypass
-		if channel.id in glob.get("channels", []):
-			return True
-
-		# Global category bypass
 		category_id = getattr(channel, "category_id", None)
-		if category_id and category_id in glob.get("categories", []):
+
+		def matches(scope: dict[str, Any]) -> bool:
+			return (
+				member.id in scope.get("users", [])
+				or bool(member_role_ids.intersection(scope.get("roles", [])))
+				or channel.id in scope.get("channels", [])
+				or bool(category_id and category_id in scope.get("categories", []))
+			)
+
+		if matches(bypasses.get("global", {})):
 			return True
-
-		# Feature-specific bypass
-		if feature:
-			feat_bypass = bypasses.get("features", {}).get(feature, {})
-			if member.id in feat_bypass.get("users", []):
-				return True
-			if member_role_ids.intersection(feat_bypass.get("roles", [])):
-				return True
-			if channel.id in feat_bypass.get("channels", []):
-				return True
-			if category_id and category_id in feat_bypass.get("categories", []):
-				return True
-
-		return False
+		return bool(feature) and matches(bypasses.get("features", {}).get(feature, {}))
 
 	def check_phrases(self, content: str, phrases: list[str]) -> bool:
 		"""Return True if content contains any forbidden phrases."""
@@ -201,7 +162,6 @@ class AutoMod(commands.Cog, name="AutoMod"):
 				if p in lower_content:
 					return True
 			else:
-				# Use word boundaries for single-word checks
 				pattern = rf"\b{re.escape(p)}\b"
 				if re.search(pattern, lower_content):
 					return True
@@ -234,14 +194,7 @@ class AutoMod(commands.Cog, name="AutoMod"):
 			if not hostname:
 				continue
 
-			# Check if hostname matches or is a subdomain of any allowed domain
-			allowed = False
-			for allowed_domain in normalized_allowlist:
-				if hostname == allowed_domain or hostname.endswith(f".{allowed_domain}"):
-					allowed = True
-					break
-
-			if not allowed:
+			if not any(hostname == domain or hostname.endswith(f".{domain}") for domain in normalized_allowlist):
 				return True
 
 		return False
@@ -272,7 +225,6 @@ class AutoMod(commands.Cog, name="AutoMod"):
 		"""Check if user has exceeded the message window rate limit."""
 		now = time.monotonic()
 
-		# Periodic prune of inactive users
 		if now - self._last_prune > 60:
 			self._prune_spam_tracker(now)
 			self._last_prune = now
@@ -341,7 +293,7 @@ class AutoMod(commands.Cog, name="AutoMod"):
 					await message.channel.send(**payload, delete_after=duration)
 				elif isinstance(payload, str):
 					await message.channel.send(content=payload, delete_after=duration)
-			except (discord.Forbidden, discord.HTTPException):
+			except discord.HTTPException:
 				pass
 			except Exception as e:  # noqa: BLE001
 				logger.warning(f"Failed to send automod notification in channel {message.channel.id}: {e}")

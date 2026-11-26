@@ -33,7 +33,6 @@ def setup_alert_subcommands(parent_node: CLINode) -> CLINode:
 		description="Configure YouTube, Twitch, and TikTok upload and stream alerts.",
 	)
 
-	# 1. alert add
 	add_node = alert_node.create_subcommand("add", description="Add an upload or stream alert.")
 	add_node.add_argument("platform", help="Platform name: youtube, twitch, or tiktok")
 	add_node.add_argument("account", help="Channel account name, handle, URL, or ID")
@@ -61,7 +60,6 @@ def setup_alert_subcommands(parent_node: CLINode) -> CLINode:
 		if not provider:
 			raise CLIParseError(f"Provider for platform `{platform}` is not available.", add_node)
 
-		# Check 5-alert total limit per server
 		count = len(await ctx.bot.api.alerts.for_guild(ctx.guild.id))
 		if count >= MAX_ALERTS:
 			raise CLIParseError(
@@ -70,7 +68,6 @@ def setup_alert_subcommands(parent_node: CLINode) -> CLINode:
 				add_node,
 			)
 
-		# Resolve target Discord channel
 		ch_raw = channel or channel_pos
 		target_channel: discord.abc.GuildChannel | discord.Thread | None = None
 		if ch_raw:
@@ -85,13 +82,11 @@ def setup_alert_subcommands(parent_node: CLINode) -> CLINode:
 		else:
 			raise CLIParseError("Please specify a target Discord channel for alerts.", add_node)
 
-		# Resolve account handle/ID via provider
-		alerts_cog: Any = ctx.bot.get_cog("Alerts")
-		session: aiohttp.ClientSession
-		if alerts_cog and hasattr(alerts_cog, "get_session"):
-			session = await alerts_cog.get_session()
-		else:
-			session = aiohttp.ClientSession()
+		from cogs.alerts import Alerts
+
+		alerts_cog = ctx.bot.get_cog("Alerts")
+		shared_session = isinstance(alerts_cog, Alerts)
+		session = await alerts_cog.get_session() if shared_session else aiohttp.ClientSession()
 
 		try:
 			account_id, account_name = await provider.resolve_channel(session, account, bot=ctx.bot)
@@ -112,10 +107,9 @@ def setup_alert_subcommands(parent_node: CLINode) -> CLINode:
 				add_node,
 			) from e
 		finally:
-			if not alerts_cog or not hasattr(alerts_cog, "get_session"):
+			if not shared_session:
 				await session.close()
 
-		# Add alert to database
 		try:
 			alert = await ctx.bot.api.alerts.add(
 				ctx.guild.id,
@@ -144,7 +138,6 @@ def setup_alert_subcommands(parent_node: CLINode) -> CLINode:
 
 	add_node.callback = alert_add
 
-	# 2. alert remove
 	remove_node = alert_node.create_subcommand("remove", description="Remove an alert subscription.")
 	remove_node.add_argument("target", help="Numeric alert ID from list, or platform name (youtube, twitch, etc.)")
 	remove_node.add_argument("account", required=False, help="Channel account name if platform was given")
@@ -153,7 +146,6 @@ def setup_alert_subcommands(parent_node: CLINode) -> CLINode:
 		assert ctx.guild is not None
 		target_clean = target.strip()
 
-		# If target is numeric alert ID
 		if target_clean.isdigit():
 			alert_id = int(target_clean)
 			removed = await ctx.bot.api.alerts.remove(ctx.guild.id, alert_id)
@@ -162,7 +154,6 @@ def setup_alert_subcommands(parent_node: CLINode) -> CLINode:
 				raise CLIParseError(f"Alert #{alert_id} was not found in this server.", remove_node)
 			return await ctx.send(content=f"```ansi\n[-] Alert #{alert_id} removed\n```")
 
-		# If target is platform
 		plat = target_clean.lower()
 		if plat in SUPPORTED_PLATFORMS:
 			if not account:
@@ -188,12 +179,11 @@ def setup_alert_subcommands(parent_node: CLINode) -> CLINode:
 
 	remove_node.callback = alert_remove
 
-	# 3. alert list
 	list_node = alert_node.create_subcommand("list", description="List all configured alerts in this server.")
 
 	async def alert_list(ctx: Context, **kwargs: Any):
 		assert ctx.guild is not None
-		rows = [dict(alert) for alert in await ctx.bot.api.alerts.for_guild(ctx.guild.id)]
+		rows = await ctx.bot.api.alerts.for_guild(ctx.guild.id)
 		if not rows:
 			return await ctx.send(
 				content="```ansi\n[-] No media alerts configured for this server (Limit: 5).\nUse `?!config alert add <platform> <channel>` to add one.\n```"
@@ -201,16 +191,15 @@ def setup_alert_subcommands(parent_node: CLINode) -> CLINode:
 
 		lines = [f"[Configured Social Media Alerts ({len(rows)}/5)]"]
 		for row in rows:
-			status = "Active" if row["enabled"] else "Disabled"
-			target_ch = ctx.guild.get_channel(int(row["target_channel_id"]))
-			ch_name = f"#{target_ch.name}" if target_ch else str(row["target_channel_id"])
-			creator = row["account_name"] or row["channel_account"]
-			lines.append(f"#{row['id']} [{row['platform'].upper()}] {creator} -> {ch_name} [{status}]")
+			status = "Active" if row.enabled else "Disabled"
+			target_ch = ctx.guild.get_channel(row.target_channel_id)
+			ch_name = f"#{target_ch.name}" if target_ch else str(row.target_channel_id)
+			creator = row.account_name or row.channel_account
+			lines.append(f"#{row.id} [{row.platform.upper()}] {creator} -> {ch_name} [{status}]")
 		return await ctx.send(content="```ansi\n" + "\n".join(lines) + "\n```")
 
 	list_node.callback = alert_list
 
-	# 4. alert enable
 	enable_node = alert_node.create_subcommand("enable", description="Enable a media alert.")
 	enable_node.add_argument("target", help="Numeric alert ID")
 
@@ -225,7 +214,6 @@ def setup_alert_subcommands(parent_node: CLINode) -> CLINode:
 
 	enable_node.callback = alert_enable
 
-	# 5. alert disable
 	disable_node = alert_node.create_subcommand("disable", description="Disable a media alert.")
 	disable_node.add_argument("target", help="Numeric alert ID")
 

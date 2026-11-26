@@ -85,15 +85,6 @@ def test_automod_config_defaults():
 	assert action["case"] is None
 
 
-def test_automod_config_from_row():
-	row = {"guild_id": 456, "is_on": True, "settings": '{"rules": {"phrase": {"enabled": true, "phrases": ["bad"]}}}'}
-	cfg = AutoModConfig.from_row(row, 456)
-	assert cfg.guild_id == 456
-	assert cfg.is_on is True
-	assert cfg.is_feature_enabled("phrase") is True
-	assert cfg.settings["rules"]["phrase"]["phrases"] == ["bad"]
-
-
 def test_check_phrases(automod_cog):
 	phrases = ["badword", "free nitro"]
 

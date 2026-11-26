@@ -27,6 +27,20 @@ def _json_keys(value: Any) -> Any:
 	return value
 
 
+def _overwrites(
+	guild: discord.Guild, channel: dict[str, Any]
+) -> dict[discord.Role | discord.Member | discord.Object, discord.PermissionOverwrite]:
+	"""Rebuild a saved channel's permission overwrites, matching roles by name. Unknown roles are skipped."""
+	overwrites: dict[discord.Role | discord.Member | discord.Object, discord.PermissionOverwrite] = {}
+	for saved in channel["overwrites"].values():
+		role = discord.utils.get(guild.roles, name=saved["role"])
+		if role:
+			overwrites[role] = discord.PermissionOverwrite.from_pair(
+				discord.Permissions(saved["allow"]), discord.Permissions(saved["deny"])
+			)
+	return overwrites
+
+
 class Snapshot(commands.Cog, name="Snapshots"):
 	def __init__(self, client: Bot):
 		self.client = client
@@ -119,29 +133,14 @@ class Snapshot(commands.Cog, name="Snapshots"):
 		snapshot = await self.client.api.snapshots.get(str(code))
 		return snapshot.payload if snapshot else None
 
-	async def delete_all_channels(self, ctx: Context):
-		assert ctx.guild is not None
-		"""Deletes all channels in the server.
-
-		Args:
-			ctx (Context): The context to get the guild data from.
-
-		"""
-		for x in ctx.guild.channels:
-			try:
-				await x.delete(reason=await self.custom_response("snapshot.strings.save_load_reason", ctx))
-			except (discord.Forbidden, discord.NotFound, discord.HTTPException):
-				continue
-			await asyncio.sleep(0.5)
-
 	async def delete_all_roles(self, ctx: Context):
-		assert ctx.guild is not None
 		"""Deletes every role in the server that the author outranks (every role, for the owner).
 
 		Args:
 			ctx (Context): The context to get the guild data from.
 
 		"""
+		assert ctx.guild is not None
 		author = ctx.author
 		for x in ctx.guild.roles:
 			# Only the owner may delete roles that aren't below their own top role.
@@ -149,7 +148,7 @@ class Snapshot(commands.Cog, name="Snapshots"):
 				continue
 			try:
 				await x.delete(reason=await self.custom_response("snapshot.strings.save_load_reason", ctx))
-			except (discord.Forbidden, discord.NotFound, discord.HTTPException):
+			except discord.HTTPException:
 				continue
 			await asyncio.sleep(0.5)
 
@@ -183,7 +182,7 @@ class Snapshot(commands.Cog, name="Snapshots"):
 							dicon = None
 				elif isinstance(icon_val, str):
 					dicon = icon_val
-				role = await ctx.guild.create_role(
+				await ctx.guild.create_role(
 					name=payload["roles"][x]["name"],
 					permissions=perms,
 					colour=color,
@@ -199,14 +198,7 @@ class Snapshot(commands.Cog, name="Snapshots"):
 			if x["type"] == "text" or x["type"] == "news":
 				try:
 					cat = discord.utils.get(ctx.guild.categories, name=x["category"])
-					overwrites: dict[discord.Role | discord.Member | discord.Object, discord.PermissionOverwrite] = {}
-					for z in x["overwrites"]:
-						role = discord.utils.get(ctx.guild.roles, name=x["overwrites"][z]["role"])
-						if role:
-							overwrites[role] = discord.PermissionOverwrite.from_pair(
-								discord.Permissions(x["overwrites"][z]["allow"]),
-								discord.Permissions(x["overwrites"][z]["deny"]),
-							)
+					overwrites = _overwrites(ctx.guild, x)
 					await ctx.guild.create_text_channel(
 						name=x["name"],
 						category=cat if cat else None,
@@ -220,19 +212,12 @@ class Snapshot(commands.Cog, name="Snapshots"):
 						default_auto_archive_duration=x.get("default_auto_archive_duration", MISSING),
 					)
 					await asyncio.sleep(0.5)
-				except (discord.Forbidden, discord.HTTPException):
+				except discord.HTTPException:
 					continue
 			elif x["type"] == "voice":
 				try:
 					cat = discord.utils.get(ctx.guild.categories, name=x["category"])
-					overwrites: dict[discord.Role | discord.Member | discord.Object, discord.PermissionOverwrite] = {}
-					for z in x["overwrites"]:
-						role = discord.utils.get(ctx.guild.roles, name=x["overwrites"][z]["role"])
-						if role:
-							overwrites[role] = discord.PermissionOverwrite.from_pair(
-								discord.Permissions(x["overwrites"][z]["allow"]),
-								discord.Permissions(x["overwrites"][z]["deny"]),
-							)
+					overwrites = _overwrites(ctx.guild, x)
 					await ctx.guild.create_voice_channel(
 						name=x["name"],
 						category=cat if cat else None,
@@ -244,19 +229,12 @@ class Snapshot(commands.Cog, name="Snapshots"):
 						rtc_region=x.get("rtc_region"),
 					)
 					await asyncio.sleep(0.5)
-				except (discord.Forbidden, discord.HTTPException):
+				except discord.HTTPException:
 					continue
 			elif x["type"] == "stage_voice":
 				try:
 					cat = discord.utils.get(ctx.guild.categories, name=x["category"])
-					overwrites: dict[discord.Role | discord.Member | discord.Object, discord.PermissionOverwrite] = {}
-					for z in x["overwrites"]:
-						role = discord.utils.get(ctx.guild.roles, name=x["overwrites"][z]["role"])
-						if role:
-							overwrites[role] = discord.PermissionOverwrite.from_pair(
-								discord.Permissions(x["overwrites"][z]["allow"]),
-								discord.Permissions(x["overwrites"][z]["deny"]),
-							)
+					overwrites = _overwrites(ctx.guild, x)
 					await ctx.guild.create_stage_channel(
 						name=x["name"],
 						category=cat if cat else None,
@@ -265,18 +243,11 @@ class Snapshot(commands.Cog, name="Snapshots"):
 						overwrites=overwrites,
 					)
 					await asyncio.sleep(0.5)
-				except (discord.Forbidden, discord.HTTPException):
+				except discord.HTTPException:
 					continue
 			elif x["type"] == "category":
 				try:
-					overwrites: dict[discord.Role | discord.Member | discord.Object, discord.PermissionOverwrite] = {}
-					for z in x["overwrites"]:
-						role = discord.utils.get(ctx.guild.roles, name=x["overwrites"][z]["role"])
-						if role:
-							overwrites[role] = discord.PermissionOverwrite.from_pair(
-								discord.Permissions(x["overwrites"][z]["allow"]),
-								discord.Permissions(x["overwrites"][z]["deny"]),
-							)
+					overwrites = _overwrites(ctx.guild, x)
 					await ctx.guild.create_category(
 						name=x["name"],
 						position=int(x["position"]),
@@ -284,18 +255,11 @@ class Snapshot(commands.Cog, name="Snapshots"):
 						overwrites=overwrites,
 					)
 					await asyncio.sleep(0.5)
-				except (discord.Forbidden, discord.HTTPException):
+				except discord.HTTPException:
 					continue
 			elif x["type"] == "forum":
 				try:
-					overwrites: dict[discord.Role | discord.Member | discord.Object, discord.PermissionOverwrite] = {}
-					for z in x["overwrites"]:
-						role = discord.utils.get(ctx.guild.roles, name=x["overwrites"][z]["role"])
-						if role:
-							overwrites[role] = discord.PermissionOverwrite.from_pair(
-								discord.Permissions(x["overwrites"][z]["allow"]),
-								discord.Permissions(x["overwrites"][z]["deny"]),
-							)
+					overwrites = _overwrites(ctx.guild, x)
 					cat = discord.utils.get(ctx.guild.categories, name=x["category"])
 					await ctx.guild.create_forum(
 						name=x["name"],
@@ -309,7 +273,7 @@ class Snapshot(commands.Cog, name="Snapshots"):
 						default_auto_archive_duration=x.get("default_auto_archive_duration", MISSING),
 					)
 					await asyncio.sleep(0.5)
-				except (discord.Forbidden, discord.HTTPException):
+				except discord.HTTPException:
 					continue
 
 	@group(permissions=["administrator"], user=False, aliases=["ss", "save", "backup"])
@@ -327,10 +291,6 @@ class Snapshot(commands.Cog, name="Snapshots"):
 		assert ctx.guild is not None
 		await ctx.defer()  # slow: recreates roles and channels
 		payload = await self.get_snapshot(code)
-		if not payload:
-			await ctx.send("snapshot.not_found")
-			return
-
 		if not isinstance(payload, dict) or "roles" not in payload or "channels" not in payload:
 			await ctx.send("snapshot.not_found")
 			return
@@ -339,12 +299,11 @@ class Snapshot(commands.Cog, name="Snapshots"):
 		current_channel_id = ctx.channel.id if ctx.channel else None
 
 		try:
-			# Delete other channels first
 			for x in list(ctx.guild.channels):
 				if x.id != current_channel_id:
 					try:
 						await x.delete(reason=await self.custom_response("snapshot.strings.save_load_reason", ctx))
-					except (discord.Forbidden, discord.NotFound, discord.HTTPException):
+					except discord.HTTPException:
 						continue
 					await asyncio.sleep(0.5)
 
@@ -356,7 +315,7 @@ class Snapshot(commands.Cog, name="Snapshots"):
 				if old_ch:
 					try:
 						await old_ch.delete(reason=await self.custom_response("snapshot.strings.save_load_reason", ctx))
-					except (discord.Forbidden, discord.NotFound, discord.HTTPException):
+					except discord.HTTPException:
 						pass
 
 		except Exception as e:
@@ -368,7 +327,7 @@ class Snapshot(commands.Cog, name="Snapshots"):
 					)
 					if isinstance(payload, dict):
 						await ctx.guild.owner.send(**payload)
-				except (discord.Forbidden, discord.HTTPException):
+				except discord.HTTPException:
 					pass
 			return
 
@@ -379,12 +338,12 @@ class Snapshot(commands.Cog, name="Snapshots"):
 			alert.pop("delete_after", None)
 			try:
 				await ctx.guild.owner.send(**alert)
-			except (discord.Forbidden, discord.HTTPException):
+			except discord.HTTPException:
 				pass
 
 		try:
 			await ctx.send("snapshot.load")
-		except (discord.NotFound, discord.HTTPException):
+		except discord.HTTPException:
 			pass
 
 

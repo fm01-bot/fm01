@@ -5,11 +5,10 @@ from typing import TYPE_CHECKING
 
 import aiohttp
 import discord
-from core.api import ApiError
 from discord.ext import commands, tasks
 from helpers.alert_providers import get_provider
 
-from api import AlertCreate, ErrorCode, MediaAlert
+from api import MediaAlert
 
 if TYPE_CHECKING:
 	from args.media import Media
@@ -22,14 +21,8 @@ logger = logging.getLogger(__name__)
 OFFLINE_BASELINE = "offline"
 
 
-class AlertLimitReachedError(Exception):
-	"""Raised when a guild attempts to configure more than the allowed alert pairs."""
-
-
 class Alerts(commands.Cog, name="Alerts"):
 	"""Social media upload and live stream alert monitoring system."""
-
-	MAX_ALERTS_PER_GUILD = 5
 
 	def __init__(self, client: Bot) -> None:
 		self.client = client
@@ -54,7 +47,6 @@ class Alerts(commands.Cog, name="Alerts"):
 		"""Periodically checks tracked channels across all platforms."""
 		try:
 			session = await self.get_session()
-			# Query distinct active accounts
 			for row in await self.client.api.alerts.accounts():
 				try:
 					await self.check_account(
@@ -97,7 +89,6 @@ class Alerts(commands.Cog, name="Alerts"):
 				await self.client.api.alerts.set_baseline(platform, channel_account, account_id, OFFLINE_BASELINE)
 			return
 
-		# Fetch all alert subscriptions for this platform & account
 		alerts = await self.client.api.alerts.subscribers(platform, channel_account, account_id)
 
 		for alert_row in alerts:
@@ -105,19 +96,16 @@ class Alerts(commands.Cog, name="Alerts"):
 			if last_id == media.id:
 				continue
 
-			# If this is the initial baseline check (last_media_id is None)
 			if last_id is None:
-				# Initialize baseline so we don't back-notify older uploads
+				# The first check only records a baseline, so older uploads are not announced.
 				await self.client.api.alerts.set_last_media(alert_row.id, media.id)
 				continue
 
-			# Dispatch alert notification
-			sent = await self.dispatch_alert(alert_row, media)
-			if sent:
+			if await self.dispatch_alert(alert_row, media):
 				await self.client.api.alerts.set_last_media(alert_row.id, media.id)
 
 	async def dispatch_alert(self, alert_row: MediaAlert, media: Media) -> bool:
-		"""Formats and sends the alert message using localization with dashboard override support."""
+		"""Sends the alert for `media` to the alert's channel. Returns whether it was sent."""
 		guild_id = alert_row.guild_id
 		channel_id = alert_row.target_channel_id
 
@@ -130,7 +118,6 @@ class Alerts(commands.Cog, name="Alerts"):
 			return False
 
 		try:
-			# Load localized message per platform (supports future dashboard overrides)
 			localized_payload = await self.client.custom_response.get_message(
 				f"alerts.{media.platform}",
 				guild,
@@ -150,7 +137,6 @@ class Alerts(commands.Cog, name="Alerts"):
 		except Exception as e:  # noqa: BLE001
 			logger.debug(f"Failed to load localized alert message for {media.platform}: {e}")
 
-		# Fallback if localization key fails
 		try:
 			fallback_content = f"**{media.author.name}** posted an update!\n**{media.title}**\n{media.url}"
 			await channel.send(content=fallback_content)
@@ -158,56 +144,6 @@ class Alerts(commands.Cog, name="Alerts"):
 		except (discord.Forbidden, discord.HTTPException) as e:
 			logger.warning(f"Could not send alert to channel {channel_id} in guild {guild_id}: {e}")
 			return False
-
-	# Accessors, through the API
-	async def get_guild_alerts(self, guild_id: int) -> list[MediaAlert]:
-		"""Returns all configured alerts for a guild, oldest first."""
-		return await self.client.api.alerts.for_guild(guild_id)
-
-	async def get_alert(self, alert_id: int, guild_id: int) -> MediaAlert | None:
-		"""Retrieves a guild's alert by its ID."""
-		return await self.client.api.alerts.get(guild_id, alert_id)
-
-	async def add_alert(
-		self,
-		guild_id: int,
-		platform: str,
-		channel_account: str,
-		account_id: str | None,
-		account_name: str | None,
-		target_channel_id: int,
-	) -> int:
-		"""Creates a new media alert subscription enforcing the limit of 5 per server."""
-		try:
-			alert = await self.client.api.alerts.add(
-				guild_id,
-				AlertCreate(
-					platform=platform,
-					channel_account=channel_account,
-					account_id=account_id,
-					account_name=account_name,
-					target_channel_id=target_channel_id,
-				),
-			)
-		except ApiError as exc:
-			if exc.code is ErrorCode.ALERT_LIMIT:
-				raise AlertLimitReachedError(
-					f"Server has reached the limit of {self.MAX_ALERTS_PER_GUILD} alert subscriptions."
-				) from exc
-			raise
-		return alert.id
-
-	async def remove_alert(self, alert_id: int, guild_id: int) -> bool:
-		"""Removes an alert by ID for the specified guild."""
-		return await self.client.api.alerts.remove(guild_id, alert_id)
-
-	async def remove_alert_by_platform_and_account(self, guild_id: int, platform: str, channel_account: str) -> int:
-		"""Removes alerts matching platform and account for the specified guild."""
-		return await self.client.api.alerts.remove_account(guild_id, platform, channel_account)
-
-	async def set_alert_enabled(self, alert_id: int, guild_id: int, enabled: bool) -> bool:
-		"""Enables or disables an alert."""
-		return await self.client.api.alerts.set_enabled(guild_id, alert_id, enabled)
 
 
 async def setup(client: Bot) -> None:
