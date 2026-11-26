@@ -38,7 +38,10 @@ from api import (
 	CaseRecord,
 	CaseRetention,
 	CaseUpdate,
+	CastVote,
 	ClearStars,
+	Decide,
+	DecisionStatus,
 	ErrorBody,
 	ErrorCode,
 	GiveawayCreate,
@@ -72,6 +75,7 @@ from api import (
 	MessageCount,
 	MessageIds,
 	MoveRequest,
+	NewSuggestion,
 	OpenTicketCount,
 	PendingCase,
 	Prefix,
@@ -89,6 +93,9 @@ from api import (
 	StarredMessage,
 	StarResult,
 	StarSeed,
+	Suggestion,
+	SuggestionConfig,
+	SuggestionMessage,
 	Ticket,
 	TicketClose,
 	TicketConfig,
@@ -96,6 +103,8 @@ from api import (
 	TicketOpen,
 	TransferRequest,
 	UserIds,
+	Vote,
+	VoteResult,
 	Wallet,
 	XpAward,
 	XpResult,
@@ -121,6 +130,9 @@ __all__ = (
 	"ShopApi",
 	"SnapshotsApi",
 	"StarboardApi",
+	"SuggestionClosed",
+	"SuggestionsApi",
+	"SuggestionsDisabled",
 	"TicketsApi",
 )
 
@@ -161,6 +173,14 @@ class InsufficientFunds(Exception):
 	"""The wallet doesn't hold enough money for the operation."""
 
 
+class SuggestionsDisabled(Exception):
+	"""The guild has no suggestions channel, so nobody can make a suggestion."""
+
+
+class SuggestionClosed(Exception):
+	"""The suggestion already has a decision, so it takes no more votes."""
+
+
 class ApiClient:
 	"""One HTTP session to the Internal API, shared by every cog.
 
@@ -180,6 +200,7 @@ class ApiClient:
 		self.settings = SettingsApi(self)
 		self.bear_trap = BearTrapApi(self)
 		self.starboard = StarboardApi(self)
+		self.suggestions = SuggestionsApi(self)
 		self.greetings = GreetingsApi(self)
 		self.automod = AutoModApi(self)
 		self.log = LogApi(self)
@@ -242,6 +263,8 @@ class ApiClient:
 		Raises:
 			ApiUnavailable: The API couldn't be reached, failed (5xx), or answered with something unparsable.
 			InsufficientFunds: The API answered ``insufficient_funds``.
+			SuggestionsDisabled: The API answered ``suggestions_disabled``.
+			SuggestionClosed: The API answered ``suggestion_closed``.
 			ValueError: The API answered ``same_account`` or ``invalid_request``.
 			ApiError: Any other refusal.
 		"""
@@ -308,6 +331,10 @@ def _refusal(status: int, data: bytes, what: str) -> Exception:
 			return InsufficientFunds()
 		case ErrorCode.SAME_ACCOUNT | ErrorCode.INVALID_REQUEST:
 			return ValueError(body.message)
+		case ErrorCode.SUGGESTIONS_DISABLED:
+			return SuggestionsDisabled()
+		case ErrorCode.SUGGESTION_CLOSED:
+			return SuggestionClosed()
 		case ErrorCode.UNAUTHORIZED:
 			logger.error("The API rejected API_INTERNAL_TOKEN")
 			return ApiUnavailable(f"{what}: {body.message}")
@@ -729,6 +756,124 @@ class StarboardApi:
 			f"/guilds/{guild_id}/starboard/messages/{message_id}/clear",
 			list[StarboardEntry],
 			body=ClearStars(emoji=emoji),
+		)
+
+
+class SuggestionsApi:
+	"""Suggestion operations: the guild setting, suggestions, votes and decisions. Every method can also raise
+	`ApiUnavailable`.
+
+	Args:
+		client: The API client.
+	"""
+
+	def __init__(self, client: ApiClient) -> None:
+		self._client = client
+
+	async def config(self, guild_id: int) -> SuggestionConfig:
+		"""Get a guild's suggestions setting.
+
+		Args:
+			guild_id: The guild.
+
+		Returns:
+			The setting. Off if the guild never set it.
+		"""
+		return await self._client.request("GET", f"/guilds/{guild_id}/settings/suggestions", SuggestionConfig)
+
+	async def set_config(self, guild_id: int, config: SuggestionConfig) -> None:
+		"""Set a guild's suggestions setting.
+
+		Args:
+			guild_id: The guild.
+			config: The setting. A ``None`` channel turns suggestions off.
+		"""
+		await self._client.send("PUT", f"/guilds/{guild_id}/settings/suggestions", body=config)
+
+	async def create(self, guild_id: int, author_id: int, content: str) -> Suggestion:
+		"""Create a suggestion with the guild's next number.
+
+		Args:
+			guild_id: The guild.
+			author_id: The member making the suggestion.
+			content: The suggestion, 1 to 1000 characters.
+
+		Returns:
+			The suggestion, which the caller posts and records with `set_message`.
+
+		Raises:
+			SuggestionsDisabled: The guild has no suggestions channel.
+		"""
+		body = NewSuggestion(author_id=author_id, content=content)
+		return await self._client.request("POST", f"/guilds/{guild_id}/suggestions", Suggestion, body=body)
+
+	async def get(self, guild_id: int, number: int) -> Suggestion | None:
+		"""Get a suggestion.
+
+		Args:
+			guild_id: The guild.
+			number: The suggestion's number in the guild.
+
+		Returns:
+			The suggestion, or ``None`` if there is none.
+		"""
+		return await _or_none(self._client.request("GET", f"/guilds/{guild_id}/suggestions/{number}", Suggestion))
+
+	async def set_message(self, guild_id: int, number: int, channel_id: int, message_id: int) -> Suggestion | None:
+		"""Record the message the bot posted for a suggestion.
+
+		Args:
+			guild_id: The guild.
+			number: The suggestion's number in the guild.
+			channel_id: The channel it was posted in.
+			message_id: The posted message.
+
+		Returns:
+			The suggestion, or ``None`` if there is none.
+		"""
+		body = SuggestionMessage(channel_id=channel_id, message_id=message_id)
+		return await _or_none(
+			self._client.request("PUT", f"/guilds/{guild_id}/suggestions/{number}/message", Suggestion, body=body)
+		)
+
+	async def vote(self, guild_id: int, number: int, user_id: int, vote: Vote) -> VoteResult | None:
+		"""Cast a vote. The same vote again takes it back, the opposite vote replaces it.
+
+		Args:
+			guild_id: The guild.
+			number: The suggestion's number in the guild.
+			user_id: The voter.
+			vote: Their vote.
+
+		Returns:
+			The counts and the voter's vote now, or ``None`` if there is no such suggestion.
+
+		Raises:
+			SuggestionClosed: The suggestion has a decision.
+		"""
+		body = CastVote(user_id=user_id, vote=vote)
+		return await _or_none(
+			self._client.request("POST", f"/guilds/{guild_id}/suggestions/{number}/votes", VoteResult, body=body)
+		)
+
+	async def decide(
+		self, guild_id: int, number: int, moderator_id: int, status: DecisionStatus, reason: str | None
+	) -> Suggestion | None:
+		"""Approve or deny a suggestion. Deciding again overwrites the earlier decision.
+
+		Args:
+			guild_id: The guild.
+			number: The suggestion's number in the guild.
+			moderator_id: The moderator deciding.
+			status: The decision.
+			reason: Why, up to 500 characters.
+
+		Returns:
+			The decided suggestion, or ``None`` if there is none.
+		"""
+		body = Decide(moderator_id=moderator_id, status=status, reason=reason)
+		return await _or_none(
+			self._client.request("POST", f"/guilds/{guild_id}/suggestions/{number}/decision", Suggestion, body=body)
 		)
 
 

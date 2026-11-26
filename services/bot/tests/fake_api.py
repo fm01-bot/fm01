@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime
 
+from core.api import SuggestionClosed, SuggestionsDisabled
 from core.clustering.interfaces import EventBus
 
 from api import (
@@ -15,6 +16,7 @@ from api import (
 	CaseFilter,
 	CaseRecord,
 	CaseUpdate,
+	DecisionStatus,
 	GreetingConfig,
 	GreetingUpdate,
 	GuildLogConfig,
@@ -23,10 +25,15 @@ from api import (
 	MediaAlert,
 	PendingCase,
 	Retention,
+	Suggestion,
+	SuggestionConfig,
+	SuggestionDecision,
 	Ticket,
 	TicketConfig,
 	TicketConfigUpdate,
 	TicketOpen,
+	Vote,
+	VoteResult,
 )
 
 
@@ -252,3 +259,67 @@ def alert(**fields: object) -> MediaAlert:
 		"created_at": datetime.datetime.now(tz=datetime.UTC),
 	}
 	return MediaAlert.model_validate(values | fields)
+
+
+class FakeSuggestions:
+	"""`SuggestionsApi` over dicts, with the API's numbering, toggling votes and closing decisions."""
+
+	def __init__(self) -> None:
+		self.configs: dict[int, SuggestionConfig] = {}
+		self.suggestions: dict[tuple[int, int], Suggestion] = {}
+		self.votes: dict[tuple[int, int], dict[int, Vote]] = {}
+
+	async def config(self, guild_id: int) -> SuggestionConfig:
+		return self.configs.get(guild_id, SuggestionConfig())
+
+	async def set_config(self, guild_id: int, config: SuggestionConfig) -> None:
+		self.configs[guild_id] = config
+
+	def _counted(self, guild_id: int, suggestion: Suggestion) -> Suggestion:
+		votes = self.votes.get((guild_id, suggestion.number), {}).values()
+		up = sum(vote is Vote.UP for vote in votes)
+		return suggestion.model_copy(update={"up": up, "down": len(votes) - up})
+
+	async def create(self, guild_id: int, author_id: int, content: str) -> Suggestion:
+		if (await self.config(guild_id)).channel_id is None:
+			raise SuggestionsDisabled
+		number = 1 + sum(guild == guild_id for guild, _ in self.suggestions)
+		suggestion = Suggestion(number=number, author_id=author_id, content=content, up=0, down=0)
+		self.suggestions[(guild_id, number)] = suggestion
+		return suggestion
+
+	async def get(self, guild_id: int, number: int) -> Suggestion | None:
+		suggestion = self.suggestions.get((guild_id, number))
+		return None if suggestion is None else self._counted(guild_id, suggestion)
+
+	async def set_message(self, guild_id: int, number: int, channel_id: int, message_id: int) -> Suggestion | None:
+		if (guild_id, number) not in self.suggestions:
+			return None
+		self.suggestions[(guild_id, number)] = self.suggestions[(guild_id, number)].model_copy(
+			update={"channel_id": channel_id, "message_id": message_id}
+		)
+		return await self.get(guild_id, number)
+
+	async def vote(self, guild_id: int, number: int, user_id: int, vote: Vote) -> VoteResult | None:
+		suggestion = self.suggestions.get((guild_id, number))
+		if suggestion is None:
+			return None
+		if suggestion.decision is not None:
+			raise SuggestionClosed
+		votes = self.votes.setdefault((guild_id, number), {})
+		if votes.get(user_id) is vote:
+			del votes[user_id]
+		else:
+			votes[user_id] = vote
+		counted = self._counted(guild_id, suggestion)
+		return VoteResult(up=counted.up, down=counted.down, vote=votes.get(user_id))
+
+	async def decide(
+		self, guild_id: int, number: int, moderator_id: int, status: DecisionStatus, reason: str | None
+	) -> Suggestion | None:
+		suggestion = self.suggestions.get((guild_id, number))
+		if suggestion is None:
+			return None
+		decision = SuggestionDecision(status=status, moderator_id=moderator_id, reason=reason)
+		self.suggestions[(guild_id, number)] = suggestion.model_copy(update={"decision": decision})
+		return await self.get(guild_id, number)

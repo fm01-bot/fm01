@@ -42,7 +42,7 @@ This document defines architectural standards, technical conventions, and operat
 
 #### `core/` (Foundational Abstractions)
 
-- `api.py` (`ApiClient`): The API client, the bot's typed wrapper around the Internal API, one attribute per domain (`bot.api.economy`, `settings`, `bear_trap`, `starboard`, `greetings`, `automod`, `log`, `cases`, `tickets`, `levels`, `afk`, `snapshots`, `shop`, `giveaways`, `alerts`, `blacklist`). Methods that look something up return `None` for `not_found`. Maps API error codes back to exceptions (`InsufficientFunds`, `ValueError`) and transport failures to `ApiUnavailable`, which the global error handler answers with `errors.api_unavailable`.
+- `api.py` (`ApiClient`): The API client, the bot's typed wrapper around the Internal API, one attribute per domain (`bot.api.economy`, `settings`, `bear_trap`, `starboard`, `suggestions`, `greetings`, `automod`, `log`, `cases`, `tickets`, `levels`, `afk`, `snapshots`, `shop`, `giveaways`, `alerts`, `blacklist`). Methods that look something up return `None` for `not_found`. Maps API error codes back to exceptions (`InsufficientFunds`, `ValueError`) and transport failures to `ApiUnavailable`, which the global error handler answers with `errors.api_unavailable`.
 - `blacklist.py` (`Blacklist`, `Blacklisted`): The blacklist cached from the API (`bot.blacklist`), kept current by `BLACKLIST_CHANGED` events and enforced as a global bot check.
 - `bot.py` (`Bot`): Subclasses `commands.AutoShardedBot`. Manages the API client (`self.api`), prefix cache, clustering coordinator, event bus, message logging buffer, and global error handling.
 - `context.py` (`Context`): Subclasses `commands.Context`. Overrides `send()` to automatically intercept localization keys and format variables via `CustomResponse`.
@@ -76,7 +76,7 @@ Dataclasses decorated with `@dataclass(slots=True)` that wrap Discord objects (e
 - `automod.py`: Server protection rule engine (invite blocking, links, caps, spam, word filters).
 - `basic.py`: Core utility commands (`ping`, `uptime`).
 - `bear_trap.py`: The bear trap: soft-bans members who post in the trap channel and keeps the trap message (with its kick counter) in step with the `bear_trap` setting behind the API (`bot.api.bear_trap`).
-- `config.py` & `config_subcommands/`: Hierarchical CLI server settings management (`automod`, `beartrap`, `join`, `leave`, `level`, `log`, `prefix`, `starboard`, `ticket`).
+- `config.py` & `config_subcommands/`: Hierarchical CLI server settings management (`automod`, `beartrap`, `join`, `leave`, `level`, `log`, `prefix`, `starboard`, `suggestions`, `ticket`).
 - `economy.py`: Virtual economy commands and the shop. Balances go through the Ledger in the API (`bot.api.economy`), the shop's items through `bot.api.shop`.
 - `help.py`: Dynamic help system subclassing `commands.HelpCommand` with paginated views.
 - `info.py`: Server, user, role, and bot diagnostic inspection commands.
@@ -88,6 +88,7 @@ Dataclasses decorated with `@dataclass(slots=True)` that wrap Discord objects (e
 - `setup.py`: Interactive first-time server setup helper.
 - `snapshot.py`: Guild structural backup and restoration system.
 - `starboard.py`: Starboards: counts stars through `bot.api.starboard`, posts, updates (debounced) and takes down each board's posts, and reports posts deleted by hand as blocks. Boards are the `starboard` guild setting, written one board at a time through the API.
+- `suggestions.py`: Suggestions: `suggest` posts a member's idea to the configured channel with up and down vote buttons (`SuggestionVoteButton`, a `DynamicItem` whose custom ID carries the number, so clicks survive restarts); `suggestion approve|deny` records a decision and closes voting. Everything goes through `bot.api.suggestions`.
 - `state_sync.py`: Mirrors guild, channel and role data into the cluster `StateStore`. (Setting caches are invalidated by `core/settings.py`, not here.)
 - `status.py`: Presence and bot activity status cycler.
 - `ticket.py`: Interactive support ticket system with components, modals, and transcript export.

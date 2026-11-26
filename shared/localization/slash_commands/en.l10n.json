@@ -974,6 +974,51 @@
     "desc": "Stop playback and clear the queue",
     "name": "stop"
   },
+  "suggest": {
+    "args": {
+      "content": {
+        "desc": "What you suggest for the server",
+        "name": "content"
+      }
+    },
+    "desc": "Suggest something for the server",
+    "name": "suggest",
+    "usage": "suggest [content: 1...1000]"
+  },
+  "suggestion": {
+    "desc": "Decide on suggestions",
+    "name": "suggestion"
+  },
+  "suggestionapprove": {
+    "args": {
+      "number": {
+        "desc": "The suggestion's number",
+        "name": "number"
+      },
+      "reason": {
+        "desc": "Why you made this decision",
+        "name": "reason"
+      }
+    },
+    "desc": "Approve a suggestion and close its voting",
+    "name": "approve",
+    "usage": "suggestion approve [number] (reason: 1...500)"
+  },
+  "suggestiondeny": {
+    "args": {
+      "number": {
+        "desc": "The suggestion's number",
+        "name": "number"
+      },
+      "reason": {
+        "desc": "Why you made this decision",
+        "name": "reason"
+      }
+    },
+    "desc": "Deny a suggestion and close its voting",
+    "name": "deny",
+    "usage": "suggestion deny [number] (reason: 1...500)"
+  },
   "sync": {
     "args": {
       "guilds": {

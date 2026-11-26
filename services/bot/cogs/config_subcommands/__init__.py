@@ -13,6 +13,7 @@ from .log import setup_log_subcommands
 from .mod import setup_mod_subcommands
 from .prefix import setup_prefix_subcommands
 from .starboard import setup_starboard_subcommands
+from .suggestions import setup_suggestions_subcommands
 from .ticket import setup_ticket_subcommands
 
 
@@ -29,3 +30,4 @@ def register_all_subcommands(root_node: CLINode) -> None:
 	setup_alert_subcommands(root_node)
 	setup_bear_trap_subcommands(root_node)
 	setup_starboard_subcommands(root_node)
+	setup_suggestions_subcommands(root_node)
