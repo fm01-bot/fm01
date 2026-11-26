@@ -1,3 +1,9 @@
+<!--
+Link the issue this PR resolves, e.g. "Closes #123". If the branch is named
+like `123-title` or `feat/123-title`, a workflow adds this line for you.
+-->
+Closes #
+
 ## Summary
 [Include a short description of the changes.]
 
