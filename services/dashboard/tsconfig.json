@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@fm01/api": ["../../shared/schemas/ts/api.d.ts"]
     }
   },
   "include": [

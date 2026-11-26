@@ -21,6 +21,8 @@ def render() -> str:
 
 if __name__ == "__main__":
 	if len(sys.argv) > 1:
-		Path(sys.argv[1]).write_text(render(), encoding="utf-8", newline="\n")
+		path = Path(sys.argv[1])
+		path.parent.mkdir(parents=True, exist_ok=True)  # the output folder is gitignored, so a fresh clone lacks it
+		path.write_text(render(), encoding="utf-8", newline="\n")
 	else:
 		sys.stdout.write(render())

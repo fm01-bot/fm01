@@ -50,7 +50,7 @@ tests/                # One file per area; conftest.py has the database, fake Re
 - **Snowflakes** use `api.Snowflake`: `int` in Python, string on the wire, in bodies and paths alike.
 - **Dashboard routes** take `CurrentSession`, which refuses blacklisted users (`AnySession` only for signing out). Routes that act on a guild take `ManagedGuildId`, which enforces the guild manager rule (owner, Administrator or Manage Server, from the user's Discord guild list cached for 60 s, and the bot in the guild) and refuses blacklisted guilds. Routes whose setting makes the bot remove members (the bear trap) take `BanManagedGuildId`, which also requires Ban Members.
 - **Schema changes** go in `services/migrations/` (see its `AGENTS.md`).
-- **Generated types**: after changing a route or a model, run `just schemas` and commit `shared/schemas/openapi/openapi.json` and `shared/schemas/ts/api.d.ts`. CI fails on drift.
+- **Generated types**: `shared/schemas/openapi/openapi.json` and `shared/schemas/ts/api.d.ts` are gitignored. Run `just schemas` after a fresh clone and after changing a route or a model; never commit them. CI only checks that they still generate.
 
 ## 5. Verification
 
@@ -61,7 +61,7 @@ uv run ruff format --check .
 uv run ruff check .
 uv run ty check
 uv run pytest        # database tests need Docker
-just schemas         # then: git diff --exit-code -- ../../shared/schemas
+just schemas         # must succeed; the output is gitignored
 ```
 
 ## 6. Operational Directives
