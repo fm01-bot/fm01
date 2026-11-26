@@ -52,9 +52,11 @@ class StateSync(commands.Cog, name="StateSync"):
 		self.client = client
 
 	async def _sync_channels(self, guild: discord.Guild) -> None:
+		"""Mirrors the guild's channels into the state store."""
 		await self.client.state_store.set_channels(guild.id, [format_channel(c) for c in guild.channels])
 
 	async def _sync_roles(self, guild: discord.Guild) -> None:
+		"""Mirrors the guild's roles into the state store."""
 		await self.client.state_store.set_roles(guild.id, [format_role(r) for r in guild.roles])
 
 	async def _sync_guild(self, guild: discord.Guild) -> None:

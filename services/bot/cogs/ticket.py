@@ -93,8 +93,10 @@ class TicketModal(discord.ui.Modal):
 
 
 def _ticket_cog(interaction: discord.Interaction) -> Ticket | None:
+	"""The loaded Ticket cog of the bot the interaction came to, or ``None`` if it isn't loaded."""
 	client = interaction.client
-	cog = client.get_cog("Ticket") if isinstance(client, commands.Bot) else None
+	# BotBase, not commands.Bot: the bot is an AutoShardedBot, which doesn't subclass commands.Bot.
+	cog = client.get_cog("Ticket") if isinstance(client, commands.bot.BotBase) else None
 	return cog if isinstance(cog, Ticket) else None
 
 
@@ -693,7 +695,7 @@ class Ticket(commands.Cog, name="Ticket"):
 	async def handle_save_action(self, interaction: discord.Interaction):
 		assert interaction.guild is not None
 		if not isinstance(interaction.channel, (discord.abc.GuildChannel, discord.Thread)):
-			return
+			return await self.send_response("ticket.errors.unavailable", interaction, ephemeral=True)
 
 		ticket = await self.get_ticket(interaction.channel.id)
 		if not ticket:
@@ -737,7 +739,7 @@ class Ticket(commands.Cog, name="Ticket"):
 	async def handle_close_action(self, interaction: discord.Interaction):
 		assert interaction.guild is not None
 		if not isinstance(interaction.channel, (discord.abc.GuildChannel, discord.Thread)):
-			return
+			return await self.send_response("ticket.errors.unavailable", interaction, ephemeral=True)
 
 		ticket = await self.get_ticket(interaction.channel.id)
 		if not ticket:

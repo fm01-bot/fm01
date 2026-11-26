@@ -92,6 +92,7 @@ class JoinLeave(commands.Cog, name="JoinLeave"):
 			return template
 
 	async def _greet(self, kind: GreetingKind, cfg: GreetingConfig | None, member: discord.Member) -> None:
+		"""Sends the join or leave message for ``member``, if the guild has one configured and enabled."""
 		if not cfg or not cfg.enabled or not cfg.channel_id or not cfg.message:
 			return
 		channel = member.guild.get_channel(cfg.channel_id)
