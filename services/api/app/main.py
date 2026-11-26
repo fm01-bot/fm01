@@ -34,6 +34,7 @@ from app.snapshots import routes as snapshot_routes
 from app.starboard import routes as starboard_routes
 from app.state import AppState, build_state
 from app.status import routes as status_routes
+from app.suggestions import routes as suggestion_routes
 from app.tickets import routes as ticket_routes
 
 __all__ = ("app", "create_app")
@@ -97,6 +98,7 @@ def create_app(config: Settings | None = None, state_factory: StateFactory = bui
 	internal.include_router(settings_routes.internal)
 	internal.include_router(bear_trap_routes.internal)
 	internal.include_router(starboard_routes.internal)
+	internal.include_router(suggestion_routes.internal)
 	for routes in (
 		greeting_routes,
 		automod_routes,
@@ -118,6 +120,7 @@ def create_app(config: Settings | None = None, state_factory: StateFactory = bui
 	dashboard.include_router(settings_routes.dashboard)
 	dashboard.include_router(bear_trap_routes.dashboard)
 	dashboard.include_router(starboard_routes.dashboard)
+	dashboard.include_router(suggestion_routes.dashboard)
 
 	public = APIRouter(prefix="/public")
 	public.include_router(status_routes.public)
