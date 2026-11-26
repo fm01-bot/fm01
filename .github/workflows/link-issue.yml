@@ -1,0 +1,74 @@
+# Links a pull request to its issue from the branch name.
+#
+# Branches named like `123-short-title` (what GitHub's "Create a branch" button
+# on an issue makes) or `feat/123-short-title` get "Closes #123" added to the
+# PR body. GitHub then shows the PR on the issue, and merging it closes the
+# issue (which moves its card to Done on the project board).
+#
+# pull_request_target is used so this also works for PRs from forks. It never
+# checks out or runs code from the PR: it only reads the branch name and edits
+# the PR body.
+
+name: Link PR to issue
+
+on:
+  pull_request_target:
+    types: [opened, reopened, edited]
+
+permissions:
+  pull-requests: write
+  issues: read
+
+jobs:
+  link:
+    name: Add closing keyword from branch name
+    runs-on: ubuntu-latest
+    steps:
+      - name: Link issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const branch = pr.head.ref;
+
+            // `123-title`, `feat/123-title`, `fix/123`, `123`
+            const match = branch.match(/^(?:[\w.-]+\/)?(\d+)(?:[-_/]|$)/);
+            if (!match) {
+              core.info(`Branch "${branch}" has no issue number, nothing to do.`);
+              return;
+            }
+            const number = Number(match[1]);
+
+            const body = pr.body ?? "";
+            const alreadyLinked = new RegExp(
+              `\\b(close[sd]?|fix(e[sd])?|resolve[sd]?)\\s+#${number}\\b`,
+              "i",
+            ).test(body);
+            if (alreadyLinked) {
+              core.info(`PR already references #${number}.`);
+              return;
+            }
+
+            // Only link real issues, not other PRs or missing numbers.
+            try {
+              const { data: issue } = await github.rest.issues.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: number,
+              });
+              if (issue.pull_request) {
+                core.info(`#${number} is a pull request, not linking.`);
+                return;
+              }
+            } catch (error) {
+              core.info(`#${number} not found (${error.status}), not linking.`);
+              return;
+            }
+
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              body: `Closes #${number}\n\n${body}`.trimEnd(),
+            });
+            core.info(`Linked PR #${pr.number} to issue #${number}.`);
