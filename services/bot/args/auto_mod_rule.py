@@ -35,7 +35,7 @@ class AutoModRule:
 		if creator is None:
 			try:
 				creator = await rule.guild.fetch_member(rule.creator_id)
-			except (discord.NotFound, discord.HTTPException):
+			except discord.HTTPException:
 				creator = None
 		return cls(
 			name=rule.name,

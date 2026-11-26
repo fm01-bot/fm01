@@ -1682,18 +1682,6 @@ class AlertsApi:
 		"""
 		return await self._client.request("GET", f"/guilds/{guild_id}/alerts", list[MediaAlert])
 
-	async def get(self, guild_id: int, alert_id: int) -> MediaAlert | None:
-		"""Get an alert.
-
-		Args:
-			guild_id: The guild.
-			alert_id: The alert.
-
-		Returns:
-			The alert, or ``None`` if the guild has no such alert.
-		"""
-		return await _or_none(self._client.request("GET", f"/guilds/{guild_id}/alerts/{alert_id}", MediaAlert))
-
 	async def add(self, guild_id: int, alert: AlertCreate) -> MediaAlert:
 		"""Add an alert, or enable it again and update its account if the guild has it.
 

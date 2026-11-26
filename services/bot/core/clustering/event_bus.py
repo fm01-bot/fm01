@@ -21,7 +21,6 @@ class LocalEventBus(EventBus):
 		self._lock = asyncio.Lock()
 
 	async def publish(self, channel: str, message: dict[str, Any]) -> None:
-		handlers: list[EventHandler] = []
 		async with self._lock:
 			handlers = list(self._handlers.get(channel, []))
 

@@ -22,7 +22,6 @@ logger = logging.getLogger(__name__)
 
 SUPPORTED_PLATFORMS = ("youtube", "twitch", "tiktok")
 
-# XML Namespaces for YouTube Atom feeds
 YT_NAMESPACES = {
 	"atom": "http://www.w3.org/2005/Atom",
 	"yt": "http://www.youtube.com/xml/schemas/2015",
@@ -222,14 +221,11 @@ class YouTubeProvider(AlertProvider):
 		bot: Bot | None = None,
 	) -> tuple[str, str]:
 		cleaned = channel_input.strip()
-		# Extract from YouTube URLs if provided
 		url_match = re.search(r"youtube\.com/(?:channel/|@|c/)?([^/?#]+)", cleaned)
 		candidate = url_match.group(1) if url_match else cleaned
 		candidate = candidate.lstrip("@")
 
-		# If already a standard YouTube channel ID (starts with UC and 24 chars long)
 		if candidate.startswith("UC") and len(candidate) == 24:
-			# Attempt to fetch feed to get real channel name
 			feed_url = f"https://www.youtube.com/feeds/videos.xml?channel_id={candidate}"
 			try:
 				async with session.get(feed_url, timeout=aiohttp.ClientTimeout(total=8)) as resp:
@@ -243,13 +239,11 @@ class YouTubeProvider(AlertProvider):
 				logger.debug(f"Failed to fetch YouTube feed for {candidate}: {e}")
 			return candidate, candidate
 
-		# Otherwise resolve handle or username
 		handle_url = f"https://www.youtube.com/@{candidate}"
 		try:
 			async with session.get(handle_url, headers=YT_PAGE_HEADERS, timeout=aiohttp.ClientTimeout(total=8)) as resp:
 				if resp.status == 200:
 					html = await resp.text()
-					# Search for channelId in page metadata
 					cid_match = re.search(r'"externalId":"(UC[a-zA-Z0-9_-]{22})"', html)
 					if not cid_match:
 						cid_match = re.search(r'itemprop="identifier"\s+content="(UC[a-zA-Z0-9_-]{22})"', html)
@@ -257,14 +251,12 @@ class YouTubeProvider(AlertProvider):
 						cid_match = re.search(r"channel/(UC[a-zA-Z0-9_-]{22})", html)
 					if cid_match:
 						cid = cid_match.group(1)
-						# Extract channel title
 						title_match = re.search(r'<meta property="og:title" content="([^"]+)">', html)
 						title = title_match.group(1) if title_match else candidate
 						return cid, title
 		except (aiohttp.ClientError, TimeoutError, OSError) as e:
 			logger.debug(f"Failed to resolve YouTube handle @{candidate}: {e}")
 
-		# Fallback to candidate as account ID
 		return candidate, candidate
 
 	async def fetch_latest(
@@ -307,7 +299,6 @@ class YouTubeProvider(AlertProvider):
 		href = link_el.attrib.get("href") if link_el is not None else None
 		video_url: str = href if href else f"https://www.youtube.com/watch?v={video_id}"
 
-		# Channel details
 		author_el = root.find("atom:author", YT_NAMESPACES)
 		author_name_el = author_el.find("atom:name", YT_NAMESPACES) if author_el is not None else None
 		author_uri_el = author_el.find("atom:uri", YT_NAMESPACES) if author_el is not None else None
@@ -323,7 +314,6 @@ class YouTubeProvider(AlertProvider):
 			else f"https://www.youtube.com/channel/{account_id}"
 		)
 
-		# Media description & thumbnail
 		media_group = entry.find("media:group", YT_NAMESPACES)
 		description: str | None = None
 		thumbnail: str | None = None
@@ -472,7 +462,7 @@ class TwitchProvider(AlertProvider):
 			AlertSourceError: Twitch could not be queried, so the offline state is unknown.
 
 		"""
-		# account_id could be numeric user_id or login name
+		# Alerts store either the numeric user ID or the login name.
 		param_key = "user_id" if account_id.isdigit() else "user_login"
 		data = await self._helix_get(session, f"streams?{param_key}={quote(account_id.lower(), safe='')}")
 
@@ -578,7 +568,6 @@ class GenericRSSProvider(AlertProvider):
 			logger.warning(f"{self.display_name} feed unavailable for {account_id}: {e}")
 			return None
 
-		# Handle RSS 2.0 channel/item structure
 		channel = root.find("channel")
 		if channel is None:
 			return None
@@ -643,7 +632,6 @@ class TikTokProvider(GenericRSSProvider):
 		super().__init__(platform="tiktok", display_name="TikTok", path_prefix="tiktok/user")
 
 
-# Registry instance dictionary
 ALERT_PROVIDERS: dict[str, AlertProvider] = {
 	"youtube": YouTubeProvider(),
 	"twitch": TwitchProvider(),

@@ -11,7 +11,6 @@ from PIL import Image, ImageDraw, ImageFont
 
 __all__ = ("create_level_card",)
 
-# Colors matching the design
 COLOR_BG = (27, 28, 32, 255)
 COLOR_TEXT_WHITE = (255, 255, 255, 255)
 COLOR_TEXT_GRAY = (161, 161, 170, 255)
@@ -106,13 +105,12 @@ async def create_level_card(
 	card = Image.new("RGBA", (width, height), COLOR_BG)
 	draw = ImageDraw.Draw(card)
 
-	# Fetch avatar bytes
 	avatar_image: Image.Image | None = None
 	try:
 		avatar_bytes = await user.display_avatar.with_format("png").with_size(256).read()
 		avatar_image = Image.open(io.BytesIO(avatar_bytes)).convert("RGBA")
 	except (discord.DiscordException, OSError, ValueError, TypeError, RuntimeError):
-		avatar_image = None
+		pass
 
 	av_size = 160
 	av_x, av_y = 35, 30
@@ -120,7 +118,6 @@ async def create_level_card(
 	if avatar_image:
 		avatar_image = avatar_image.resize((av_size, av_size), Image.Resampling.LANCZOS)
 	else:
-		# Fallback placeholder avatar
 		avatar_image = Image.new("RGBA", (av_size, av_size), COLOR_AVATAR_BG)
 		av_draw = ImageDraw.Draw(avatar_image)
 		initials = (user.display_name[:2] or "??").upper()
@@ -132,7 +129,6 @@ async def create_level_card(
 			anchor="mm",
 		)
 
-	# Apply rounded corners to avatar
 	mask = Image.new("L", (av_size, av_size), 0)
 	mask_draw = ImageDraw.Draw(mask)
 	mask_draw.rounded_rectangle((0, 0, av_size, av_size), radius=16, fill=255)
@@ -184,10 +180,8 @@ async def create_level_card(
 	bar_h = bar_y1 - bar_y0
 	bar_r = bar_h // 2
 
-	# Track
 	draw.rounded_rectangle((bar_x0, bar_y0, bar_x1, bar_y1), radius=bar_r, fill=COLOR_TRACK)
 
-	# Fill
 	ratio = min(max(current_xp / max(needed_xp, 1), 0.0), 1.0)
 	if ratio > 0:
 		total_bar_w = bar_x1 - bar_x0

@@ -114,7 +114,6 @@ class RedisMessageBuffer(MessageBuffer):
 		while self._running:
 			try:
 				batch: list[tuple[int, int, bytes]] = []
-				# Wait for at least one item or timeout
 				try:
 					item = await asyncio.wait_for(self._queue.get(), timeout=self.flush_interval)
 					batch.append(item)
@@ -122,7 +121,6 @@ class RedisMessageBuffer(MessageBuffer):
 				except TimeoutError:
 					continue
 
-				# Drain up to batch_size items without blocking
 				while len(batch) < self.batch_size and not self._queue.empty():
 					try:
 						extra = self._queue.get_nowait()
@@ -131,15 +129,13 @@ class RedisMessageBuffer(MessageBuffer):
 					except asyncio.QueueEmpty:
 						break
 
-				if batch:
-					await self._flush_batch(batch)
+				await self._flush_batch(batch)
 			except asyncio.CancelledError:
 				break
 			except Exception:
 				logger.exception("Error in RedisMessageBuffer flush loop")
 				await asyncio.sleep(0.5)
 
-		# Drain remaining queue on shutdown
 		remaining: list[tuple[int, int, bytes]] = []
 		while not self._queue.empty():
 			try:

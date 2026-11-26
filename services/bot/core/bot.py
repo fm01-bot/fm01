@@ -83,7 +83,6 @@ class Bot(commands.AutoShardedBot):
 		self._sentry_enabled = False
 		self.debug: bool = config.debug
 		self.logger = getLogger(__name__)
-		self.uptime: datetime.datetime | MISSING = None
 		self.lavalink: dict[str, wavelink.Node] | MISSING = None
 		intents: discord.Intents = discord.Intents.all()
 		self.session: aiohttp.ClientSession | None = None
@@ -270,25 +269,10 @@ class Bot(commands.AutoShardedBot):
 			prefixes = ["?!", "?"]
 			mention = True
 
-		content = message.content
-		is_command = False
-		for p in prefixes:
-			if content.startswith(p):
-				is_command = True
-				break
-
-		if (
-			not is_command
-			and mention
-			and self.user
-			and content.startswith((f"<@{self.user.id}>", f"<@!{self.user.id}>"))
-		):
-			is_command = True
-
-		if not is_command:
-			return
-
-		await self.process_commands(message)
+		if mention and self.user:
+			prefixes += [f"<@{self.user.id}>", f"<@!{self.user.id}>"]
+		if message.content.startswith(tuple(prefixes)):
+			await self.process_commands(message)
 
 	async def verify_gateway_proxy_shard_count(self, gateway_url: str) -> None:
 		"""Refuse to start when ``SHARD_COUNT`` differs from the gateway proxy's shard count.
@@ -399,8 +383,6 @@ class Bot(commands.AutoShardedBot):
 		self.logger.debug(f"Loaded cogs in {end:.2f}s")
 
 	async def on_ready(self):
-		if not hasattr(self, "uptime"):
-			self.uptime = discord.utils.utcnow()
 		self.logger.info("Bot is ready!")
 		self.logger.info(f"Servers: {len(self.guilds)}, Commands: {len(self.commands)}, Shards: {self.shard_count}")
 		self.logger.info(f"Loaded cogs: {', '.join([cog for cog in self.cogs])}")
@@ -495,14 +477,9 @@ class Bot(commands.AutoShardedBot):
 
 				stack = "".join(traceback.format_exception(type(target_exc), target_exc, target_exc.__traceback__))
 
-				# if stack is more than 1700 characters, make it a file
-				too_long = len(stack) > 1700
-				file: discord.File | None = None
-				if too_long:
-					s = StringIO()
-					s.write(stack)
-					s.seek(0)
-					file = discord.File(s, filename="error.txt")  # type: ignore # stringIO is supported
+				file: discord.File = discord.utils.MISSING
+				if len(stack) > 1700:
+					file = discord.File(StringIO(stack), filename="error.txt")  # type: ignore # stringIO is supported
 					message_stack = "The stack trace was too long to send in a message, so it was saved as a file."
 				else:
 					message_stack = stack
@@ -511,7 +488,7 @@ class Bot(commands.AutoShardedBot):
 				if self.debug:
 					await ctx.reply(
 						content=f"```{message_stack}```",
-						file=file if too_long and file else discord.abc.MISSING,
+						file=file,
 						mention_author=False,
 					)
 					return
@@ -574,7 +551,7 @@ class Bot(commands.AutoShardedBot):
 								f"**User:** {ctx.author} / {ctx.author.id if ctx.author else 0}\n"
 								f"**Command:** {ctx.command}\n"
 								f"```{message_stack}```",
-								file=file if too_long and file else discord.abc.MISSING,
+								file=file,
 							)
 						except discord.HTTPException as e:
 							self.logger.warning(f"Failed to send error to webhook: {e}")

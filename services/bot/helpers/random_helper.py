@@ -13,7 +13,3 @@ def randbool() -> bool:
 
 	"""
 	return random.random() < 0.5
-
-
-if __name__ == "__main__":
-	print(randbool())
