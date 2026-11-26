@@ -14,12 +14,8 @@ load_dotenv()
 
 logger = logging.getLogger("alembic.env")
 
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
 config = context.config
 
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
 if config.config_file_name is not None:
 	fileConfig(config.config_file_name)
 
@@ -47,24 +43,15 @@ def get_url() -> str:
 	port = os.getenv("DB_PORT", "5432")
 	database = os.getenv("DB_NAME")
 
-	if not all([user, password, host, port, database]):
+	if not (user and password and host and port and database):
 		raise ValueError("Missing database configuration")
 
-	auth = f"{quote_plus(user)}:{quote_plus(password)}"  # type: ignore
+	auth = f"{quote_plus(user)}:{quote_plus(password)}"
 	return f"postgresql+asyncpg://{auth}@{host}:{port}/{database}"
 
 
 def run_migrations_offline() -> None:
-	"""Run migrations in 'offline' mode.
-
-	This configures the context with just a URL
-	and not an Engine, though an Engine is acceptable
-	here as well.  By skipping the Engine creation
-	we don't even need a DBAPI to be available.
-
-	Calls to context.execute() here emit the given string to the
-	script output.
-	"""
+	"""Emit the migrations as SQL to the script output, from a URL alone, without a database connection."""
 	url = get_url()
 	context.configure(
 		url=url, target_metadata=target_metadata, literal_binds=True, dialect_opts={"paramstyle": "named"}
@@ -82,9 +69,7 @@ def do_run_migrations(connection: Connection) -> None:
 
 
 async def run_async_migrations() -> None:
-	"""In this scenario we need to create an Engine
-	and associate a connection with the context.
-	"""
+	"""Run the migrations on a database connection, retrying while the database is still starting."""
 	configuration = config.get_section(config.config_ini_section, {})
 	configuration["sqlalchemy.url"] = get_url()
 

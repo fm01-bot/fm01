@@ -22,6 +22,7 @@ from api import (
 	StarSeed,
 )
 
+from app.db import snowflake
 from app.errors import ApiError
 from app.events import Announcer
 
@@ -39,18 +40,6 @@ _CONSTRAINT_ERRORS = {
 		"another board in this guild has that emoji and threshold",
 	),
 }
-
-
-def _id(value: Any) -> int | None:
-	"""Convert a ``numeric`` snowflake column to an ``int``.
-
-	Args:
-		value: The column value.
-
-	Returns:
-		The snowflake, or ``None`` for ``NULL``.
-	"""
-	return None if value is None else int(value)
 
 
 def _board(row: Mapping[str, Any]) -> Starboard:
@@ -86,8 +75,8 @@ def _entry(row: Mapping[str, Any]) -> StarboardEntry:
 	return StarboardEntry(
 		board=row["name"],
 		message_id=int(row["message_id"]),
-		post_channel_id=_id(row["post_channel_id"]),
-		post_id=_id(row["post_id"]),
+		post_channel_id=snowflake(row["post_channel_id"]),
+		post_id=snowflake(row["post_id"]),
 		blocked=row["blocked"],
 	)
 
@@ -332,7 +321,7 @@ class StarboardStore:
 			candidate,
 			emoji,
 		)
-		return _id(seeded)
+		return snowflake(seeded)
 
 	async def seed(self, guild_id: int, seed: StarSeed) -> StarredMessage:
 		"""Record everyone who starred a message with an emoji, replacing the stars recorded so far.
