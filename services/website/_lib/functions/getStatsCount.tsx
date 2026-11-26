@@ -5,9 +5,7 @@ export async function getStatsCount() {
         1000000
     ]
 
-    {/**
-        TODO: Write DB function to get global user count and server count
-    */}
+    // TODO: Write DB function to get global user count and server count
 
     return {
         COUNTS

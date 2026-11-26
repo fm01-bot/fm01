@@ -3,14 +3,12 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
-// Define the shape of our language object
 interface Language {
     code: string;
     flag: string;
     name: string;
 }
 
-// Define the component's expected props
 interface LanguageSelectorProps {
     currentLangCode?: string;
 }
@@ -26,7 +24,6 @@ const LANGUAGES: Language[] = [
 
 export default function Page({ currentLangCode = "en" }: LanguageSelectorProps) {
     const [isOpen, setIsOpen] = useState<boolean>(false);
-    // Strongly type the ref to an HTMLDivElement
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     const router = useRouter();
@@ -37,9 +34,7 @@ export default function Page({ currentLangCode = "en" }: LanguageSelectorProps) 
     const currentLang = LANGUAGES.find((l) => l.code === currentLangCode) || LANGUAGES[0];
 
     useEffect(() => {
-        // Strongly type the native DOM MouseEvent
         function handleClickOutside(event: MouseEvent) {
-            // Cast event.target to Node so TypeScript knows it's valid for .contains()
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
             }
@@ -59,7 +54,6 @@ export default function Page({ currentLangCode = "en" }: LanguageSelectorProps) 
             className="relative w-fit inline-flex items-center justify-between select-none transition-all duration-400 font-sans cursor-pointer mt-30"
             onClick={() => setIsOpen(!isOpen)}
         >
-            {/* Dropdown Trigger Button (Left side) */}
             <div className="flex items-center justify-center px-2.5 h-full rounded-l-[9px] transition-colors duration-200">
                 <span className="text-[20px]">{currentLang.flag}</span>
                 <svg
@@ -72,7 +66,6 @@ export default function Page({ currentLangCode = "en" }: LanguageSelectorProps) 
                 </svg>
             </div>
 
-            {/* Dropdown Menu */}
             <div
                 className={`absolute left-0 transition-all duration-200 z-10 bg-background/20 backdrop-blur-lg rounded-lg border-background border ${isOpen
                     ? "top-[calc(100%+5px)] opacity-100 visible"

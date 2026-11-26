@@ -1,19 +1,16 @@
 
 "use client"
-import { useState, useRef, useEffect, SetStateAction, Dispatch } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-// Define the shape of our language object
 interface Language {
     code: string;
     flag: string;
     name: string;
 }
 
-// Define the component's expected props
 interface LanguageSelectorProps {
     currentLangCode?: string;
-    mobileMenu?: [boolean, Dispatch<SetStateAction<boolean>>]
 }
 
 const LANGUAGES: Language[] = [
@@ -25,9 +22,8 @@ const LANGUAGES: Language[] = [
     { code: "hu", flag: "🇭🇺", name: "Magyar" },
 ];
 
-export default function LangSelector({ currentLangCode = "en", mobileMenu }: LanguageSelectorProps) {
+export default function LangSelector({ currentLangCode = "en" }: LanguageSelectorProps) {
     const [isOpen, setIsOpen] = useState<boolean>(false);
-    // Strongly type the ref to an HTMLDivElement
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     const router = useRouter();
@@ -35,9 +31,7 @@ export default function LangSelector({ currentLangCode = "en", mobileMenu }: Lan
     const currentLang = LANGUAGES.find((l) => l.code === currentLangCode) || LANGUAGES[0];
 
     useEffect(() => {
-        // Strongly type the native DOM MouseEvent
         function handleClickOutside(event: MouseEvent) {
-            // Cast event.target to Node so TypeScript knows it's valid for .contains()
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
             }
@@ -50,7 +44,7 @@ export default function LangSelector({ currentLangCode = "en", mobileMenu }: Lan
     // in the cookie, then re-render the current route (proxy.tsx rewrites it to
     // the new locale). The refresh runs in a transition tagged "lang-switch",
     // which selects the circular reveal in app/layout.tsx.
-    const handleLanguageSelect = (e: React.MouseEvent<HTMLButtonElement>, langCode: string) => {
+    const handleLanguageSelect = (langCode: string) => {
         setIsOpen(false);
         if (langCode === currentLang.code || isSwitching) return;
         setIsSwitching(true);
@@ -76,7 +70,6 @@ export default function LangSelector({ currentLangCode = "en", mobileMenu }: Lan
             ref={dropdownRef}
             className="relative z-50 w-fit inline-flex items-center justify-between select-none transition-all duration-400 font-sans"
         >
-            {/* Dropdown Trigger Button (Left side) */}
             <button
                 type="button"
                 aria-expanded={isOpen}
@@ -95,7 +88,6 @@ export default function LangSelector({ currentLangCode = "en", mobileMenu }: Lan
                 </svg>
             </button>
 
-            {/* Dropdown Menu */}
             <div
                 onPointerDown={(event) => event.stopPropagation()}
                 className={`absolute -left-3.5 top-full transition-all duration-200 z-50 pointer-events-auto bg-text/10 rounded-lg backdrop-blur-sm border-background border ${isOpen
@@ -113,7 +105,7 @@ export default function LangSelector({ currentLangCode = "en", mobileMenu }: Lan
                                 disabled={isSwitching}
                                 onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                                     e.stopPropagation();
-                                    handleLanguageSelect(e, lang.code);
+                                    handleLanguageSelect(lang.code);
                                 }}
                                 className={`flex items-center w-full p-2 rounded-[5px] cursor-pointer transition-colors hover:bg-background/80 disabled:cursor-wait`}
                             >
