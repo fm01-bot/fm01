@@ -120,6 +120,12 @@ def _target_error(ctx: Context, member: discord.Member, action: str, *, bot_acts
 	return None
 
 
+def _replied_content(ctx: Context) -> str | None:
+	"""The content of the message the command replies to, or ``None`` if it replies to none (or it was deleted)."""
+	resolved = ctx.message.reference.resolved if ctx.message.reference else None
+	return resolved.content if isinstance(resolved, discord.Message) else None
+
+
 async def _guild_member(guild: discord.Guild, user_id: int) -> discord.Member | None:
 	"""Find a member from the cache, or from Discord: members aren't chunked at startup, so most aren't cached.
 
@@ -214,7 +220,7 @@ class Moderation(commands.GroupCog, name="Moderation", group_name="mod"):
 			ctx.author,
 			reason,
 			expiry_date,
-			ctx.message.reference.resolved.content if ctx.message.reference else None,  # type: ignore
+			_replied_content(ctx),
 		)
 		await self.cases.open(warn)
 
@@ -246,7 +252,7 @@ class Moderation(commands.GroupCog, name="Moderation", group_name="mod"):
 			ctx.author,
 			expiry_date,
 			reason,
-			ctx.message.reference.resolved.content if ctx.message.reference else None,  # type: ignore
+			_replied_content(ctx),
 		)
 		await self.cases.open(mute)
 
@@ -285,7 +291,7 @@ class Moderation(commands.GroupCog, name="Moderation", group_name="mod"):
 			member,
 			ctx.author,
 			reason,
-			ctx.message.reference.resolved.content if ctx.message.reference else None,  # type: ignore
+			_replied_content(ctx),
 		)
 		await self.cases.open(kick)
 
@@ -320,7 +326,7 @@ class Moderation(commands.GroupCog, name="Moderation", group_name="mod"):
 			ctx.author,
 			reason,
 			expiry_date,
-			ctx.message.reference.resolved.content if ctx.message.reference else None,  # type: ignore
+			_replied_content(ctx),
 		)
 		await self.cases.open(ban)
 
