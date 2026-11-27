@@ -5,5 +5,6 @@ For every service that needs to be modified or looked at, check its `AGENTS.md` 
 | API            | `services/api/AGENTS.md`        |
 | Bot            | `services/bot/AGENTS.md`        |
 | Migrations     | `services/migrations/AGENTS.md` |
-| Website        | `services/website/README.md` (no `AGENTS.md` yet) |
+| Website        | `services/website/README.md`    |
+| Dashboard      | `services/dashboard/AGENTS.md`  |
 | Shared schemas | `shared/schemas/` (wire models; see the API's `AGENTS.md`) |
