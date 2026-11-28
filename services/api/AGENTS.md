@@ -35,6 +35,7 @@ app/
 ├── bear_trap/        # store.py (bear trap), routes.py (Internal + Dashboard API)
 ├── blacklist/        # store.py (blacklisted users and guilds), routes.py (Internal API; app/auth.py enforces it)
 ├── starboard/        # store.py (boards, stars, entries), routes.py (Internal + Dashboard API)
+├── suggestions/      # store.py (suggestions, votes, decisions, numbering), routes.py (Internal + Dashboard API)
 ├── greetings/ automod/ log/ moderation/ tickets/ leveling/   # guild configurations and their records (Internal API)
 ├── afk/ snapshots/ shop/ giveaways/ alerts/                    # member-facing features (Internal API)
 └── dashboard/        # discord.py (OAuth2/REST), sessions.py, access.py (guild manager rule), routes.py

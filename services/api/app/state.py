@@ -35,6 +35,7 @@ from app.shop.store import ShopStore
 from app.snapshots.store import SnapshotStore
 from app.starboard.store import StarboardStore
 from app.status.store import StatusStore
+from app.suggestions.store import SuggestionStore
 from app.tickets.store import TicketStore
 
 __all__ = ("AppState", "build_state", "get_state")
@@ -61,6 +62,7 @@ class AppState:
 		shop: The shop store.
 		giveaways: The giveaway store.
 		alerts: The media alert store.
+		suggestions: The suggestion store.
 		blacklist: The blacklist store.
 		discord: The Discord client.
 		sessions: The dashboard session store.
@@ -74,6 +76,7 @@ class AppState:
 	guild_settings: GuildSettingsStore
 	bear_traps: BearTrapStore
 	starboards: StarboardStore
+	suggestions: SuggestionStore
 	greetings: GreetingStore
 	automod: AutoModStore
 	log: LogStore
@@ -143,6 +146,7 @@ def assemble(config: Settings, pool: asyncpg.Pool, redis: aioredis.Redis, http: 
 		guild_settings=GuildSettingsStore(pool, announcer),
 		bear_traps=BearTrapStore(pool, announcer),
 		starboards=StarboardStore(pool, announcer),
+		suggestions=SuggestionStore(pool, announcer),
 		greetings=GreetingStore(pool, announcer),
 		automod=AutoModStore(pool, announcer),
 		log=LogStore(pool, announcer),

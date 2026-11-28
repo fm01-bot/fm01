@@ -9,9 +9,9 @@ from typing import Any
 import pytest
 from aiohttp import web
 from aiohttp.test_utils import TestServer
-from core.api import ApiClient, ApiError, ApiUnavailable, InsufficientFunds
+from core.api import ApiClient, ApiError, ApiUnavailable, InsufficientFunds, SuggestionClosed, SuggestionsDisabled
 
-from api import Balance, Prefix
+from api import Balance, Prefix, Vote
 
 BIG = 1234567890123456789  # loses precision as a JavaScript number
 
@@ -135,3 +135,33 @@ async def test_settings_round_trip(stand_in):
 	fake.status = 204
 	await client.economy.transfer(7, 1, 2, 3)
 	assert fake.requests[-1]["path"] == "/internal/guilds/7/economy/transfer"
+
+
+async def test_suggestions_disabled_is_raised_as_the_cogs_exception(stand_in):
+	fake, client = stand_in
+	fake.status, fake.body = 409, {"code": "suggestions_disabled", "message": "suggestions disabled"}
+
+	with pytest.raises(SuggestionsDisabled):
+		await client.suggestions.create(7, BIG, "More emoji")
+
+	request = fake.requests[0]
+	assert (request["method"], request["path"]) == ("POST", "/internal/guilds/7/suggestions")
+	assert request["json"] == {"author_id": str(BIG), "content": "More emoji"}
+
+
+async def test_a_closed_suggestion_is_raised_as_the_cogs_exception(stand_in):
+	fake, client = stand_in
+	fake.status, fake.body = 409, {"code": "suggestion_closed", "message": "suggestion closed"}
+
+	with pytest.raises(SuggestionClosed):
+		await client.suggestions.vote(7, 3, BIG, Vote.UP)
+
+	assert fake.requests[0]["json"] == {"user_id": str(BIG), "vote": "up"}
+
+
+async def test_an_unknown_suggestion_is_none(stand_in):
+	fake, client = stand_in
+	fake.status, fake.body = 404, {"code": "not_found", "message": "no such suggestion"}
+
+	assert await client.suggestions.get(7, 3) is None
+	assert await client.suggestions.vote(7, 3, BIG, Vote.UP) is None

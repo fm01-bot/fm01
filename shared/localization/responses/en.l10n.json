@@ -200,6 +200,7 @@
     "setup": "🔧 Setup",
     "shop": "🏪 Shop",
     "snapshots": "📸 Snapshots",
+    "suggestions": "💡 Suggestions",
     "utility": "🧰 Utility",
     "voice": "🔊 Voice"
   },
@@ -3671,6 +3672,137 @@
         ]
       }
     }
+  },
+  "suggestions": {
+    "decision": {
+      "approved": {
+        "content": "Suggestion #{number} is approved.",
+        "ephemeral": true
+      },
+      "denied": {
+        "content": "Suggestion #{number} is denied.",
+        "ephemeral": true
+      }
+    },
+    "errors": {
+      "cannot_post": {
+        "content": "I can't post in the suggestions channel. Ask a moderator to give me permission to send messages and embed links there.",
+        "ephemeral": true
+      },
+      "closed": {
+        "content": "Suggestion #{number} is decided, so voting on it is closed.",
+        "ephemeral": true
+      },
+      "disabled": {
+        "content": "Suggestions are not set up on this server.",
+        "ephemeral": true
+      },
+      "not_found": {
+        "content": "There is no suggestion #{number}.",
+        "ephemeral": true
+      }
+    },
+    "message": {
+      "approved": {
+        "allowed_mentions": [
+          "none"
+        ],
+        "embeds": [
+          {
+            "color": "#57F287",
+            "description": "{content}",
+            "fields": [
+              {
+                "inline": true,
+                "name": "Suggested by",
+                "value": "<@{author_id}>"
+              },
+              {
+                "inline": true,
+                "name": "Status",
+                "value": "✅ Approved"
+              },
+              {
+                "inline": true,
+                "name": "Approved by",
+                "value": "<@{moderator_id}>"
+              },
+              {
+                "inline": false,
+                "name": "Reason",
+                "value": "{reason}"
+              }
+            ],
+            "title": "Suggestion #{number}"
+          }
+        ]
+      },
+      "denied": {
+        "allowed_mentions": [
+          "none"
+        ],
+        "embeds": [
+          {
+            "color": "#ED4245",
+            "description": "{content}",
+            "fields": [
+              {
+                "inline": true,
+                "name": "Suggested by",
+                "value": "<@{author_id}>"
+              },
+              {
+                "inline": true,
+                "name": "Status",
+                "value": "❌ Denied"
+              },
+              {
+                "inline": true,
+                "name": "Denied by",
+                "value": "<@{moderator_id}>"
+              },
+              {
+                "inline": false,
+                "name": "Reason",
+                "value": "{reason}"
+              }
+            ],
+            "title": "Suggestion #{number}"
+          }
+        ]
+      },
+      "open": {
+        "allowed_mentions": [
+          "none"
+        ],
+        "embeds": [
+          {
+            "color": "#5865F2",
+            "description": "{content}",
+            "fields": [
+              {
+                "inline": true,
+                "name": "Suggested by",
+                "value": "<@{author_id}>"
+              },
+              {
+                "inline": true,
+                "name": "Status",
+                "value": "🕒 Open"
+              }
+            ],
+            "title": "Suggestion #{number}"
+          }
+        ]
+      }
+    },
+    "suggest": {
+      "success": {
+        "content": "Your suggestion is posted: {url}",
+        "ephemeral": true
+      }
+    },
+    "thread_name": "Suggestion #{number}"
   },
   "ticket": {
     "actions": {
