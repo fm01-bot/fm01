@@ -24,7 +24,7 @@
     "@octokit/core": "^7.0.8",
     "@teispace/next-themes": "^2.0.4",
     "@types/mdx": "^2.0.14",
-    "framer-motion": "^12.42.2",
+    "framer-motion": "^12.43.0",
     "negotiator": "^1.1.0",
     "next": "16.4.6",
     "next-mdx-remote": "^6.0.0",
