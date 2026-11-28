@@ -25,7 +25,7 @@ By contributing you agree that your work is released under the project's [MIT Li
 - **Fix a bug or build a feature.** Look for an open issue first, or open one before starting anything large, so we can
   agree on the approach before you spend time on it. Small fixes (typos, obvious bugs) can go straight to a PR.
 - **Improve the English texts** in `shared/localization/`. The bot's wording is all data, no Python needed.
-- **Improve docs**: this file, the README, the `AGENTS.md` files and [`GLOSSARY.md`](GLOSSARY.md).
+- **Improve docs**: this file, the README, [`SELF-HOSTING.md`](SELF-HOSTING.md), the `AGENTS.md` files and [`GLOSSARY.md`](GLOSSARY.md).
 
 **Security issues are the exception:** never report them in a public issue. Follow [SECURITY.md](SECURITY.md).
 
@@ -118,17 +118,17 @@ To run the bot you need your own **test** bot. Create an application in the
 (Presence, Server Members, Message Content), and invite it to a private test server. Never use a token for a bot other
 people rely on.
 
-Then configure it, as in the README's [self-hosting steps](README.md#self-hosting):
+Then configure it, as in [steps 2 and 3 of SELF-HOSTING.md](SELF-HOSTING.md#2-create-env):
 
 ```bash
-cp .env.example .env                                          # fill in TOKEN, DB_PASSWORD, LAVALINK_PASSWORD
-cp services/bot/config.yml.example services/bot/config.yml    # set owner_ids to your Discord user ID
+cp .env.example .env  # fill in TOKEN, DB_PASSWORD, LAVALINK_PASSWORD
+cp services/bot/config.yml.example services/bot/config.yml  # add your Discord user ID to owner_ids
 ```
 
 Set `debug: true` in `config.yml` and put your test bot's token in `DEBUG_TOKEN` to get verbose errors. Then:
 
 ```bash
-just debug        # starts the stack, applies migrations, follows the bot's logs
+just debug  # starts the stack, applies migrations, follows the bot's logs
 ```
 
 After a code change, `just debug` again rebuilds and restarts what's needed. Other useful recipes (`just --list` shows
@@ -145,12 +145,12 @@ them all):
 The website runs on its own: `pnpm dev` in `services/website/` serves it at http://localhost:3007.
 
 > [!WARNING]
-> Never commit `.env`, `services/bot/config.yml`, tokens or certificates. They are gitignored; keep it that way.
+> Never commit `.env`, `services/bot/config.yml`, tokens or certificates.
 
 ## Making a change
 
 Each service has an `AGENTS.md` with its full rules (they're written for AI tools but are the most precise reference for
-humans too). **Read the one for the service you touch.** The rules people trip over most:
+contributors too). **Read the one for the service you touch.** The rules people trip over most:
 
 ### Bot
 
@@ -159,10 +159,11 @@ humans too). **Read the one for the service you touch.** The rules people trip o
 - **No hard-coded user-facing text.** Every response goes in `shared/localization/responses/en.l10n.json` and is sent by
   key: `await ctx.send("feature.thing.done", user=user)`. Pass Discord objects as keyword arguments; the formatter maps
   them so texts can use `{user.mention}` and similar.
+  - There are some exceptions for admin commands and the automated error message.
 - Slash command names and descriptions go in `shared/localization/slash_commands/`, keyed `<command>-name`,
   `<command>-desc`, `<command>-args-<parameter>-name` and `<command>-args-<parameter>-desc`.
-- Only edit the **English** files. Other languages are translated by people through our translation platform; don't add
-  machine translations. English is the fallback, so a missing Hungarian string is fine.
+- Only edit the **English** files. Other languages are translated by people on our [Weblate](https://weblate.fm01.bot); don't
+  add machine translations. English is the fallback, so a missing Hungarian string is fine.
 - Keep cog-specific helpers in the cog. `helpers/` is for code used by several cogs.
 - Tests use the in-memory API fakes in `services/bot/tests/fake_api.py`, so they need neither Discord nor a database.
   `tests/test_message_keys.py` fails if the bot uses a key that isn't in `en.l10n.json`.
@@ -171,8 +172,7 @@ humans too). **Read the one for the service you touch.** The rules people trip o
 
 - An Internal API endpoint is **one domain operation in one transaction** (a transfer, a settings write), never a
   generic get/set pair.
-- Each domain has one store (`app/<domain>/store.py`) that owns every query on its tables. Raw SQL with `asyncpg`, no
-  ORM.
+- Each domain has one store (`app/<domain>/store.py`) that owns every query on its tables.
 - Request and response models live in `shared/schemas/`, never in the API itself.
 - Errors are `ApiError(ErrorCode.X)`; add new codes to `shared/schemas/api/errors.py`.
 - Nothing guild-specific or internal ever goes in the Public API (`/public/...`).
@@ -187,9 +187,7 @@ humans too). **Read the one for the service you touch.** The rules people trip o
 
 ### Website and dashboard
 
-- They use a recent Next.js whose APIs may differ from what you know; check `node_modules/next/dist/docs/` when in doubt.
-- Every website string goes in **both** `shared/localization/website/en.json` and `hu.json` with the same keys. Leave
-  room in layouts: Hungarian runs longer.
+- Website localization goes in `shared/localization/website/en.json`. Other languages are translated on Weblate.
 - Follow the design system in `services/website/AGENTS.md`: theme colour aliases only (no raw hex), the existing utility
   classes, the `laptop:` breakpoint, and **fm01** always in lowercase.
 
@@ -287,11 +285,11 @@ Common types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`. The scope is t
 
 Before you ask for a review, check that:
 
-- [ ] the checks above pass locally
-- [ ] new behaviour has tests
-- [ ] new texts are in the English localization files, not in code
-- [ ] schema changes have a migration that upgrades and downgrades
-- [ ] no secrets, `.env`, `config.yml` or generated schema files are committed
+- [x] the checks above pass locally
+- [x] new behaviour has passing tests, bugfixes add a test that reproduces the issue
+- [x] new texts are in the English localization files, not in code
+- [x] schema changes have a migration that upgrades and downgrades
+- [x] no secrets, `.env`, `config.yml` or generated schema files are committed
 
 ## Getting help
 

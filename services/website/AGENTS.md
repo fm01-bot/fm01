@@ -60,10 +60,9 @@ Path aliases (`tsconfig.json`): `@/*` → `./*`, `@lib/*` → `./_lib/*`, `@publ
 
 ## 4. Localization
 
-- The site's text lives outside this folder, in `shared/localization/website/`: `en.json`, `hu.json` (imported via `@shared/localization/website/<lang>.json`) and the legal docs in `doc/<lang>/*.mdx` (read at runtime through `WEBSITE_L10N_DIR` in `_lib/functions/paths.ts`). `doc/en/` and `doc/hu/` must hold the same file names.
-- The site ships in **English and Hungarian**. Every user-facing string goes in **both** `en.json` and `hu.json`, with the same keys. Don't hard-code copy in components.
+- The site's text lives outside this folder, in `shared/localization/website/`, i.e. `en.json`, `<two_letter_language_id>.json` (imported via `@shared/localization/website/<lang>.json`) and the legal docs in `doc/<lang>/*.mdx` (read at runtime through `WEBSITE_L10N_DIR` in `_lib/functions/paths.ts`). Files in `doc/<lang>/` must have the same names as those in `doc/en/`.
 - Hungarian strings run longer. Leave room in layouts and test both languages.
-- The Discord showcase displays real bot responses. The bot's texts are owned by `shared/localization/responses/{en,hu}.l10n.json`; never copy them into the website files. A showcase message points at one by **exact key** and `resolveMessages` (`_lib/functions/botLocale.ts`) renders the whole payload (content, embeds, Components V2):
+- The Discord showcase displays real bot responses. The bot's texts are owned by `shared/localization/responses/{lang}.l10n.json`; never copy them into the website files. A showcase message points at one by **exact key** and `resolveMessages` (`_lib/functions/botLocale.ts`) renders the whole payload (content, embeds, Components V2):
 
   ```json
   { "username": "fm01", "avatar": "/images/logo.webp", "bot": true,
